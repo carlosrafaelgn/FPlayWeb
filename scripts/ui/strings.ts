@@ -56,6 +56,8 @@ class Strings {
 	public static AddFolders = "Add Folders";
 	public static ShowFilter = "Show Filter";
 	public static ShowPlaylist = "Show Playlist";
+	public static UpdateAvailable = "Update Available!";
+	public static PleaseRefresh = "Please, refresh the page to update the app 😊";
 
 	public static init(): void {
 		const language = ((navigator as any)["userLanguage"] as string || navigator.language);
@@ -91,6 +93,8 @@ class Strings {
 			Strings.AddFolders = "Adicionar Pastas";
 			Strings.ShowFilter = "Exibir Filtro";
 			Strings.ShowPlaylist = "Exibir Lista";
+			Strings.UpdateAvailable = "Atualização Disponível!";
+			Strings.PleaseRefresh = "Por favor, recarregue a página para atualizar a aplicação 😊";
 		}
 
 		Strings.translateChildren(document.body);

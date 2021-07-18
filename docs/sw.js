@@ -31,8 +31,8 @@
 // works because the browser reinstalls the service worker
 // whenever it detects a change in the source code of the
 // service worker).
-const CACHE_PREFIX = "fplay-static-cache";
-const CACHE_VERSION = "-20210330";
+const CACHE_PREFIX = "fplay-static-cache-";
+const CACHE_VERSION = "20210718";
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
 
 self.addEventListener("install", (event) => {
@@ -69,7 +69,24 @@ self.addEventListener("install", (event) => {
 		// Let the commented files be downloaded/cached only
 		// if the browser requests them!
 		const files = [
-			// Development phase only
+			"./",
+			"assets/css/graphicalFilterEditor.css",
+			"assets/css/style.css",
+			"assets/fonts/OpenSans-Bold.ttf",
+			"assets/fonts/OpenSans-Regular.ttf",
+			"assets/images/albumArts/64x64.png",
+			"assets/images/albumArts/96x96.png",
+			"assets/images/albumArts/192x192.png",
+			"assets/images/albumArts/256x256.png",
+			"assets/images/albumArts/512x512.png",
+			"assets/images/favicons/favicon-512x512.png",
+			"assets/images/favicons/favicon.ico",
+			"assets/images/favicons/favicon.png",
+			"assets/images/favicons/manifest.webmanifest",
+			"assets/images/loading.gif",
+			"assets/js/scripts.min.js?" + CACHE_VERSION,
+			"assets/lib/graphicalFilterEditor/lib.js?" + CACHE_VERSION,
+			"assets/lib/graphicalFilterEditor/lib.wasm?" + CACHE_VERSION
 		];
 		const promises = new Array(files.length);
 		for (let i = files.length - 1; i >= 0; i--)
@@ -122,11 +139,11 @@ self.addEventListener("fetch", (event) => {
 	// when the service worker is reinstalled).
 
 	// Development phase only
-	event.respondWith(fetch(event.request));
+	if (event.request.url.startsWith("http://localhost"))
+		return;
 
-	/*
 	event.respondWith(caches.open(CACHE_NAME).then((cache) => {
-		return cache.match(event.request).then((response) => {
+		return cache.match(event.request, { ignoreVary: true }).then((response) => {
 			// Return the resource if it has been found.
 			if (response)
 				return response;
@@ -170,7 +187,6 @@ self.addEventListener("fetch", (event) => {
 			});
 		});
 	}));
-	*/
 });
 
 // References:

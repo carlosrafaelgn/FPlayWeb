@@ -1,7 +1,7 @@
 {
 	"name": "FPlay",
 	"short_name": "FPlay",
-	"start_url": "/",
+	"start_url": "../../../",
 	"dir": "ltr",
 	"lang": "en-US",
 	"orientation": "any",

@@ -223,7 +223,19 @@ class App {
 		if ("serviceWorker" in navigator) {
 			window.addEventListener("beforeinstallprompt", App.beforeInstallPrompt);
 
-			//navigator.serviceWorker.register("sw.js");
+			const promise = navigator.serviceWorker.register("sw.js");
+			if (promise && ("then" in promise)) {
+				promise.then(function (registration) {
+					if (registration && ("onupdatefound" in registration) && registration.active) {
+						registration.onupdatefound = function () {
+							Modal.show({
+								html: Strings.PleaseRefresh,
+								title: Strings.UpdateAvailable
+							});
+						};
+					}
+				});
+			}
 		}
 
 		window.addEventListener("resize", App.adjustCover);
@@ -350,10 +362,6 @@ class App {
 	public static mainWindowClose(): void {
 		if (App.ipcRenderer)
 			App.ipcRenderer.invoke("mainWindowClose");
-	}
-
-	public static async readWasmLibrary(): Promise<ArrayBuffer> {
-		return (await fetch("assets/lib/graphicalFilterEditor/lib.wasm")).arrayBuffer();
 	}
 
 	public static async showOpenFileDialog(): Promise<string[] | null> {

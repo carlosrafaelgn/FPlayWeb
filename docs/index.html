@@ -120,6 +120,8 @@
 		//<![CDATA[
 		"use strict";
 
+		var CACHE_VERSION = "20180718";
+
 		(function () {
 			function loadScript(src, successCallback, errorCallback) {
 				window.onerror = errorCallback;
@@ -153,7 +155,7 @@
 
 				// All TS files are being concatenated into a single file according to the
 				// order specified in the files array, inside tsconfig.json
-				loadScript("assets/js/scripts." + (version ? (version + ".") : version) + "min.js", function () {
+				loadScript("assets/js/scripts." + (version ? (version + ".") : version) + "min.js?" + CACHE_VERSION, function () {
 					window.onerror = showError;
 				}, function (msg, url, line, col, error) {
 					showError("Impossible to load the main script :(", arguments);
@@ -162,6 +164,13 @@
 
 			function loadLibScript() {
 				window["fplayUsingWebAssembly"] = ("WebAssembly" in window);
+
+				if (window["fplayUsingWebAssembly"])
+					window["CLibWasmBinaryReader"] = function () {
+						return fetch("assets/lib/graphicalFilterEditor/lib.wasm?" + CACHE_VERSION).then(function (response) {
+							return response.arrayBuffer();
+						});
+					};
 
 				// Unfortunately, as of September 2020, emscripten does not automaticaly loads
 				// the pure JS version of the compiled code, even when specifying the flag WASM=2
@@ -172,7 +181,7 @@
 				// https://github.com/emscripten-core/emscripten/blob/master/src/settings.js
 				// https://github.com/emscripten-core/emscripten/pull/10118
 				// https://github.com/emscripten-core/emscripten/issues/11357
-				loadScript(window["fplayUsingWebAssembly"] ? "assets/lib/graphicalFilterEditor/lib.js": "assets/lib/graphicalFilterEditor/lib-nowasm.js", function () {
+				loadScript("assets/lib/graphicalFilterEditor/lib" + (window["fplayUsingWebAssembly"] ? "" : "-nowasm") + ".js?" + CACHE_VERSION, function () {
 					// Trying to add a script to the body element, then removing it and adding
 					// another version leads to duplicate variable declaration (using let/const),
 					// because all globals remain declared, even if the script tag is removed.
