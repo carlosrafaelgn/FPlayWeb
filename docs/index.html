@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-us">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimal-ui, shrink-to-fit=no" />
+	<meta name="color-scheme" content="dark" />
+
+	<!--
+		Adding the line below causes the error "Wasm code generation
+		disallowed by embedder" when trying to compile a WASM file
+	-->
+	<!-- <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" /> -->
+
+	<meta property="og:locale" content="en_US" />
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content="https://fplay.com.br" />
+	<meta property="og:title" content="FPlay" />
+	<meta property="og:site_name" content="FPlay" />
+	<meta property="og:description" content="Experimental music player" />
+	<meta property="og:image" content="https://fplay.com.br/assets/images/favicons/favicon-512x512.png" />
+	<meta property="og:image:type" content="image/png" />
+	<meta property="og:image:width" content="512" />
+	<meta property="og:image:height" content="512" />
+	<meta name="author" content="Carlos Rafael Gimenes das Neves" />
+	<meta name="description" content="Experimental music player" />
+	<meta name="keywords" content="fplay, web audio, webassembly, graphical equalizer, music player" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+	<meta name="apple-mobile-web-app-title" content="FPlay" />
+	<meta name="mobile-web-app-capable" content="yes" />
+	<meta name="mobile-web-app-status-bar-style" content="black-translucent" />
+	<meta name="mobile-web-app-title" content="FPlay" />
+	<link rel="apple-touch-icon" sizes="57x57" href="assets/images/favicons/apple-icon-57x57.png" />
+	<link rel="apple-touch-icon" sizes="60x60" href="assets/images/favicons/apple-icon-60x60.png" />
+	<link rel="apple-touch-icon" sizes="72x72" href="assets/images/favicons/apple-icon-72x72.png" />
+	<link rel="apple-touch-icon" sizes="76x76" href="assets/images/favicons/apple-icon-76x76.png" />
+	<link rel="apple-touch-icon" sizes="114x114" href="assets/images/favicons/apple-icon-114x114.png" />
+	<link rel="apple-touch-icon" sizes="120x120" href="assets/images/favicons/apple-icon-120x120.png" />
+	<link rel="apple-touch-icon" sizes="144x144" href="assets/images/favicons/apple-icon-144x144.png" />
+	<link rel="apple-touch-icon" sizes="152x152" href="assets/images/favicons/apple-icon-152x152.png" />
+	<link rel="apple-touch-icon" sizes="180x180" href="assets/images/favicons/apple-icon-180x180.png" />
+	<link rel="icon" type="image/png" sizes="512x512" href="assets/images/favicons/favicon-512x512.png" />
+	<link rel="icon" type="image/png" sizes="192x192" href="assets/images/favicons/favicon-192x192.png" />
+	<link rel="icon" type="image/png" sizes="96x96" href="assets/images/favicons/favicon-96x96.png" />
+	<link rel="icon" type="image/png" sizes="48x48" href="assets/images/favicons/favicon-48x48.png" />
+	<link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicons/favicon-32x32.png" />
+	<link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicons/favicon-16x16.png" />
+	<link rel="Shortcut Icon" href="assets/images/favicons/favicon.png" />
+	<link rel="manifest" href="assets/images/favicons/manifest.webmanifest" />
+	<meta name="msapplication-config" content="assets/images/favicons/browserconfig.xml" />
+	<meta name="theme-color" content="#303030" />
+
+	<title>FPlay</title>
+
+	<style type="text/css" id="root-variables">
+		:root {
+			--icon-size: 12px;
+			--icon-padding: 6px;
+			--large-icon-size: 24px;
+			--large-icon-padding: 0;
+			--thin-border: 1px;
+			--thick-border: 2px;
+		}
+	</style>
+	<link rel="stylesheet" type="text/css" href="assets/css/graphicalFilterEditor.css" />
+	<link rel="stylesheet" type="text/css" href="assets/css/style.css" />
+</head>
+<body>
+	<noscript>Sorry! You need to enable JavaScript in order to run the player :(</noscript>
+
+	<div id="panel-container">
+		<div id="fixed-panel">
+			<div id="top-panel" class="toolbar border-bottom">
+				<div id="artist-label"><i class="large margin icon-artist orange"></i>-</div>
+				<div id="title-label"><i class="large margin icon-title pink"></i>-</div>
+			</div>
+
+			<div id="playlist-control" tabindex="-1"></div>
+
+			<div id="middle-panel" class="toolbar border-top">
+				<button type="button" class="btn square green transparent" onclick="AppUI.addFiles()" title="AddFiles" data-string="aria-label|AddFiles">
+					<i class="large icon-add-title green"></i>
+				</button><button type="button" class="btn square orange transparent" onclick="AppUI.addDirectories()" title="AddFolders" data-string="aria-label|AddFolders">
+					<i class="large icon-add-folder orange"></i>
+				</button><button type="button" class="btn square red transparent" onclick="App.player && App.player.playlist && App.player.playlist.clear()" title="Clear" data-string="aria-label|Clear">
+					<i class="large icon-clear red"></i>
+				</button>
+
+				<button type="button" class="btn square transparent toolbar-right hidden-normal" onclick="AppUI.switchView()" title="ShowFilter" data-string="aria-label|ShowFilter">
+					<i class="large icon-filter"></i>
+				</button>
+			</div>
+
+			<div id="bottom-panel" class="toolbar border-top">
+				<div id="seek-slider" data-string="aria-label|Seek"></div>
+				<div>
+					<button type="button" class="btn square transparent" onclick="App.player && App.player.previous()" title="Previous" data-string="aria-label|Previous"><i class="large icon-previous"></i></button><button type="button" class="btn square transparent" onclick="App.player && App.player.playPause()" title="PlayPause" data-string="aria-label|PlayPause"><i class="large icon-play" id="icon-play"></i><i class="large icon-pause hidden" id="icon-pause"></i></button><button type="button" class="btn square transparent" onclick="App.player && App.player.stop()" title="Stop" data-string="aria-label|Stop"><i class="large icon-stop"></i></button><button type="button" class="btn square transparent" onclick="App.player && App.player.next()" title="Next" data-string="aria-label|Next"><i class="large icon-next"></i></button><span class="large-left-margin" id="volume-slider" data-string="aria-label|Volume"></span>
+				</div>
+			</div>
+		</div>
+
+		<div id="optional-panel" class="scrollable">
+			<div id="optional-panel-container">
+				<div class="toolbar">
+					<input class="btn transparent" type="checkbox" id="graphical-filter-control-enabled" title="Enabled" /><button type="button" class="btn square transparent hidden-normal" onclick="AppUI.switchView()" title="ShowPlaylist" data-string="aria-label|ShowPlaylist">
+						<i class="large icon-playlist"></i>
+					</button>
+				</div>
+
+				<div id="graphical-filter-control"></div>
+			</div>
+		</div>
+	</div>
+
+	<div id="cover" class="fade in"></div>
+
+	<i class="web" id="icon-loading"></i>
+
+	<script type="text/javascript">
+		//<![CDATA[
+		"use strict";
+
+		(function () {
+			function loadScript(src, successCallback, errorCallback) {
+				window.onerror = errorCallback;
+				var s = document.createElement("script");
+				s.setAttribute("type", "text/javascript");
+				s.setAttribute("charset", "utf-8");
+				document.body.appendChild(s);
+				s.onload = successCallback;
+				s.onerror = errorCallback;
+				s.setAttribute("src", src);
+				return s;
+			}
+
+			function showError(msg, a) {
+				var i;
+				if (a && a.length) {
+					// Firefox for iOS, user agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1 Safari/605.1.15,
+					// reports a script error when loading the scripts but nothing is wrong! Everything works fine!
+					// Not even this prevented the script error from being generated: https://stackoverflow.com/a/7778424/3569421
+					if (a[0] && (a[0] == "Script error" || a[0] == "Script error."))
+						return;
+					msg += "\n\nError: " + a[0];
+					for (i = 1; i < a.length; i++)
+						msg += ", " + a[i];
+				}
+				alert(msg);
+			}
+
+			function loadMainScript(version) {
+				window["fplayES"] = version;
+
+				// All TS files are being concatenated into a single file according to the
+				// order specified in the files array, inside tsconfig.json
+				loadScript("assets/js/scripts." + (version ? (version + ".") : version) + "min.js", function () {
+					window.onerror = showError;
+				}, function (msg, url, line, col, error) {
+					showError("Impossible to load the main script :(", arguments);
+				});
+			}
+
+			function loadLibScript() {
+				window["fplayUsingWebAssembly"] = ("WebAssembly" in window);
+
+				// Unfortunately, as of September 2020, emscripten does not automaticaly loads
+				// the pure JS version of the compiled code, even when specifying the flag WASM=2
+				//
+				// Tested using the following command line:
+				// chrome --disable-features="WebAssembly,AsmJsToWebAssembly,WebAssemblyStreaming" --js-flags="--noexpose-wasm"
+				//
+				// https://github.com/emscripten-core/emscripten/blob/master/src/settings.js
+				// https://github.com/emscripten-core/emscripten/pull/10118
+				// https://github.com/emscripten-core/emscripten/issues/11357
+				loadScript(window["fplayUsingWebAssembly"] ? "assets/lib/graphicalFilterEditor/lib.js": "assets/lib/graphicalFilterEditor/lib-nowasm.js", function () {
+					// Trying to add a script to the body element, then removing it and adding
+					// another version leads to duplicate variable declaration (using let/const),
+					// because all globals remain declared, even if the script tag is removed.
+					// Therefore, we need to know the exact version that must be loaded.
+					// According to Can I Use:
+					// https://caniuse.com/wasm / https://caniuse.com/mdn-javascript_operators_await
+					// if a browser has support for WebAssembly it also has support for async/await
+					// (but not the opposite).
+					if (window["fplayUsingWebAssembly"])
+						loadMainScript("");
+					else
+						loadMainScript("es6");
+				}, function (msg, url, line, col, error) {
+					showError("Impossible to load the library script :(", arguments);
+				});
+			}
+
+			// Modified version of https://stackoverflow.com/a/29046739/3569421
+			function checkES6() {
+				try {
+					if ((typeof Symbol) == "undefined")
+						return false;
+					var a;
+					eval("a = `1`");
+				} catch (ex) {
+					return false;
+				}
+				return true;
+			}
+
+			// We can assume Promise is available in the browser because we are checking it down below
+			if (!("queueMicrotask" in window))
+				window.queueMicrotask = function (callback) {
+					Promise.resolve()
+						.then(callback)
+						.catch(e => setTimeout(() => { throw e; }));
+				};
+
+			// Even though Promise can be polyfilled, we are using this as a way to try to
+			// figure out other features supported by the browser
+			// https://caniuse.com/audio-api
+			// https://caniuse.com/mdn-api_audiocontext_suspend
+			// https://caniuse.com/promises
+			// https://caniuse.com/url
+			// https://caniuse.com/bloburls
+			// https://caniuse.com/fetch
+			// https://caniuse.com/es6
+			if ((!("AudioContext" in window) && !("webkitAudioContext" in window)) || !("Promise" in window) || !("URL" in window) || !("createObjectURL" in URL) || !("fetch" in window) || !checkES6())
+				alert("Sorry, but your browser does not meet the minimum requirements :(");
+			else
+				loadLibScript();
+		})();
+		//]]>
+	</script>
+</body>
+</html>

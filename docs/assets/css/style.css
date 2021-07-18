@@ -1,0 +1,948 @@
+@font-face {
+	font-family: 'Open Sans';
+	font-style: normal;
+	font-weight: 300;
+	font-display: swap;
+	src: url('../fonts/OpenSans-Light.ttf') format('truetype');
+}
+
+@font-face {
+	font-family: 'Open Sans';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('../fonts/OpenSans-Regular.ttf') format('truetype');
+}
+
+@font-face {
+	font-family: 'Open Sans';
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url('../fonts/OpenSans-Bold.ttf') format('truetype');
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html {
+	margin: 0;
+	padding: 0;
+	min-height: 100%;
+	height: 100%;
+	font-size: 4px;
+	background-color: #1c1c1c;
+	-webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
+body, .modal, .btn, input, textarea, select, h1, h2, h3, h4, h5, h6 {
+	font-weight: 400;
+	font-family: 'Open Sans', sans-serif;
+	line-height: 6rem;
+	color: #fff;
+}
+
+#fixed-panel, #option-panel, .modal, .btn, input, textarea, select, h1, h2, h3, h4, h5, h6 {
+	font-size: 3.5rem;
+}
+
+body {
+	margin: 0;
+	padding: 0 2rem;
+	min-height: 100%;
+	height: 100%;
+	overflow: hidden;
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+.icon {
+	display: inline-block;
+	width: 6rem;
+	height: 6rem;
+	padding: var(--icon-padding);
+	vertical-align: top;
+}
+
+.icon.large {
+	padding: var(--large-icon-padding);
+}
+
+.icon > svg {
+	display: inline-block;
+	width: var(--icon-size);
+	height: var(--icon-size);
+	vertical-align: top;
+	stroke-width: 0;
+	stroke: transparent;
+	fill: currentColor;
+}
+
+.icon.large > svg {
+	width: var(--large-icon-size);
+	height: var(--large-icon-size);
+}
+
+.menu-icon {
+	width: auto;
+	padding-left: 0;
+}
+
+h1 {
+	position: relative;
+	margin: 0 -2rem;
+	padding: 2rem;
+	height: 10rem;
+	text-align: center;
+}
+
+h1,
+.modal,
+.slider-control-ruler,
+.list-item {
+	background: #303030;
+}
+
+h1 > div {
+	position: absolute;
+	z-index: -1;
+	-webkit-app-region: drag;
+	left: 1rem;
+	top: 1rem;
+	right: 1rem;
+	bottom: 0;
+}
+
+h1.maximized > div {
+	left: 0;
+	top: 0;
+	right: 0;
+}
+
+h1 > span {
+	display: block;
+	position: absolute;
+	right: 0;
+	top: 0;
+	margin: 0;
+	padding: 0;
+	text-align: center;
+	-webkit-app-region: no-drag;
+}
+
+h1 > span > span {
+	display: inline-block;
+	width: 10rem;
+	height: 10rem;
+	padding: 2rem;
+	text-align: center;
+	cursor: pointer;
+}
+
+h1 > span > span:hover {
+	background-color: #444;
+}
+
+h1 > span > span:active,
+.list-item:active {
+	background-color: #555;
+}
+
+h1 > span > span.close:hover {
+	background-color: #c00;
+}
+
+h1 > span > span.close:active {
+	background-color: #d11;
+}
+
+#icon-main {
+	position: absolute;
+	left: 1.8rem;
+	top: 1.8rem;
+	background-image: url('../images/favicons/favicon-96x96.png');
+	background-size: 100% 100%;
+	width: 6.4rem;
+	height: 6.4rem;
+	pointer-events: none;
+}
+
+#icon-loading {
+	position: absolute;
+	left: 10rem;
+	top: 2rem;
+	width: 6.4rem;
+	height: 6.4rem;
+	background-image: url('../images/loading.gif');
+	background-size: 100% 100%;
+	pointer-events: none;
+}
+
+#icon-loading.web {
+	left: 2rem;
+	width: 5rem;
+	height: 5rem;
+	z-index: 99998;
+}
+
+.btn, input, textarea, select, i, graphical-filter-control {
+	vertical-align: top;
+}
+
+.btn, .btn > span, input, textarea, select {
+	margin: 0;
+	border-radius: 0;
+	border: 0 none transparent;
+	box-shadow: none;
+	outline: 0 none transparent;
+	appearance: none;
+	/*transition: background-color ease-in-out 0.3s, color ease-in-out 0.3s;*/
+}
+
+.modal {
+	display: block;
+    outline: 0 none transparent;
+    border: 0 none transparent;
+	margin: 10rem auto;
+	width: 156rem;
+	max-width: 90%;
+    box-shadow: 0 0.25rem 2rem #000;
+}
+
+.modal-decoration {
+	padding: 2rem;
+}
+
+.modal-body {
+    padding: 2rem;
+    margin: 0 2rem;
+    border-color: #5a5a5a;
+    border-style: solid none;
+    border-width: var(--thin-border);
+}
+
+.btn, .btn > span {
+	display: inline-block;
+	height: 8rem;
+}
+
+.btn {
+	cursor: pointer;
+	text-align: center;
+	white-space: nowrap;
+	padding: 0;
+}
+
+.btn > span {
+	padding: 1rem 2rem;
+}
+
+.btn > span > i {
+	pointer-events: none;
+}
+
+.btn + .btn {
+	margin-left: 2rem;
+}
+
+.btn.square, .btn.square > span {
+	width: 8rem;
+}
+
+.btn.square > span {
+	padding: 1rem;
+}
+
+input[type="checkbox"] {
+	color: inherit;
+	display: inline-block;
+	vertical-align: top;
+	width: 0;
+	height: 0;
+	pointer-events: none;
+}
+
+input[type="checkbox"] + .icon + .icon {
+	display: none;
+}
+
+input[type="checkbox"]:checked + .icon {
+	display: none;
+}
+
+input[type="checkbox"]:checked + .icon + .icon {
+	display: inline-block;
+}
+
+.blue {
+	color: #06f;
+}
+
+.green {
+	color: #4f4;
+}
+
+.yellow {
+	color: #fe4;
+}
+
+.orange {
+	color: #f90;
+}
+
+.red {
+	color: #f44;
+}
+
+.pink {
+	color: #f4f;
+}
+
+.btn,
+.slider-control-thumb {
+	background-color: #06f;
+}
+
+/* Adding this to the group above makes the entire group stop working in Firefox */
+.scrollable::-webkit-scrollbar-thumb {
+	background-color: #06f;
+}
+
+.btn.green {
+	color: #000;
+	background-color: #4f4;
+}
+
+.btn.yellow {
+	color: #000;
+	background-color: #fe4;
+}
+
+.btn.orange {
+	color: #000;
+	background-color: #f90;
+}
+
+.btn.red {
+	color: #000;
+	background-color: #f44;
+}
+
+.btn.pink {
+	color: #000;
+	background-color: #f4f;
+}
+
+.btn.transparent {
+	color: #fff;
+	background-color: transparent;
+}
+
+.btn:hover,
+.btn:focus,
+.slider-control-container:hover .slider-control-thumb {
+	background-color: #17f;
+}
+
+/* Adding this to the group above makes the entire group stop working in Firefox */
+.scrollable::-webkit-scrollbar-thumb:hover {
+	background-color: #17f;
+}
+
+/*
+Although it would be way simpler to just add a (hover: hover) query adding
+the hover effect to the elements, it would sacrifice many desktop browsers that
+do not support this query... Therefore, I thought it would be better to do the
+opposite, and disable the hover effect when it is not desirable...
+
+https://drafts.csswg.org/mediaqueries-4/#hover
+*/
+@media (hover: none) {
+	.btn:hover,
+	.slider-control-container:hover .slider-control-thumb {
+		background-color: #06f;
+	}
+
+	/* Adding this to the group above makes the entire group stop working in Firefox */
+	.scrollable::-webkit-scrollbar-thumb:hover {
+		background-color: #06f;
+	}
+}
+
+.btn:active,
+.slider-control-container.active:hover .slider-control-thumb,
+.slider-control-container.active .slider-control-thumb {
+	background-color: #28f;
+}
+
+/* Adding this to the group above makes the entire group stop working in Firefox */
+.scrollable::-webkit-scrollbar-thumb:active {
+	background-color: #28f;
+}
+
+.btn.green:focus,
+.btn.green:hover {
+	color: #000;
+	background-color: #7f7;
+}
+
+@media (hover: none) {
+	.btn.green:hover {
+		background-color: #4f4;
+	}
+}
+
+.btn.green:active {
+	color: #000;
+	background-color: #afa;
+}
+
+.btn.yellow:focus,
+.btn.yellow:hover {
+	color: #000;
+	background-color: #ff7;
+}
+
+@media (hover: none) {
+	.btn.yellow:hover {
+		background-color: #fe4;
+	}
+}
+
+.btn.yellow:active {
+	color: #000;
+	background-color: #ffa;
+}
+
+.btn.orange:focus,
+.btn.orange:hover {
+	color: #000;
+	background-color: #fa1;
+}
+
+@media (hover: none) {
+	.btn.orange:hover {
+		background-color: #f90;
+	}
+}
+
+.btn.orange:active {
+	color: #000;
+	background-color: #fb2;
+}
+
+.btn.red:focus,
+.btn.red:hover {
+	color: #000;
+	background-color: #f55;
+}
+
+@media (hover: none) {
+	.btn.red:hover {
+		background-color: #f44;
+	}
+}
+
+.btn.red:active {
+	color: #000;
+	background-color: #f66;
+}
+
+.btn.pink:focus,
+.btn.pink:hover {
+	color: #000;
+	background-color: #f5f;
+}
+
+@media (hover: none) {
+	.btn.pink:hover {
+		background-color: #f4f;
+	}
+}
+
+.btn.pink:active {
+	color: #000;
+	background-color: #f6f;
+}
+
+.btn.transparent:hover > span > .icon,
+.btn.transparent:focus > span > .icon,
+.btn.transparent:active > span > .icon {
+	color: inherit;
+}
+
+@media (hover: none) {
+	.btn.transparent:hover:not(:active):not(:focus) {
+		background-color: transparent;
+	}
+
+	.btn.transparent.green:hover:not(:active):not(:focus) {
+		color: #4f4;
+	}
+
+	.btn.transparent.yellow:hover:not(:active):not(:focus) {
+		color: #fe4;
+	}
+
+	.btn.transparent.orange:hover:not(:active):not(:focus) {
+		color: #f90;
+	}
+
+	.btn.transparent.red:hover:not(:active):not(:focus) {
+		color: #f44;
+	}
+
+	.btn.transparent.pink:hover:not(:active):not(:focus) {
+		color: #f4f;
+	}
+}
+
+graphical-filter-control {
+	display: inline-block;
+}
+
+.slider-control, .slider-control-focus-container {
+	height: 8rem;
+}
+
+.slider-control {
+	display: inline-block;
+}
+
+.slider-control-focus-container {
+	display: inline-flex;
+	flex-direction: row;
+    flex-wrap: nowrap;
+	width: 100%;
+	padding: 1rem 0;
+}
+
+.slider-control,
+.slider-control:focus,
+.slider-control-focus-container,
+.slider-control-focus-container:focus {
+	outline: 0 none transparent;
+}
+
+.slider-control-focus-container > span {
+	display: inline-block;
+}
+
+.slider-control-container {
+	display: inline-block;
+	position: relative;
+	height: 6rem;
+	flex: 1 1 auto;
+	padding: 0 2rem 0 0;
+}
+
+.slider-control-inner-container {
+	display: inline-block;
+	position: relative;
+	height: 6rem;
+	width: 100%;
+	pointer-events: none;
+}
+
+.slider-control-filled-ruler,
+.slider-control-ruler {
+	display: block;
+	position: absolute;
+	z-index: -1;
+	top: 2rem;
+	height: 2rem;
+}
+
+.slider-control-filled-ruler {
+	left: 0;
+}
+
+.slider-control-ruler {
+	right: -2rem;
+}
+
+.slider-control-thumb {
+	display: block;
+	position: absolute;
+	z-index: 1;
+	top: 0;
+	height: 6rem;
+	width: 2rem;
+}
+
+.slider-control-filled-ruler,
+.list-item.current {
+	background-color: #0e418e; /*rgba(0, 102, 255, 0.5);*/
+}
+
+.slider-control-container:hover .slider-control-filled-ruler {
+	background-color: #164a8e; /*rgba(17, 120, 255, 0.5);*/
+}
+
+@media (hover: none) {
+	.slider-control-container:hover .slider-control-filled-ruler {
+		background-color: #0e418e; /*rgba(0, 102, 255, 0.5);*/
+	}
+}
+
+.slider-control-container.active:hover .slider-control-filled-ruler,
+.slider-control-container.active .slider-control-filled-ruler,
+.list-item.current:active {
+	background-color: #1f538e; /*rgba(34, 137, 255, 0.5);*/
+}
+
+.list,
+.list:focus {
+	outline: 0 none transparent;
+}
+
+.list {
+	width: 100%;
+}
+
+.scrollable {
+	overflow: hidden auto;
+	padding: 0 var(--thick-border) 0 0;
+	scrollbar-color: #06f #1c1c1c;
+}
+
+.scrollable::-webkit-scrollbar {
+	width: 3rem;
+	height: 3rem;
+}
+
+.list-container {
+	position: relative;
+	width: 100%;
+	padding: 0;
+	font-size: 3rem;
+	line-height: 4rem;
+	overflow: hidden;
+}
+
+.list-item {
+	position: absolute;
+	padding: 1rem;
+	left: 0;
+	right: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.list-item > .icon,
+.list-item > span {
+	pointer-events: none;
+}
+
+.playlist-item {
+	height: 14rem;
+}
+
+.playlist-item > .icon,
+.playlist-item > .icon > svg {
+	width: 4rem;
+	height: 4rem;
+}
+
+.playlist-item > .icon {
+	padding: 0;
+}
+
+.playlist-item > span {
+	color: #999;
+}
+
+.playlist-item > .length {
+	margin-left: 5rem;
+}
+
+#seek-slider {
+	width: 100%;
+}
+
+.seek-label {
+	width: 16rem;
+}
+
+#volume-slider {
+	width: 41rem;
+}
+
+.volume-label {
+	font-size: 3rem;
+	width: 7rem;
+}
+
+#panel-container {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	max-width: 2000px;
+	margin: 10rem auto 0;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	align-items: stretch;
+}
+
+#panel-container.web {
+	margin-top: 0;
+}
+
+#fixed-panel {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+    flex-wrap: nowrap;
+	flex: 1 1 auto;
+	padding: 2rem 0;
+	min-width: 0; /* https://css-tricks.com/flexbox-truncated-text/ */
+}
+
+#optional-panel {
+	position: relative;
+	margin: 2rem 0 2rem 2rem;
+}
+
+#optional-panel-container {
+	display: flex;
+	height: 100%;
+	min-height: 380px;
+	width: 512px;
+	flex-direction: column;
+	justify-content: center;
+}
+
+#cover {
+	position: absolute;
+	z-index: 99999;
+	left: 0;
+	top: 0;
+	width: 2px;
+	height: 2px;
+	background-color: #1c1c1c;
+	transform-origin: top left;
+	transform: scale(2048, 1200);
+}
+
+.toolbar {
+	position: relative;
+	text-align: center;
+}
+
+.toolbar-sep {
+	display: inline-block;
+	width: var(--thin-border);
+	border-left: var(--thin-border) solid #303030;
+}
+
+.toolbar-right {
+	position: absolute;
+	top: 0;
+	right: 0;
+}
+
+#playlist-control {
+	flex: 1 1 auto;
+}
+
+#title-label,
+#artist-label {
+	padding: 1rem 0;
+	line-height: 6rem;
+	height: 8rem;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	-webkit-user-select: text;
+	user-select: text;
+}
+
+.border-top {
+	margin-top: 2rem;
+	padding-top: 2rem;
+	border-top: var(--thin-border) solid #303030;
+}
+
+.toolbar.border-top > .toolbar-right {
+	top: 2rem;
+}
+
+.border-bottom {
+	margin-bottom: 2rem;
+	padding-bottom: 2rem;
+	border-bottom: var(--thin-border) solid #303030;
+}
+
+.small-left-margin {
+	margin-left: 1rem;
+}
+
+.left-margin {
+	margin-left: 2rem;
+}
+
+.large-left-margin {
+	margin-left: 4rem;
+}
+
+.small-right-margin,
+.icon.margin {
+	margin-right: 1rem;
+}
+
+.right-margin {
+	margin-right: 2rem;
+}
+
+.large-right-margin {
+	margin-right: 4rem;
+}
+
+@media (max-width: 511px) {
+	.btn + .btn {
+		margin-left: 1rem;
+	}
+
+	#fixed-panel {
+		padding: 1rem 0 2rem;
+	}
+
+	.border-top {
+		margin-top: 1rem;
+		padding-top: 1rem;
+	}
+
+	.toolbar.border-top > .toolbar-right {
+		top: 1rem;
+	}
+	
+	.border-bottom {
+		margin-bottom: 1rem;
+		padding-bottom: 1rem;
+	}
+
+	.left-margin {
+		margin-left: 1rem;
+	}
+
+	.large-left-margin {
+		margin-left: 2rem;
+	}
+
+	.right-margin {
+		margin-right: 1rem;
+	}
+
+	.large-right-margin {
+		margin-right: 2rem;
+	}
+}
+
+@media (max-width: 345px) {
+	#volume-slider {
+		width: 33rem;
+	}
+
+	.slider-control-focus-container > .volume-label {
+		display: none;
+	}
+}
+
+@media (max-height: 450px) {
+	#artist-label {
+		display: none;
+	}
+}
+
+.left {
+	text-align: left;
+}
+
+.center {
+	text-align: center;
+}
+
+.right {
+	text-align: right;
+}
+
+.float-left {
+	float: left;
+}
+
+.float-right {
+	float: right;
+}
+
+.fade {
+	opacity: 0;
+	transition: opacity ease-in-out 0.3s;
+}
+
+.fade.in {
+	opacity: 1;
+}
+
+.slide {
+	transform: translate(0, -5rem);
+	opacity: 0;
+	transition: transform ease-in-out 0.3s, opacity ease-in-out 0.3s;
+}
+
+.slide.in {
+	transform: none;
+	opacity: 1;
+}
+
+.modal-container {
+	position: fixed;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	overflow: auto;
+}
+
+.modal-container.background {
+    background: transparent;
+	transition: background-color ease-in-out 0.3s;
+}
+
+.modal-container.background.in {
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.hidden {
+	display: none;
+}
+
+@media (min-width: 876px) {
+	.hidden-normal {
+		display: none;
+	}
+}
+
+@media (max-width: 875px) {
+	#optional-panel {
+		margin-left: 0;
+		margin-right: 0;
+		width: 100%;
+		overflow: auto;
+	}
+
+	#optional-panel-container {
+		margin-left: auto;
+		margin-right: auto;
+	}
+
+	#panel-container:not(.toggled) > #optional-panel {
+		display: none;
+	}
+
+	#panel-container.toggled > #fixed-panel {
+		display: none;
+	}
+}
