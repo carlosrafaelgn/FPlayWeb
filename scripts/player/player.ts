@@ -62,6 +62,7 @@ class Player {
 		this.audioContextSuspended = true;
 		this.audioContext = (window.AudioContext ? new window.AudioContext() : new (window as any)["webkitAudioContext"]()) as AudioContext;
 		this.audioContext.suspend();
+		this.audioContext.onstatechange = this.audioContextStateChanged.bind(this);
 
 		this.graphicalFilterControl = new GraphicalFilterControl(editorElement, this.audioContext, graphicalFilterControlEnabled);
 		this.graphicalFilterControl.filterChangedCallback = this.filterChanged.bind(this);
@@ -220,6 +221,16 @@ class Player {
 		return (this._currentSong ? ((this.audio.currentTime * 1000) | 0) : -1);
 	}
 
+	private audioContextStateChanged(): void {
+		if (!this._alive)
+			return;
+
+		if (this.audioContext.state !== "running" && !this.audioContextSuspended) {
+			this.audioContextSuspended = true;
+			this.playbackPaused();
+		}
+	}
+
 	private playbackLoadStarted(): void {
 		if (!this._alive || this._loading)
 			return;
@@ -270,8 +281,8 @@ class Player {
 			if (delay) {
 				this.audioContextTimeout = window.setTimeout(this.boundCheckAudioContext, 5000);
 			} else {
-				this.audioContext.suspend();
 				this.audioContextSuspended = true;
+				this.audioContext.suspend();
 			}
 		}
 	}
@@ -282,9 +293,9 @@ class Player {
 			this.audioContextTimeout = 0;
 		}
 
-		if (this.audioContextSuspended) {
-			this.audioContext.resume();
+		if (this.audioContextSuspended || this.audioContext.state !== "running") {
 			this.audioContextSuspended = false;
+			this.audioContext.resume();
 		}
 	}
 
@@ -293,13 +304,13 @@ class Player {
 
 		if (this._paused) {
 			if (!this.audioContextSuspended) {
-				this.audioContext.suspend();
 				this.audioContextSuspended = true;
+				this.audioContext.suspend();
 			}
 		} else {
 			if (this.audioContextSuspended) {
-				this.audioContext.resume();
 				this.audioContextSuspended = false;
+				this.audioContext.resume();
 			}
 		}
 	}
