@@ -138,22 +138,23 @@ self.addEventListener("fetch", (event) => {
 	// local cache (which, right now, will only happen
 	// when the service worker is reinstalled).
 
-	// Development phase only
-	if (event.request.url.startsWith("http://localhost"))
+	const url = event.request.url;
+
+	if (event.request.method !== "GET" ||
+		url.includes("/examples/") ||
+		// Development phase only
+		url.startsWith("http://localhost"))
 		return;
 
 	event.respondWith(caches.open(CACHE_NAME).then((cache) => {
-		return cache.match(event.request, { ignoreVary: true }).then((response) => {
+		return cache.match(url, { ignoreVary: true }).then((response) => {
 			// Return the resource if it has been found.
 			if (response)
 				return response;
 
 			// When the resource was not found in the cache,
-			// try to fetch it from the network. We are cloning the
-			// request because requests are streams, and fetch will
-			// consume this stream, rendering event.request unusable
-			// (but we will need a usable request later, for cache.put)
-			return fetch(event.request.clone()).then((response) => {
+			// try to fetch it from the network.
+			return fetch(url).then((response) => {
 				// If this fetch succeeds, store it in the cache for
 				// later! (This means we probably forgot to add a file
 				// to the cache during the installation phase)
@@ -163,7 +164,7 @@ self.addEventListener("fetch", (event) => {
 				// and one to be returned to the browser! So, we send a
 				// clone of the response to the cache.
 				if (response && response.status === 200)
-					return cache.put(event.request, response.clone()).then(() => {
+					return cache.put(url, response.clone()).then(() => {
 						return response;
 					}, () => {
 						// If anything goes wrong, just ignore and try
@@ -177,8 +178,8 @@ self.addEventListener("fetch", (event) => {
 				// available from the network (maybe we are offline).
 				// Therefore, try to fulfill requests for favicons with
 				// the largest favicon we have available in our cache.
-				if (event.request.url.indexOf("favicon") >= 0)
-					return cache.match("/assets/images/favicons/favicon-512x512.png");
+				if (url.indexOf("favicon") >= 0)
+					return cache.match("/assets/images/favicons/favicon-512x512.png", { ignoreVary: true });
 
 				// The resource was not in our cache, was not available
 				// from the network and was also not a favicon...
