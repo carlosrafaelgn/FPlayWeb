@@ -308,7 +308,6 @@ class ListControl<T extends ListItem> {
 						item.element.classList.remove("current");
 				}
 
-				console.log("prepare " + firstIndex);
 				adapter.prepareElement(listItem, firstIndex, length, item.element);
 
 				if (!item.item)

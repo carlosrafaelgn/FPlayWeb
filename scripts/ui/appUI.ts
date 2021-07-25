@@ -29,7 +29,16 @@ interface AppUIZoomHandler {
 }
 
 class AppUI {
+	// https://stackoverflow.com/a/52855084/3569421
+	// https://stackoverflow.com/a/52854585/3569421
+	// https://stackoverflow.com/a/4819886/3569421
+	public static readonly primaryInputIsTouch = (("matchMedia" in window) ? window.matchMedia("(pointer: coarse)").matches : (navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0));
+
 	private static readonly rem = 4;
+	private static readonly buttonRegularSizeREM = 8;
+	private static readonly buttonRegularSizePX = AppUI.remToPX(AppUI.buttonRegularSizeREM);
+	private static readonly buttonSizeREM = AppUI.buttonRegularSizeREM * (AppUI.primaryInputIsTouch ? 1.5 : 1);
+	private static readonly buttonSizePX = AppUI.remToPX(AppUI.buttonSizeREM);
 	private static readonly optionalPanelClientWidthREM = 128;
 	private static readonly optionalPanelClientWidthPX = AppUI.remToPX(AppUI.optionalPanelClientWidthREM);
 	private static readonly minWidthREM = 216;
@@ -94,19 +103,24 @@ class AppUI {
 			AppUI.devicePixelRatio = devicePixelRatio;
 
 			const zoom = AppUI.factorToZoom(devicePixelRatio),
+				factor = AppUI.zoomToFactor(zoom),
+				iconOuterSizePX = AppUI.remToPX(Icon.outerSizeREM),
 				trailingDecimal = /[,\.]$/,
 				trailingZeroes = /0+$/;
 
 			AppUI._smallIconSizePX = (Icon.baseSizePX * (((zoom + 1) >> 2) + 1)) / devicePixelRatio; // Divide by four and truncate the result at once :)
-			AppUI._largeIconSizePX = (Icon.baseSizePX * (AppUI.zoomToFactor(zoom) << 1)) / devicePixelRatio; // Truncate the factor and multiply by two at once :)
+			AppUI._largeIconSizePX = (Icon.baseSizePX * (factor << 1)) / devicePixelRatio; // Truncate the factor and multiply by two at once :)
 			AppUI._thinBorderPX = ((AppUI.baseThinBorderPX * devicePixelRatio) | 0) / devicePixelRatio;
 			AppUI._thickBorderPX = ((AppUI.baseThickBorderPX * devicePixelRatio) | 0) / devicePixelRatio;
 
 			AppUI.rootVariables.textContent = `:root {
+				--button-size: ${AppUI.buttonSizePX}px;
+				--button-padding-top: ${(0.5 * (AppUI.buttonSizePX - iconOuterSizePX))}px;
+				--extra-touch-padding-top: ${(0.5 * (AppUI.buttonSizePX - AppUI.buttonRegularSizePX))}px;
 				--icon-size: ${AppUI._smallIconSizePX}px;
-				--icon-padding: ${(0.5 * (AppUI.remToPX(Icon.outerSizeREM) - AppUI._smallIconSizePX)).toFixed(6).replace(trailingZeroes, "").replace(trailingDecimal, "")}px;
+				--icon-padding: ${(0.5 * (iconOuterSizePX - AppUI._smallIconSizePX)).toFixed(6).replace(trailingZeroes, "").replace(trailingDecimal, "")}px;
 				--large-icon-size: ${AppUI._largeIconSizePX}px;
-				--large-icon-padding: ${(0.5 * (AppUI.remToPX(Icon.outerSizeREM) - AppUI._largeIconSizePX)).toFixed(6).replace(trailingZeroes, "").replace(trailingDecimal, "")}px;
+				--large-icon-padding: ${(0.5 * (iconOuterSizePX - AppUI._largeIconSizePX)).toFixed(6).replace(trailingZeroes, "").replace(trailingDecimal, "")}px;
 				--thin-border: ${AppUI._thinBorderPX}px;
 				--thick-border: ${AppUI._thickBorderPX}px;
 			}`;

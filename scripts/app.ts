@@ -230,7 +230,12 @@ class App {
 						registration.onupdatefound = function () {
 							Modal.show({
 								html: Strings.PleaseRefresh,
-								title: Strings.UpdateAvailable
+								title: Strings.UpdateAvailable,
+								oktext: Strings.Refresh,
+								okcancel: true,
+								onok: function () {
+									window.location.reload();
+								}
 							});
 						};
 					}

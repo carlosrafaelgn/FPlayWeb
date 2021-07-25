@@ -224,7 +224,7 @@ h1 > span > span.close:active {
 
 .btn, .btn > span {
 	display: inline-block;
-	height: 8rem;
+	height: var(--button-size);
 }
 
 .btn {
@@ -235,7 +235,7 @@ h1 > span > span.close:active {
 }
 
 .btn > span {
-	padding: 1rem 2rem;
+	padding: var(--button-padding-top) 2rem 0;
 }
 
 .btn > span > i {
@@ -247,11 +247,12 @@ h1 > span > span.close:active {
 }
 
 .btn.square, .btn.square > span {
-	width: 8rem;
+	width: var(--button-size);
 }
 
 .btn.square > span {
-	padding: 1rem;
+	padding-left: 0;
+	padding-right: 0;
 }
 
 input[type="checkbox"] {
@@ -502,12 +503,10 @@ graphical-filter-control {
 	display: inline-block;
 }
 
-.slider-control, .slider-control-focus-container {
-	height: 8rem;
-}
-
 .slider-control {
 	display: inline-block;
+	padding-top: var(--extra-touch-padding-top);
+	height: var(--button-size);
 }
 
 .slider-control-focus-container {
@@ -515,6 +514,7 @@ graphical-filter-control {
 	flex-direction: row;
     flex-wrap: nowrap;
 	width: 100%;
+	height: 8rem;
 	padding: 1rem 0;
 }
 
@@ -841,7 +841,7 @@ graphical-filter-control {
 	}
 }
 
-@media (max-width: 345px) {
+@media (max-width: 400px) {
 	#volume-slider {
 		width: 33rem;
 	}

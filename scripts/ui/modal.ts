@@ -43,6 +43,8 @@ interface ModalOptions {
 	title?: string;
 	titleStringKey?: string;
 	background?: boolean;
+	oktext?: string | null;
+	canceltext?: string | null;
 	okcancel?: boolean;
 	okcancelsubmit?: boolean;
 	buttons?: ModalButtonOptions[];
@@ -88,7 +90,7 @@ class Modal {
 					id: "cancel",
 					defaultCancel: true,
 					icon: "clear",
-					stringKey: Strings.Cancel,
+					text: options.canceltext || Strings.Cancel,
 					className: "transparent",
 					onclick: (options.oncancel || Modal.hide),
 				},
@@ -96,7 +98,7 @@ class Modal {
 					id: "ok",
 					defaultSubmit: options.okcancelsubmit,
 					icon: "check",
-					stringKey: Strings.OK,
+					text: options.oktext || Strings.OK,
 					onclick: (options.onok || Modal.hide),
 				}
 			];
@@ -106,7 +108,7 @@ class Modal {
 					id: "cancel",
 					defaultCancel: true,
 					icon: "clear",
-					stringKey: Strings.Close,
+					text: Strings.Close,
 					onclick: Modal.hide
 				}
 			];

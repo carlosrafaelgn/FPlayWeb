@@ -43,6 +43,7 @@ class Strings {
 	public static Clear = "Clear";
 	public static Back = "Back";
 	public static Close = "Close";
+	public static Refresh = "Refresh";
 	public static Exit = "Exit";
 	public static Previous = "Previous";
 	public static Play = "Play";
@@ -80,6 +81,7 @@ class Strings {
 			Strings.Clear = "Limpar";
 			Strings.Back = "Voltar";
 			Strings.Close = "Fechar";
+			Strings.Refresh = "Recarregar";
 			Strings.Exit = "Sair";
 			Strings.Previous = "Anterior";
 			Strings.Play = "Tocar";

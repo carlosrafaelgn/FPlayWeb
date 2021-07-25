@@ -54,6 +54,9 @@
 
 	<style type="text/css" id="root-variables">
 		:root {
+			--button-size: 32px;
+			--button-padding-top: 4px;
+			--extra-touch-padding-top: 0;
 			--icon-size: 12px;
 			--icon-padding: 6px;
 			--large-icon-size: 24px;
@@ -94,7 +97,7 @@
 			<div id="bottom-panel" class="toolbar border-top">
 				<div id="seek-slider" data-string="aria-label|Seek"></div>
 				<div>
-					<button type="button" class="btn square transparent" onclick="App.player && App.player.previous()" title="Previous" data-string="aria-label|Previous"><i class="large icon-previous"></i></button><button type="button" class="btn square transparent" onclick="App.player && App.player.playPause()" title="PlayPause" data-string="aria-label|PlayPause"><i class="large icon-play" id="icon-play"></i><i class="large icon-pause hidden" id="icon-pause"></i></button><button type="button" class="btn square transparent" onclick="App.player && App.player.stop()" title="Stop" data-string="aria-label|Stop"><i class="large icon-stop"></i></button><button type="button" class="btn square transparent" onclick="App.player && App.player.next()" title="Next" data-string="aria-label|Next"><i class="large icon-next"></i></button><span class="large-left-margin" id="volume-slider" data-string="aria-label|Volume"></span>
+					<button type="button" class="btn square transparent" onclick="App.player && App.player.previous()" title="Previous" data-string="aria-label|Previous"><i class="large icon-previous"></i></button><button type="button" class="btn square transparent" onclick="App.player && App.player.playPause()" title="PlayPause" data-string="aria-label|PlayPause"><i class="large icon-play" id="icon-play"></i><i class="large icon-pause hidden" id="icon-pause"></i></button><button type="button" class="btn square transparent" onclick="App.player && App.player.stop()" title="Stop" data-string="aria-label|Stop"><i class="large icon-stop"></i></button><button type="button" class="btn square transparent" onclick="App.player && App.player.next()" title="Next" data-string="aria-label|Next"><i class="large icon-next"></i></button><span id="volume-slider" data-string="aria-label|Volume"></span>
 				</div>
 			</div>
 		</div>
@@ -120,7 +123,7 @@
 		//<![CDATA[
 		"use strict";
 
-		var CACHE_VERSION = "20210720";
+		var CACHE_VERSION = "20210725";
 
 		(function () {
 			function loadScript(src, successCallback, errorCallback) {
