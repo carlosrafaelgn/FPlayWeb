@@ -582,21 +582,37 @@ class MetadataExtractor {
 		let ret: string | null = null;
 
 		switch (encoding) {
+			case 1: // UCS-2 (utf-16 encoded Unicode with BOM), in ID3v2.2 and ID3v2.3
+			case 2: // utf-16be encoded Unicode without BOM, in ID3v2.4
+				// Restore the extra 0 removed from the end
+				if ((frameSize & 1) && (offsetStart + frameSize) < tmp.length)
+					frameSize++;
+
+				if (frameSize >= 2 && encoding === 1) {
+					if (tmp[offsetStart] === 0xFE && tmp[offsetStart + 1] === 0xFF) {
+						encoding = 2;
+						offsetStart += 2;
+						frameSize -= 2;
+					} else if (tmp[offsetStart] === 0xFF && tmp[offsetStart + 1] === 0xFE) {
+						offsetStart += 2;
+						frameSize -= 2;
+					}
+					if (!frameSize)
+						return null;
+				}
+				break;
+		}
+
+		switch (encoding) {
 			case 0: // iso-8859-1
 				ret = MetadataExtractor.textDecoderIso88591.decode(tmp.subarray(offsetStart, offsetStart + frameSize));
 				break;
 
 			case 1: // UCS-2 (utf-16 encoded Unicode with BOM), in ID3v2.2 and ID3v2.3
-				// Restore the extra 0 removed from the end
-				if ((frameSize & 1) && (offsetStart + frameSize) < tmp.length)
-					frameSize++;
 				ret = MetadataExtractor.textDecoderUtf16.decode(tmp.subarray(offsetStart, offsetStart + frameSize));
 				break;
 
 			case 2: // utf-16be encoded Unicode without BOM, in ID3v2.4
-				// Restore the extra 0 removed from the end
-				if ((frameSize & 1) && (offsetStart + frameSize) < tmp.length)
-					frameSize++;
 				ret = MetadataExtractor.textDecoderUtf16be.decode(tmp.subarray(offsetStart, offsetStart + frameSize));
 				break;
 
