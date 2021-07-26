@@ -608,8 +608,8 @@ graphical-filter-control {
 }
 
 .scrollable::-webkit-scrollbar {
-	width: 3rem;
-	height: 3rem;
+	width: var(--scrollbar-size);
+	height: var(--scrollbar-size);
 }
 
 .list-container {
@@ -709,7 +709,7 @@ graphical-filter-control {
 #optional-panel-container {
 	display: flex;
 	height: 100%;
-	min-height: 380px;
+	min-height: var(--optional-panel-container-height);
 	width: 512px;
 	flex-direction: column;
 	justify-content: center;
@@ -738,9 +738,16 @@ graphical-filter-control {
 	border-left: var(--thin-border) solid #303030;
 }
 
-.toolbar-right {
+.toolbar-left, .toolbar-right {
 	position: absolute;
 	top: 0;
+}
+
+.toolbar-left {
+	left: 0;
+}
+
+.toolbar-right {
 	right: 0;
 }
 
@@ -766,6 +773,7 @@ graphical-filter-control {
 	border-top: var(--thin-border) solid #303030;
 }
 
+.toolbar.border-top > .toolbar-left,
 .toolbar.border-top > .toolbar-right {
 	top: 2rem;
 }
@@ -815,6 +823,7 @@ graphical-filter-control {
 		padding-top: 1rem;
 	}
 
+	.toolbar.border-top > .toolbar-left,
 	.toolbar.border-top > .toolbar-right {
 		top: 1rem;
 	}
@@ -842,6 +851,12 @@ graphical-filter-control {
 }
 
 @media (max-width: 400px) {
+	#button-stop {
+		display: none;
+	}
+}
+
+@media (max-width: 339px) {
 	#volume-slider {
 		width: 33rem;
 	}

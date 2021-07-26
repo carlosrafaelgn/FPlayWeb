@@ -41,6 +41,7 @@ class AppUI {
 	private static readonly buttonSizePX = AppUI.remToPX(AppUI.buttonSizeREM);
 	private static readonly optionalPanelClientWidthREM = 128;
 	private static readonly optionalPanelClientWidthPX = AppUI.remToPX(AppUI.optionalPanelClientWidthREM);
+	private static readonly scrollbarSizeREM = (AppUI.primaryInputIsTouch ? 5 : 3);
 	private static readonly minWidthREM = 216;
 	private static readonly minWidthPX = AppUI.remToPX(AppUI.minWidthREM);
 	private static readonly baseThinBorderPX = 1;
@@ -98,31 +99,97 @@ class AppUI {
 		AppUI.playlistControl.adapter = new PlaylistAdapter(playlist);
 	}
 
+	private static adjustDecimal(x: number): string {
+		let firstTime = true,
+			n = x.toFixed(5);
+
+		n = n.substr(0, n.length - 1);
+
+		for (; ; ) {
+			const lastChar1 = n.charAt(n.length - 1),
+				lastChar2 = n.charAt(n.length - 2);
+
+			if (lastChar1 === lastChar2) {
+				if (lastChar1 !== "0") {
+					n = n.padEnd(24, lastChar1);
+					if (lastChar1 === "9" && firstTime) {
+						n = parseFloat(n).toFixed(5);
+						firstTime = false;
+						continue;
+					}
+				}
+			} else {
+				let i = n.lastIndexOf(".");
+				let sub1 = n.substr(i + 1, 2),
+					sub2 = n.substr(i + 3, 2);
+				if (sub1 === sub2) {
+					n = n.substr(0, i + 1);
+					while (n.length < 24)
+						n += sub1;
+				} else {
+					n = x.toFixed(7);
+					i = n.lastIndexOf(".");
+					sub1 = n.substr(i + 1, 3);
+					sub2 = n.substr(i + 4, 3);
+					if (sub1 === sub2) {
+						n = n.substr(0, i + 1);
+						while (n.length < 24)
+							n += sub1;
+					} else {
+						n = x.toFixed(18);
+					}
+				}
+			}
+
+			break;
+		}
+
+		const trailingDecimal = /[,\.]$/,
+			trailingZeroes = /0+$/;
+
+		return n.replace(trailingZeroes, "").replace(trailingDecimal, "");
+	}
+
 	private static adjustWindow(): void {
 		if (AppUI.devicePixelRatio !== devicePixelRatio && AppUI.rootVariables) {
 			AppUI.devicePixelRatio = devicePixelRatio;
 
 			const zoom = AppUI.factorToZoom(devicePixelRatio),
 				factor = AppUI.zoomToFactor(zoom),
-				iconOuterSizePX = AppUI.remToPX(Icon.outerSizeREM),
-				trailingDecimal = /[,\.]$/,
-				trailingZeroes = /0+$/;
+				iconOuterSizePX = AppUI.remToPX(Icon.outerSizeREM);
 
-			AppUI._smallIconSizePX = (Icon.baseSizePX * (((zoom + 1) >> 2) + 1)) / devicePixelRatio; // Divide by four and truncate the result at once :)
-			AppUI._largeIconSizePX = (Icon.baseSizePX * (factor << 1)) / devicePixelRatio; // Truncate the factor and multiply by two at once :)
-			AppUI._thinBorderPX = ((AppUI.baseThinBorderPX * devicePixelRatio) | 0) / devicePixelRatio;
-			AppUI._thickBorderPX = ((AppUI.baseThickBorderPX * devicePixelRatio) | 0) / devicePixelRatio;
+			// Divide by four and truncate the result at once :)
+			const _smallIconSizePX = AppUI.adjustDecimal((Icon.baseSizePX * (((zoom + 1) >> 2) + 1)) / devicePixelRatio);
+			AppUI._smallIconSizePX = parseFloat(_smallIconSizePX);
+
+			// Truncate the factor and multiply by two at once :)
+			const _largeIconSizePX = AppUI.adjustDecimal((Icon.baseSizePX * (factor << 1)) / devicePixelRatio);
+			AppUI._largeIconSizePX = parseFloat(_largeIconSizePX);
+
+			let i = ((AppUI.baseThinBorderPX * devicePixelRatio) | 0) / devicePixelRatio;
+			if (!i)
+				i = 1;
+			const _thinBorderPX = AppUI.adjustDecimal(i);
+			AppUI._thinBorderPX = parseFloat(_thinBorderPX);
+
+			i = ((AppUI.baseThickBorderPX * devicePixelRatio) | 0) / devicePixelRatio;
+			if (!i)
+				i = 1;
+			const _thickBorderPX = AppUI.adjustDecimal(i);
+			AppUI._thickBorderPX = parseFloat(_thickBorderPX);
 
 			AppUI.rootVariables.textContent = `:root {
 				--button-size: ${AppUI.buttonSizePX}px;
-				--button-padding-top: ${(0.5 * (AppUI.buttonSizePX - iconOuterSizePX))}px;
-				--extra-touch-padding-top: ${(0.5 * (AppUI.buttonSizePX - AppUI.buttonRegularSizePX))}px;
-				--icon-size: ${AppUI._smallIconSizePX}px;
-				--icon-padding: ${(0.5 * (iconOuterSizePX - AppUI._smallIconSizePX)).toFixed(6).replace(trailingZeroes, "").replace(trailingDecimal, "")}px;
-				--large-icon-size: ${AppUI._largeIconSizePX}px;
-				--large-icon-padding: ${(0.5 * (iconOuterSizePX - AppUI._largeIconSizePX)).toFixed(6).replace(trailingZeroes, "").replace(trailingDecimal, "")}px;
-				--thin-border: ${AppUI._thinBorderPX}px;
-				--thick-border: ${AppUI._thickBorderPX}px;
+				--button-padding-top: ${AppUI.adjustDecimal(0.5 * (AppUI.buttonSizePX - iconOuterSizePX))}px;
+				--extra-touch-padding-top: ${AppUI.adjustDecimal(0.5 * (AppUI.buttonSizePX - AppUI.buttonRegularSizePX))}px;
+				--icon-size: ${_smallIconSizePX}px;
+				--icon-padding: ${AppUI.adjustDecimal(0.5 * (iconOuterSizePX - AppUI._smallIconSizePX))}px;
+				--large-icon-size: ${_largeIconSizePX}px;
+				--large-icon-padding: ${AppUI.adjustDecimal(0.5 * (iconOuterSizePX - AppUI._largeIconSizePX))}px;
+				--thin-border: ${_thinBorderPX}px;
+				--thick-border: ${_thickBorderPX}px;
+				--scrollbar-size: ${AppUI.scrollbarSizeREM}rem;
+				--optional-panel-container-height: ${(348 + AppUI.buttonSizePX)}px;
 			}`;
 
 			//if (App.player)

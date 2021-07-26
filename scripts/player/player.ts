@@ -434,6 +434,11 @@ class Player {
 		if (!this._alive)
 			return;
 
+		// Try to help solving issues on a few mobile devices that suspend
+		// audio contexts, without notification, when the screen goes off or
+		// when the browser goes to the background.
+		this.suspendAudioContext(false);
+
 		if (this._currentSong)
 			this.audio.pause();
 	}
