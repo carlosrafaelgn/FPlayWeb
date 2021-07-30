@@ -60,7 +60,14 @@ class Player {
 	constructor(editorElement: HTMLDivElement, volume?: number, graphicalFilterControlEnabled?: boolean) {
 		this.audioContextTimeout = 0;
 		this.audioContextSuspended = true;
-		this.audioContext = (window.AudioContext ? new window.AudioContext() : new (window as any)["webkitAudioContext"]()) as AudioContext;
+		// https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/AudioContext#options
+		// https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/baseLatency
+		// https://bugs.chromium.org/p/chromium/issues/detail?id=1231090
+		this.audioContext = (window.AudioContext ? new window.AudioContext({
+			latencyHint: "playback"
+		}) : new (window as any)["webkitAudioContext"]({
+			latencyHint: "playback"
+		})) as AudioContext;
 		this.audioContext.suspend();
 		this.audioContext.onstatechange = this.audioContextStateChanged.bind(this);
 
