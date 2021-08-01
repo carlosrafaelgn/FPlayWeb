@@ -25,6 +25,8 @@
 //
 
 class Player {
+	public static readonly maxVolume = 40;
+
 	private static readonly nop = function () { };
 
 	public readonly audioContext: AudioContext;
@@ -121,11 +123,11 @@ class Player {
 		this._paused = true;
 		this._playlist = null;
 		this._currentSong = null;
-		this._volume = 100;
+		this._volume = Player.maxVolume;
 
 		this.lastObjectURL = null;
 
-		this.volume = (volume === undefined ? 100 : volume);
+		this.volume = (volume === undefined ? Player.maxVolume : volume);
 
 		this.filterChanged();
 
@@ -202,10 +204,12 @@ class Player {
 
 	public set volume(volume: number) {
 		volume |= 0;
-		this._volume = (volume <= 0 ? 0 : (volume >= 100 ? 100 : volume));
+		this._volume = (volume <= 0 ? 0 : (volume >= Player.maxVolume ? Player.maxVolume : volume));
 
+		// Apparently, browsers assume volume is on a linear scale...
+		// https://github.com/whatwg/html/issues/5501
 		if (this.audio)
-			this.audio.volume = volume / 100;
+			this.audio.volume = (volume ? Math.pow(10, (this._volume - Player.maxVolume) / 20) : 0);
 	}
 
 	public get playlist(): Playlist | null {

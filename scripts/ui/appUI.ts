@@ -327,11 +327,11 @@ class AppUI {
 		AppUI.changeText(AppUI.songLengthLabel, Formatter.none);
 		AppUI.seekSlider.rightChild = AppUI.songLengthLabel;
 
-		AppUI.volumeSlider = new SliderControl("volume-slider", true, 0, 100, appSettings.playerVolume);
+		AppUI.volumeSlider = new SliderControl("volume-slider", true, 0, Player.maxVolume, appSettings.playerVolume);
 		AppUI.volumeSlider.leftChild = Icon.createLarge("icon-volume", "green small-right-margin");
 		AppUI.volumeLabel = document.createElement("span");
 		AppUI.volumeLabel.className = "volume-label small-left-margin";
-		AppUI.changeText(AppUI.volumeLabel, AppUI.volumeSlider.value.toString());
+		AppUI.changeText(AppUI.volumeLabel, AppUI.volumeStr(AppUI.volumeSlider.value));
 		AppUI.volumeSlider.rightChild = AppUI.volumeLabel;
 		AppUI.volumeSlider.onvaluechanged = AppUI.volumeSliderValueChanged;
 
@@ -534,12 +534,16 @@ class AppUI {
 		App.player.seekTo(value);
 	}
 
+	private static volumeStr(value: number): string {
+		return (value >= Player.maxVolume ? "-0" : (value ? (value - Player.maxVolume) : GraphicalFilterEditorStrings.MinusInfinity)) + " dB";
+	}
+
 	private static volumeSliderValueChanged(value: number): void {
 		if (App.player)
 			App.player.volume = value;
 
 		if (AppUI.volumeLabel)
-			AppUI.changeText(AppUI.volumeLabel, value.toString());
+			AppUI.changeText(AppUI.volumeLabel, AppUI.volumeStr(value));
 	}
 
 	private static playlistControlItemClicked(item: Song, index: number): void {

@@ -60,6 +60,8 @@ class Strings {
 	public static UpdateAvailable = "Update Available!";
 	public static PleaseRefresh = "Please, refresh the page to update the app 😊";
 
+	public static toFixed(x: number, fractionDigits: number): string { return x.toFixed(fractionDigits); }
+
 	public static init(): void {
 		const language = ((navigator as any)["userLanguage"] as string || navigator.language);
 		if (language && language.toLowerCase().indexOf("pt") === 0) {

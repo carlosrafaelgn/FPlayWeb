@@ -213,6 +213,7 @@ class App {
 		Strings.init();
 		Icon.init();
 		GraphicalFilterEditorStrings.init(Strings.language);
+		Strings.toFixed = GraphicalFilterEditorStrings.toFixed;
 
 		const appSettings = InternalStorage.loadAppSettings(),
 			webFrame = (window as any)["electronWebFrame"] as WebFrame;
