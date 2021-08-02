@@ -310,8 +310,6 @@ class SliderControl {
 	}
 
 	private mouseUp(e: MouseEvent): void {
-		this.mouseMove(e);
-
 		// Firefox ignores :active pseudo-class when event.preventDefault() is called
 		this.container.classList.remove("active");
 
