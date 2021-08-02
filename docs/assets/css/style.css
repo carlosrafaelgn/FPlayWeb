@@ -505,6 +505,7 @@ graphical-filter-control {
 
 .slider-control {
 	display: inline-block;
+	touch-action: none;
 	padding-top: var(--extra-touch-padding-top);
 	height: var(--button-size);
 }

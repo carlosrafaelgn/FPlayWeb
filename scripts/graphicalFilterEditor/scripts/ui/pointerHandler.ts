@@ -74,6 +74,12 @@ class PointerHandler {
 
 		this.boundExtraTouchStart = null;
 
+		// If the element using the PointerHandler wants to track pointer/touch position,
+		// it is important not to forget to add the touch-action CSS property, with a value
+		// like none (or similiar, depending on the case) to prevent pointercancel/touchcancel
+		// events from happening when the touch actually starts outside the element, and
+		// sometimes, even when the touch starts inside it.
+		// https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/pointercancel_event
 		if ("onpointerdown" in element) {
 			this.documentDownEvent = "pointerdown";
 			this.documentMoveEvent = "pointermove";
@@ -177,14 +183,6 @@ class PointerHandler {
 	private pointerDown(e: PointerEvent): boolean | undefined {
 		if (this.pointerId >= 0 && e.pointerType !== "mouse")
 			return cancelEvent(e);
-
-		if (e.pointerType === "touch" && e.target && (e.target as HTMLElement).tagName) {
-			// Avoid processing the touch if it actually happened outside the element
-			const rect = (e.target as HTMLElement).getBoundingClientRect();
-			if (e.clientX < rect.left || e.clientX >= rect.right ||
-				e.clientY < rect.top || e.clientY >= rect.bottom)
-				return cancelEvent(e);
-		}
 
 		const ret = this.mouseDown(e);
 
