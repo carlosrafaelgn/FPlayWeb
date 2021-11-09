@@ -32,7 +32,7 @@ class AppUI {
 	// https://stackoverflow.com/a/52855084/3569421
 	// https://stackoverflow.com/a/52854585/3569421
 	// https://stackoverflow.com/a/4819886/3569421
-	public static readonly primaryInputIsTouch = (("matchMedia" in window) ? window.matchMedia("(pointer: coarse)").matches : (navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0));
+	public static readonly primaryInputIsTouch = (("matchMedia" in window) ? window.matchMedia("(pointer: coarse)").matches : (navigator.maxTouchPoints > 0 || (navigator as any).msMaxTouchPoints > 0));
 
 	private static readonly rem = 4;
 	private static readonly buttonRegularSizeREM = 8;
@@ -596,7 +596,7 @@ class AppUI {
 				else
 					await App.player.playlist.addSongWeb(filePaths[i] as File, buffer, tempBuffer);
 			}
-		} catch (ex) {
+		} catch (ex: any) {
 			// @@@
 			alert("addFiles error: " + (ex.message || ex.toString()));
 		} finally {
@@ -656,7 +656,7 @@ class AppUI {
 				if (!await AppUI.addDirectory(directoryPaths[i]))
 					break;
 			}
-		} catch (ex) {
+		} catch (ex: any) {
 			// @@@
 			alert("addDirectories error: " + (ex.message || ex.toString()));
 		} finally {
