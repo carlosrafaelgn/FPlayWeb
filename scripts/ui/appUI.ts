@@ -670,4 +670,11 @@ class AppUI {
 		if (AppUI.panelContainer)
 			AppUI.panelContainer.classList.toggle("toggled");
 	}
+
+	public static showAbout(): void {
+		Modal.show({
+			html: Strings.AboutHTML,
+			title: Strings.About
+		});
+	}
 }

@@ -32,7 +32,7 @@
 // whenever it detects a change in the source code of the
 // service worker).
 const CACHE_PREFIX = "fplay-static-cache-";
-const CACHE_VERSION = "20210802";
+const CACHE_VERSION = "20211114";
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
 
 self.addEventListener("install", (event) => {
@@ -70,8 +70,8 @@ self.addEventListener("install", (event) => {
 		// if the browser requests them!
 		const files = [
 			"./",
-			"assets/css/graphicalFilterEditor.css",
-			"assets/css/style.css",
+			"assets/css/graphicalFilterEditor.css?" + CACHE_VERSION,
+			"assets/css/style.css?" + CACHE_VERSION,
 			"assets/fonts/OpenSans-Bold.ttf",
 			"assets/fonts/OpenSans-Regular.ttf",
 			"assets/images/albumArts/64x64.png",
@@ -90,7 +90,7 @@ self.addEventListener("install", (event) => {
 		];
 		const promises = new Array(files.length);
 		for (let i = files.length - 1; i >= 0; i--)
-			promises[i] = cache.add(new Request(files[i], { cache: "no-store" }));
+			promises[i] = cache.add(new Request(files[i], { cache: "no-cache" }));
 		return Promise.all(promises);
 	}));
 });

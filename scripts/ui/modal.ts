@@ -42,7 +42,7 @@ interface ModalOptions {
 	html: string | HTMLElement;
 	title?: string;
 	titleStringKey?: string;
-	background?: boolean;
+	transparentBackground?: boolean;
 	oktext?: string | null;
 	canceltext?: string | null;
 	okcancel?: boolean;
@@ -89,16 +89,17 @@ class Modal {
 				{
 					id: "cancel",
 					defaultCancel: true,
-					icon: "clear",
+					icon: "icon-clear",
 					text: options.canceltext || Strings.Cancel,
-					className: "transparent",
+					color: "red",
 					onclick: (options.oncancel || Modal.hide),
 				},
 				{
 					id: "ok",
 					defaultSubmit: options.okcancelsubmit,
-					icon: "check",
+					icon: "icon-check",
 					text: options.oktext || Strings.OK,
+					color: "green",
 					onclick: (options.onok || Modal.hide),
 				}
 			];
@@ -107,7 +108,7 @@ class Modal {
 				{
 					id: "cancel",
 					defaultCancel: true,
-					icon: "clear",
+					icon: "icon-clear",
 					text: Strings.Close,
 					onclick: Modal.hide
 				}
@@ -165,14 +166,14 @@ class Modal {
 		// https://developer.mozilla.org/en-US/docs/Web/CSS/::backdrop
 		// https://caniuse.com/mdn-api_htmldialogelement_showmodal
 		this.containerElement = document.createElement("div");
-		this.containerElement.className = (options.background ? "modal-container background" : "modal-container");
+		this.containerElement.className = (!options.transparentBackground ? "modal-container background" : "modal-container");
 
 		this.modalElement = document.createElement("form");
 		this.modalElement.className = "modal slide";
 		this.modalElement.onsubmit = this.submit.bind(this);
 
 		this.modalHeaderElement = document.createElement("div");
-		this.modalHeaderElement.className = "modal-decoration";
+		this.modalHeaderElement.className = "modal-header";
 		this.modalHeaderElement.innerHTML = options.title || (options.titleStringKey ? Strings.translate(options.titleStringKey) : Strings.Oops);
 
 		this.modalBodyElement = document.createElement("div");
@@ -198,7 +199,7 @@ class Modal {
 		}
 
 		this.modalFooterElement = document.createElement("div");
-		this.modalFooterElement.className = ((options.buttons && options.buttons.length === 1) ? "modal-decoration right" : "modal-decoration");
+		this.modalFooterElement.className = ((options.buttons && options.buttons.length === 1) ? "modal-footer right" : "modal-footer");
 
 		this.defaultCancelButton = null;
 		this.defaultSubmitButton = null;

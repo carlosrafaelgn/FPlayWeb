@@ -60,9 +60,24 @@ class GraphicalFilterControl { //extends HTMLElement {
 
 			menuWidth: Icon.outerSizeREM + "rem",
 			menuPadding: "0",
-			openMenuHTML: Icon.createHTML("icon-expand-less", true),
-			closeMenuHTML: Icon.createHTML("icon-expand-more", true)
+			openMenuHTML: '<span>' + Icon.createHTML("icon-expand-less", true) + '</span>',
+			closeMenuHTML: '<span>' + Icon.createHTML("icon-expand-more", true) + '</span>'
 		});
+
+		const labels = this.editor.element.querySelectorAll("div.GELBL");
+		for (let i = labels.length - 1; i >= 0; i--) {
+			const label = labels[i] as HTMLDivElement;
+			label.style.height = "var(--button-size)";
+			label.style.lineHeight = "6rem";
+			label.style.paddingTop = "var(--button-padding-top)";
+			label.style.paddingBottom = "0";
+		}
+
+		const menuButton = this.editor.element.querySelector("div.GEBTN.GECLK") as HTMLDivElement;
+		menuButton.className = "btn square white transparent";
+		menuButton.style.width = "";
+		menuButton.style.padding = "";
+		menuButton.style.float = "right";
 	}
 
 	private filterChanged(): void {

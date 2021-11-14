@@ -49,7 +49,7 @@ class ButtonControl {
 		}
 	}
 
-	public static create(options: CommonButtonControlOptions, ignoreButtonControlOptions?: boolean): HTMLButtonElement {
+	public static create(options: CommonButtonControlOptions, skipClickAndAppend?: boolean): HTMLButtonElement {
 		const button = document.createElement("button");
 		button.setAttribute("type", "button");
 
@@ -69,19 +69,19 @@ class ButtonControl {
 
 		button.className = className;
 
-		const span = ButtonControl.prepare(button);
+		const span = ButtonControl.prepare(button),
+			text = (options.text || (options.stringKey ? Strings.translate(options.stringKey) : ""));
 
 		if (options.icon) {
-			className = "large icon-" + options.icon;
+			className = "large";
+			if (!options.square && text)
+				className += " margin";
 			if (!options.opaque && options.color)
 				className += " " + options.color;
 
-			const i = document.createElement("i");
-			i.className = className;
-			span.appendChild(i);
+			span.appendChild(Icon.create(options.icon, className));
 		}
 
-		const text = (options.text || (options.stringKey ? Strings.translate(options.stringKey) : ""));
 		if (options.square) {
 			button.setAttribute("aria-label", text);
 			button.setAttribute("title", text);
@@ -89,7 +89,7 @@ class ButtonControl {
 			span.appendChild(document.createTextNode(text));
 		}
 
-		if (!ignoreButtonControlOptions) {
+		if (!skipClickAndAppend) {
 			const o = options as ButtonControlOptions;
 
 			if (o.onclick)

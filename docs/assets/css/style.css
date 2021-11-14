@@ -190,7 +190,7 @@ h1 > span > span.close:active {
 	vertical-align: top;
 }
 
-.btn, .btn > span, input, textarea, select {
+.btn, .btn > span, input, textarea, select, a, a:focus {
 	margin: 0;
 	border-radius: 0;
 	border: 0 none transparent;
@@ -198,6 +198,27 @@ h1 > span > span.close:active {
 	outline: 0 none transparent;
 	appearance: none;
 	/*transition: background-color ease-in-out 0.3s, color ease-in-out 0.3s;*/
+}
+
+a {
+	color: #f90;
+	font-weight: 700;
+	text-decoration: none;
+}
+
+a:focus,
+a:hover {
+	color: #fa1;
+}
+
+@media (hover: none) {
+	a:hover {
+		color: #f90;
+	}
+}
+
+a:active {
+	color: #fb2;
 }
 
 .modal {
@@ -210,13 +231,21 @@ h1 > span > span.close:active {
     box-shadow: 0 0.25rem 2rem #000;
 }
 
-.modal-decoration {
+.modal-header, .modal-body {
+	text-align: center;
+}
+
+.modal-header, .modal-footer {
 	padding: 2rem;
 }
 
+.modal-header {
+	font-weight: 700;
+}
+
 .modal-body {
-    padding: 2rem;
-    margin: 0 2rem;
+	padding: 8rem 0;
+	margin: 0 2rem;
     border-color: #5a5a5a;
     border-style: solid none;
     border-width: var(--thin-border);
@@ -300,6 +329,10 @@ input[type="checkbox"]:checked + .icon + .icon {
 	color: #f4f;
 }
 
+.white {
+	color: #fff;
+}
+
 .btn,
 .slider-control-thumb {
 	background-color: #06f;
@@ -333,6 +366,11 @@ input[type="checkbox"]:checked + .icon + .icon {
 .btn.pink {
 	color: #000;
 	background-color: #f4f;
+}
+
+.btn.white {
+	color: #000;
+	background-color: #fff;
 }
 
 .btn.transparent {
@@ -467,6 +505,23 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 	background-color: #f6f;
 }
 
+.btn.white:focus,
+.btn.white:hover {
+	color: #000;
+	background-color: #fff;
+}
+
+@media (hover: none) {
+	.btn.white:hover {
+		background-color: #fff;
+	}
+}
+
+.btn.white:active {
+	color: #000;
+	background-color: #fff;
+}
+
 .btn.transparent:hover > span > .icon,
 .btn.transparent:focus > span > .icon,
 .btn.transparent:active > span > .icon {
@@ -496,6 +551,10 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 
 	.btn.transparent.pink:hover:not(:active):not(:focus) {
 		color: #f4f;
+	}
+
+	.btn.transparent.white:hover:not(:active):not(:focus) {
+		color: #fff;
 	}
 }
 
@@ -915,6 +974,7 @@ graphical-filter-control {
 
 .modal-container {
 	position: fixed;
+	z-index: 10000;
 	left: 0;
 	top: 0;
 	right: 0;
@@ -928,7 +988,7 @@ graphical-filter-control {
 }
 
 .modal-container.background.in {
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.5);
 }
 
 .hidden {

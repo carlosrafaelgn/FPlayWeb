@@ -67,8 +67,8 @@
 			--optional-panel-container-height: 380px;
 		}
 	</style>
-	<link rel="stylesheet" type="text/css" href="assets/css/graphicalFilterEditor.css" />
-	<link rel="stylesheet" type="text/css" href="assets/css/style.css" />
+	<link rel="stylesheet" type="text/css" href="assets/css/graphicalFilterEditor.css?20211114" />
+	<link rel="stylesheet" type="text/css" href="assets/css/style.css?20211114" />
 </head>
 <body>
 	<noscript>Sorry! You need to enable JavaScript in order to run the player :(</noscript>
@@ -92,6 +92,8 @@
 					<i class="large icon-add-folder orange"></i>
 				</button><button type="button" class="btn square red transparent" onclick="App.player && App.player.playlist && App.player.playlist.clear()" title="Clear" data-string="aria-label|Clear">
 					<i class="large icon-clear red"></i>
+				</button><button type="button" class="btn square transparent toolbar-right" onclick="AppUI.showAbout()" title="Menu" data-string="aria-label|Menu">
+					<i class="large icon-menu"></i>
 				</button>
 			</div>
 
@@ -124,7 +126,7 @@
 		//<![CDATA[
 		"use strict";
 
-		var CACHE_VERSION = "20210802";
+		var CACHE_VERSION = "20211114";
 
 		(function () {
 			function loadScript(src, successCallback, errorCallback) {

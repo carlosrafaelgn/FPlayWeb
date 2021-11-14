@@ -32,6 +32,7 @@ class Strings {
 	public static Oops = "Oops\u2026";
 
 	public static Menu = "Menu";
+	public static About = "About";
 	public static Edit = "Edit";
 	public static Delete = "Delete";
 	public static Enable = "Enable";
@@ -58,7 +59,12 @@ class Strings {
 	public static ShowFilter = "Show Filter";
 	public static ShowPlaylist = "Show Playlist";
 	public static UpdateAvailable = "Update Available!";
-	public static PleaseRefresh = "Please, refresh the page to update the app 😊";
+	public static PleaseRefresh = "Please, refresh the page to update the app. 😊";
+	public static AboutHTML = `FPlay for web is an experimental audio player. 😊<br />
+<br />
+For more information about the project, its source code and dependencies, check out its repository at <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb">github.com/carlosrafaelgn/FPlayWeb</a>.<br />
+<br />
+This project is licensed under the <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb/blob/master/LICENSE">MIT License</a>.`;
 
 	public static toFixed(x: number, fractionDigits: number): string { return x.toFixed(fractionDigits); }
 
@@ -72,6 +78,7 @@ class Strings {
 			Strings.DecimalSeparator = ",";
 			Strings.OppositeDecimalSeparator = ".";
 			//Strings.Menu = "Menu";
+			Strings.About = "Sobre";
 			Strings.Edit = "Edit";
 			Strings.Delete = "Excluir";
 			Strings.Enable = "Habilitar";
@@ -98,7 +105,12 @@ class Strings {
 			Strings.ShowFilter = "Exibir Filtro";
 			Strings.ShowPlaylist = "Exibir Lista";
 			Strings.UpdateAvailable = "Atualização Disponível!";
-			Strings.PleaseRefresh = "Por favor, recarregue a página para atualizar a aplicação 😊";
+			Strings.PleaseRefresh = "Por favor, recarregue a página para atualizar a aplicação. 😊";
+			Strings.AboutHTML = `FPlay para web é um player de áudio experimental. 😊<br />
+<br />
+Para mais informações sobre o projeto, seu código-fonte e dependências, confira seu repositório em <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb">github.com/carlosrafaelgn/FPlayWeb</a>.<br />
+<br />
+Este projeto é licenciado sob a <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb/blob/master/LICENSE">MIT License</a>.`;
 		}
 
 		Strings.translateChildren(document.body);
