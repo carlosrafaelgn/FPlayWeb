@@ -148,7 +148,7 @@ class Modal {
 	private constructor(options: ModalOptions) {
 		this.options = options;
 
-		const elementsToDisable = document.querySelectorAll("button,input,select,textarea"),
+		const elementsToDisable = document.querySelectorAll("button,input,select,textarea,.slider-control"),
 			changedElements: { element: HTMLElement, tabindex: string | null }[] = new Array(elementsToDisable.length);
 		for (let i = elementsToDisable.length - 1; i >= 0; i--) {
 			const element = elementsToDisable[i] as HTMLElement,
