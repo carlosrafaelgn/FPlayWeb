@@ -186,7 +186,7 @@ h1 > span > span.close:active {
 	z-index: 99998;
 }
 
-.btn, input, textarea, select, i, graphical-filter-control {
+.btn, input, textarea, select, i, .slider-control {
 	vertical-align: top;
 }
 
@@ -558,24 +558,37 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 	}
 }
 
-graphical-filter-control {
-	display: inline-block;
-}
-
 .slider-control {
 	display: inline-block;
 	touch-action: none;
+}
+
+.slider-control:not(.vertical) {
 	padding-top: var(--extra-touch-padding-top);
 	height: var(--button-size);
 }
 
+.slider-control.vertical {
+	padding-left: var(--extra-touch-padding-top);
+	width: var(--button-size);
+}
+
 .slider-control-focus-container {
 	display: inline-flex;
-	flex-direction: row;
     flex-wrap: nowrap;
+	align-items: center;
 	width: 100%;
-	height: 8rem;
+	height: 100%;
+}
+
+.slider-control-focus-container:not(.vertical) {
+	flex-direction: row;
 	padding: 1rem 0;
+}
+
+.slider-control-focus-container.vertical {
+	flex-direction: column-reverse;
+	padding: 0 1rem;
 }
 
 .slider-control,
@@ -592,17 +605,33 @@ graphical-filter-control {
 .slider-control-container {
 	display: inline-block;
 	position: relative;
-	height: 6rem;
 	flex: 1 1 auto;
+}
+
+.slider-control-container:not(.vertical) {
+	height: 6rem;
 	padding: 0 2rem 0 0;
+}
+
+.slider-control-container.vertical {
+	width: 6rem;
+	padding: 2rem 0 0 0;
 }
 
 .slider-control-inner-container {
 	display: inline-block;
 	position: relative;
+	pointer-events: none;
+}
+
+.slider-control-inner-container:not(.vertical) {
 	height: 6rem;
 	width: 100%;
-	pointer-events: none;
+}
+
+.slider-control-inner-container.vertical {
+	width: 6rem;
+	height: 100%;
 }
 
 .slider-control-filled-ruler,
@@ -610,25 +639,52 @@ graphical-filter-control {
 	display: block;
 	position: absolute;
 	z-index: -1;
+}
+
+.slider-control-filled-ruler:not(.vertical),
+.slider-control-ruler:not(.vertical) {
 	top: 2rem;
 	height: 2rem;
 }
 
-.slider-control-filled-ruler {
+.slider-control-filled-ruler.vertical,
+.slider-control-ruler.vertical {
+	left: 2rem;
+	width: 2rem;
+}
+
+.slider-control-filled-ruler:not(.vertical) {
 	left: 0;
 }
 
-.slider-control-ruler {
+.slider-control-filled-ruler.vertical {
+	bottom: 0;
+}
+
+.slider-control-ruler:not(.vertical) {
 	right: -2rem;
+}
+
+.slider-control-ruler.vertical {
+	top: -2rem;
 }
 
 .slider-control-thumb {
 	display: block;
 	position: absolute;
 	z-index: 1;
+}
+
+.slider-control-thumb:not(.vertical) {
 	top: 0;
 	height: 6rem;
 	width: 2rem;
+}
+
+.slider-control-thumb.vertical {
+	left: 0;
+	width: 6rem;
+	height: 2rem;
 }
 
 .slider-control-filled-ruler,
@@ -856,6 +912,18 @@ graphical-filter-control {
 	margin-left: 4rem;
 }
 
+.small-top-margin {
+	margin-top: 1rem;
+}
+
+.top-margin {
+	margin-top: 2rem;
+}
+
+.large-top-margin {
+	margin-top: 4rem;
+}
+
 .small-right-margin,
 .icon.margin {
 	margin-right: 1rem;
@@ -867,6 +935,18 @@ graphical-filter-control {
 
 .large-right-margin {
 	margin-right: 4rem;
+}
+
+.small-bottom-margin {
+	margin-bottom: 1rem;
+}
+
+.bottom-margin {
+	margin-bottom: 2rem;
+}
+
+.large-bottom-margin {
+	margin-bottom: 4rem;
 }
 
 @media (max-width: 511px) {
@@ -901,12 +981,28 @@ graphical-filter-control {
 		margin-left: 2rem;
 	}
 
+	.top-margin {
+		margin-top: 1rem;
+	}
+
+	.large-top-margin {
+		margin-top: 2rem;
+	}
+
 	.right-margin {
 		margin-right: 1rem;
 	}
 
 	.large-right-margin {
 		margin-right: 2rem;
+	}
+
+	.bottom-margin {
+		margin-bottom: 1rem;
+	}
+
+	.large-bottom-margin {
+		margin-bottom: 2rem;
 	}
 }
 

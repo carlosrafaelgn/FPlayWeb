@@ -311,7 +311,7 @@ class AppUI {
 		ButtonControl.init();
 		CheckboxControl.init();
 
-		AppUI.seekSlider = new SliderControl("seek-slider", false, 0, 1);
+		AppUI.seekSlider = new SliderControl("seek-slider", false, false, 0, 1);
 		AppUI.seekSlider.disabled = true;
 		AppUI.seekSlider.onvaluechanged = AppUI.seekSliderValueChanged;
 		AppUI.seekSlider.ondragended = AppUI.seekSliderDragEnded;
@@ -327,7 +327,7 @@ class AppUI {
 		AppUI.changeText(AppUI.songLengthLabel, Formatter.none);
 		AppUI.seekSlider.rightChild = AppUI.songLengthLabel;
 
-		AppUI.volumeSlider = new SliderControl("volume-slider", true, 0, Player.maxVolume, appSettings.playerVolume);
+		AppUI.volumeSlider = new SliderControl("volume-slider", true, false, 0, Player.maxVolume, appSettings.playerVolume);
 		AppUI.volumeSlider.leftChild = Icon.createLarge("icon-volume", "green small-right-margin");
 		AppUI.volumeLabel = document.createElement("span");
 		AppUI.volumeLabel.className = "volume-label small-left-margin";

@@ -47,13 +47,16 @@ class SliderControl {
 	private percent: number;
 
 	public readonly keyboardFocusable: boolean;
+	public readonly vertical: boolean;
 
 	public onvaluechanged: ((value: number) => void) | null;
 	public ondragended: ((value: number) => void) | null;
 
-	constructor(element: string | HTMLElement, keyboardFocusable: boolean, min: number, max: number, value?: number, leftChild?: HTMLElement | null, rightChild?: HTMLElement | null) {
+	constructor(element: string | HTMLElement, keyboardFocusable: boolean, vertical: boolean, min: number, max: number, value?: number, leftChild?: HTMLElement | null, rightChild?: HTMLElement | null) {
 		this._element = (((typeof element) === "string") ? document.getElementById(element as string) : element) as HTMLElement;
 		this._element.classList.add("slider-control");
+		if (vertical)
+			this._element.classList.add("vertical");
 		this._element.setAttribute("role", "slider");
 		if (keyboardFocusable)
 			this._element.setAttribute("tabindex", "0");
@@ -61,9 +64,12 @@ class SliderControl {
 			this._element.setAttribute("aria-hidden", "true");
 
 		this.keyboardFocusable = keyboardFocusable;
+		this.vertical = vertical;
+
+		const classSuffix = (vertical ? " vertical" : "");
 
 		const focusContainer = document.createElement("span");
-		focusContainer.className = "slider-control-focus-container";
+		focusContainer.className = "slider-control-focus-container" + classSuffix;
 		focusContainer.setAttribute("tabindex", "-1");
 		this.focusContainer = focusContainer;
 
@@ -71,27 +77,27 @@ class SliderControl {
 		this.ondragended = null;
 
 		const container = document.createElement("span");
-		container.className = "slider-control-container";
+		container.className = "slider-control-container" + classSuffix;
 		focusContainer.appendChild(container);
 		this.container = container;
 
 		const innerContainer = document.createElement("span");
-		innerContainer.className = "slider-control-inner-container";
+		innerContainer.className = "slider-control-inner-container" + classSuffix;
 		container.appendChild(innerContainer);
 		this.innerContainer = innerContainer;
 
 		const ruler = document.createElement("span");
-		ruler.className = "slider-control-ruler";
+		ruler.className = "slider-control-ruler" + classSuffix;
 		innerContainer.appendChild(ruler);
 		this.ruler = ruler;
 
 		const filledRuler = document.createElement("span");
-		filledRuler.className = "slider-control-color slider-control-filled-ruler";
+		filledRuler.className = "slider-control-color slider-control-filled-ruler" + classSuffix;
 		innerContainer.appendChild(filledRuler);
 		this.filledRuler = filledRuler;
 
 		const thumb = document.createElement("span");
-		thumb.className = "slider-control-color slider-control-thumb";
+		thumb.className = "slider-control-color slider-control-thumb" + classSuffix;
 		innerContainer.appendChild(thumb);
 		this.thumb = thumb;
 
@@ -269,14 +275,26 @@ class SliderControl {
 
 		const p = this.percent + "%";
 
-		if (this.filledRuler)
-			this.filledRuler.style.right = (100 - this.percent) + "%";
+		if (this.filledRuler) {
+			if (this.vertical)
+				this.filledRuler.style.top = (100 - this.percent) + "%";
+			else
+				this.filledRuler.style.right = (100 - this.percent) + "%";
+		}
 
-		if (this.ruler)
-			this.ruler.style.left = p;
+		if (this.ruler) {
+			if (this.vertical)
+				this.ruler.style.bottom = p;
+			else
+				this.ruler.style.left = p;
+		}
 
-		if (this.thumb)
-			this.thumb.style.left = p;
+		if (this.thumb) {
+			if (this.vertical)
+				this.thumb.style.bottom = p;
+			else
+				this.thumb.style.left = p;
+		}
 
 		if (value !== oldValue) {
 			if (this.keyboardFocusable)
@@ -302,9 +320,16 @@ class SliderControl {
 	}
 
 	private mouseMove(e: MouseEvent): void {
-		const rect = this.innerContainer.getBoundingClientRect(),
+		const rect = this.innerContainer.getBoundingClientRect();
+
+		let dx: number, x: number;
+		if (this.vertical) {
+			dx = rect.bottom - rect.top,
+			x = dx - (e.clientY - (rect.top - 3));
+		} else {
 			dx = rect.right - rect.left,
 			x = e.clientX - (rect.left + 4);
+		}
 
 		this.value = ((dx <= 0) ? this._min : (this._min + (this.delta * x / dx)));
 	}
