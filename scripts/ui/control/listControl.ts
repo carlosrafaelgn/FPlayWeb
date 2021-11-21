@@ -31,7 +31,7 @@ class ListControlItem<T extends ListItem> {
 	public item: T | null;
 	public readonly element: HTMLElement;
 
-	constructor(element: HTMLElement) {
+	public constructor(element: HTMLElement) {
 		this.index = -1;
 		this.selected = false;
 		this.current = false;
@@ -76,7 +76,7 @@ class ListControl<T extends ListItem> {
 	public onitemclicked: ((item: T, index: number) => void) | null;
 	public onitemcontextmenu: ((item: T, index: number) => void) | null;
 
-	constructor(element: string | HTMLElement) {
+	public constructor(element: string | HTMLElement) {
 		this.element = (((typeof element) === "string") ? document.getElementById(element as string) : element) as HTMLElement;
 		this.element.classList.add("list", "scrollable");
 		if (!this.element.getAttribute("tabindex"))

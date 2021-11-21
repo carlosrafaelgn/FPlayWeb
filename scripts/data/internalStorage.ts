@@ -65,7 +65,8 @@ class InternalStorage {
 		}
 		return {
 			playerVolume: 100,
-			graphicalFilterControlEnabled: false
+			graphicalFilterControlEnabled: false,
+			graphicalFilterControlSimpleMode: false
 		};
 	}
 
@@ -89,7 +90,7 @@ class InternalStorage {
 		}
 		return {
 			currentChannelIndex: 0,
-			editMode: GraphicalFilterEditorControl.editModeZones,
+			editMode: GraphicalFilterEditorControl.editModeShelfEq,
 			isActualChannelCurveNeeded: true,
 			isNormalized: false,
 			isSameFilterLR: true,

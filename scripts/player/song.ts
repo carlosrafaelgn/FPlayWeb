@@ -62,7 +62,7 @@ class Song extends ListItem implements SongInfo {
 
 	public file?: File | null;
 
-	constructor(urlOrMetadata: string | Metadata, title?: string | null, artist?: string | null, album?: string | null, track?: number | null, lengthMS?: number | null, year?: number | null) {
+	public constructor(urlOrMetadata: string | Metadata, title?: string | null, artist?: string | null, album?: string | null, track?: number | null, lengthMS?: number | null, year?: number | null) {
 		super();
 
 		if ((typeof urlOrMetadata) !== "string") {

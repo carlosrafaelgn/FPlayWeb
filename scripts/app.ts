@@ -58,6 +58,7 @@ interface AppSettings {
 	devicePixelRatio?: number;
 	playerVolume?: number;
 	graphicalFilterControlEnabled?: boolean;
+	graphicalFilterControlSimpleMode?: boolean;
 }
 
 class App {
@@ -108,7 +109,8 @@ class App {
 			InternalStorage.saveAppSettings({
 				devicePixelRatio: devicePixelRatio,
 				playerVolume: App.player.volume,
-				graphicalFilterControlEnabled: App.player.graphicalFilterControl.enabled
+				graphicalFilterControlEnabled: App.player.graphicalFilterControl.enabled,
+				graphicalFilterControlSimpleMode: App.player.graphicalFilterControl.simpleMode
 			});
 
 			App.player.destroy(true);
@@ -253,7 +255,8 @@ class App {
 
 			App.triggerMainWindowStateChanged();
 		} else {
-			window.addEventListener("beforeunload", App.mainWindowClosing);
+			// https://developers.google.com/web/updates/2018/07/page-lifecycle-api#the-unload-event
+			window.addEventListener(("onpagehide" in window) ? "pagehide" : "unload", App.mainWindowClosing);
 		}
 
 		if (App.frameless) {
@@ -317,7 +320,7 @@ class App {
 
 		const appSettings = InternalStorage.loadAppSettings();
 
-		App.player = new Player(document.getElementById("graphical-filter-control") as HTMLDivElement, appSettings.playerVolume, appSettings.graphicalFilterControlEnabled);
+		App.player = new Player(document.getElementById("filter-container") as HTMLDivElement, appSettings.playerVolume, appSettings.graphicalFilterControlEnabled, appSettings.graphicalFilterControlSimpleMode);
 
 		try {
 			const playlist = await InternalStorage.loadPlaylist();

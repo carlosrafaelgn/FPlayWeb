@@ -38,6 +38,7 @@
 		"libmikmod/webaudio/ts/frontend/libmikmod.ts",
 		"ui/control/buttonControl.ts",
 		"ui/control/checkboxControl.ts",
+		"ui/control/simpleFilterEditorControl.ts",
 		"ui/control/graphicalFilterControl.ts",
 		"ui/control/listControl.ts",
 		"ui/control/sliderControl.ts",

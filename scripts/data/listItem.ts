@@ -29,7 +29,7 @@ abstract class ListItem {
 
 	public readonly id: number;
 
-	constructor() {
+	public constructor() {
 		this.id = ++ListItem.Id;
 	}
 

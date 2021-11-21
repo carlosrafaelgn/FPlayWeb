@@ -59,7 +59,7 @@ class Player {
 	public oncurrenttimeschanged: ((currentTimeS: number) => void) | null;
 	public onerror: ((message: string) => void) | null;
 
-	constructor(editorElement: HTMLDivElement, volume?: number, graphicalFilterControlEnabled?: boolean) {
+	public constructor(filterContainer: HTMLDivElement, volume?: number, graphicalFilterControlEnabled?: boolean, graphicalFilterControlSimpleMode?: boolean) {
 		this.audioContextTimeout = 0;
 		this.audioContextSuspended = true;
 		// https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/AudioContext#options
@@ -73,7 +73,7 @@ class Player {
 		this.audioContext.suspend();
 		this.audioContext.onstatechange = this.audioContextStateChanged.bind(this);
 
-		this.graphicalFilterControl = new GraphicalFilterControl(editorElement, this.audioContext, graphicalFilterControlEnabled);
+		this.graphicalFilterControl = new GraphicalFilterControl(filterContainer, this.audioContext, graphicalFilterControlEnabled, graphicalFilterControlSimpleMode);
 		this.graphicalFilterControl.filterChangedCallback = this.filterChanged.bind(this);
 
 		this.onsongchanged = null;

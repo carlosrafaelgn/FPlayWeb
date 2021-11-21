@@ -116,4 +116,19 @@ class ButtonControl {
 
 		return span;
 	}
+
+	public static setText(button: HTMLButtonElement, text: string): void {
+		let span = button.firstChild as HTMLElement;
+		if (!span || span.tagName !== "SPAN") {
+			span = button.querySelector("span") as HTMLElement;
+			if (!span)
+				return;
+		}
+
+		const textNode = span.lastChild;
+		if (!textNode || (textNode as HTMLElement).tagName)
+			span.appendChild(document.createTextNode(text));
+		else
+			textNode.nodeValue = text;
+	}
 }

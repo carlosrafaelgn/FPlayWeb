@@ -55,6 +55,10 @@ class Formatter {
 		return r + timeS;
 	}
 
+	public static formatDB(dB: number): string {
+		return ((dB < 0) ? Strings.toFixed(dB, 1) : ((dB === 0) ? "-" + Strings.toFixed(dB, 1) : "+" + Strings.toFixed(dB, 1)));
+	}
+
 	public static pathToURL(urlOrAbsolutePath: string): string {
 		return ((!urlOrAbsolutePath || urlOrAbsolutePath.startsWith(Formatter.fileURLPrefix)) ? urlOrAbsolutePath :
 			encodeURI(!urlOrAbsolutePath.startsWith("/") ? (Formatter.fileURLPrefixWindows + urlOrAbsolutePath.replace(Formatter.regExpSepWindows, "/")) : (Formatter.fileURLPrefix + urlOrAbsolutePath))

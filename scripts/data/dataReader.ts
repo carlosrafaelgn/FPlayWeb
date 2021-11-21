@@ -32,7 +32,7 @@ class DataReader {
 
 	public readonly length: number;
 
-	constructor(arrayBuffer: ArrayBuffer) {
+	public constructor(arrayBuffer: ArrayBuffer) {
 		this.arrayBuffer = arrayBuffer;
 		this.dataView = new DataView(arrayBuffer);
 		this.textDecoder = new TextDecoder("utf-8", { ignoreBOM: true });

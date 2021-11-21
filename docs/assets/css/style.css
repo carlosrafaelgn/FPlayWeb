@@ -22,8 +22,70 @@
 	src: url('../fonts/OpenSans-Bold.ttf') format('truetype');
 }
 
+:root {
+	--color-background: #1c1c1c;
+
+	--color-highlight: #303030;
+	--color-highlight-thin: #06f;
+	--color-highlight-hover: #484848;
+	--color-highlight-active: #5a5a5a;
+
+	--color-close-hover: #c00;
+	--color-close-active: #d11;
+
+	--color-shadow-modal: #000;
+
+	--color-fade: rgba(0, 0, 0, 0.5);
+
+	--color-text: #fff;
+	--color-text-secodary: #999;
+
+	--color-text-on-blue: #fff;
+	--color-blue: #06f;
+	--color-blue-hover: #17f;
+	--color-blue-active: #28f;
+	--color-blue-on-dark-50: #0e418e; /*rgba(0, 102, 255, 0.5);*/
+	--color-blue-hover-on-dark-50: #164a8e; /*rgba(17, 121, 255, 0.5);*/
+	--color-blue-active-on-dark-50: #1f538e; /*rgba(34, 136, 255, 0.5);*/
+
+	--color-text-on-green: #000;
+	--color-green: #4f4;
+	--color-green-hover: #7f7;
+	--color-green-active: #afa;
+
+	--color-text-on-yellow: #000;
+	--color-yellow: #fe4;
+	--color-yellow-hover: #ff7;
+	--color-yellow-active: #ffa;
+
+	--color-text-on-orange: #000;
+	--color-orange: #f90;
+	--color-orange-hover: #fa1;
+	--color-orange-active: #fb2;
+
+	--color-text-on-red: #000;
+	--color-red: #f44;
+	--color-red-hover: #f55;
+	--color-red-active: #f66;
+
+	--color-text-on-pink: #000;
+	--color-pink: #f4f;
+	--color-pink-hover: #f5f;
+	--color-pink-active: #f6f;
+
+	--color-text-on-white: #000;
+	--color-white: #fff;
+	--color-white-hover: #fff;
+	--color-white-active: #fff;
+}
+
 * {
 	box-sizing: border-box;
+}
+
+html,
+.modal-body {
+	background-color: var(--color-background);
 }
 
 html {
@@ -32,7 +94,6 @@ html {
 	min-height: 100%;
 	height: 100%;
 	font-size: 4px;
-	background-color: #1c1c1c;
 	-webkit-tap-highlight-color: rgba(0,0,0,0);
 }
 
@@ -40,10 +101,13 @@ body, .modal, .btn, input, textarea, select, h1, h2, h3, h4, h5, h6 {
 	font-weight: 400;
 	font-family: 'Open Sans', sans-serif;
 	line-height: 6rem;
-	color: #fff;
 }
 
-#fixed-panel, #option-panel, .modal, .btn, input, textarea, select, h1, h2, h3, h4, h5, h6 {
+body, .modal, input, textarea, select, h1, h2, h3, h4, h5, h6 {
+	color: var(--color-text);
+}
+
+#fixed-panel, #optional-panel, .modal, .btn, input, textarea, select, h1, h2, h3, h4, h5, h6 {
 	font-size: 3.5rem;
 }
 
@@ -101,7 +165,7 @@ h1,
 .modal,
 .slider-control-ruler,
 .list-item {
-	background: #303030;
+	background-color: var(--color-highlight);
 }
 
 h1 > div {
@@ -141,20 +205,20 @@ h1 > span > span {
 }
 
 h1 > span > span:hover {
-	background-color: #444;
+	background-color: var(--color-highlight-hover);
 }
 
 h1 > span > span:active,
 .list-item:active {
-	background-color: #555;
+	background-color: var(--color-highlight-active);
 }
 
 h1 > span > span.close:hover {
-	background-color: #c00;
+	background-color: var(--color-close-hover);
 }
 
 h1 > span > span.close:active {
-	background-color: #d11;
+	background-color: var(--color-close-active);
 }
 
 #icon-main {
@@ -186,7 +250,7 @@ h1 > span > span.close:active {
 	z-index: 99998;
 }
 
-.btn, input, textarea, select, i, .slider-control {
+.btn, input, textarea, select, i, .slider-control, .toolbar-sep {
 	vertical-align: top;
 }
 
@@ -196,29 +260,32 @@ h1 > span > span.close:active {
 	border: 0 none transparent;
 	box-shadow: none;
 	outline: 0 none transparent;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    -ms-appearance: none;
 	appearance: none;
 	/*transition: background-color ease-in-out 0.3s, color ease-in-out 0.3s;*/
 }
 
 a {
-	color: #f90;
+	color: var(--color-orange);
 	font-weight: 700;
 	text-decoration: none;
 }
 
 a:focus,
 a:hover {
-	color: #fa1;
+	color: var(--color-orange-hover);
 }
 
 @media (hover: none) {
 	a:hover {
-		color: #f90;
+		color: var(--color-orange);
 	}
 }
 
 a:active {
-	color: #fb2;
+	color: var(--color-orange-active);
 }
 
 .modal {
@@ -228,7 +295,7 @@ a:active {
 	margin: 10rem auto;
 	width: 156rem;
 	max-width: 90%;
-    box-shadow: 0 0.25rem 2rem #000;
+    box-shadow: 0 0.25rem 2rem var(--color-shadow-modal);
 }
 
 .modal-header, .modal-body {
@@ -244,14 +311,13 @@ a:active {
 }
 
 .modal-body {
-	padding: 8rem 0;
-	margin: 0 2rem;
-    border-color: #5a5a5a;
+	padding: 8rem 2rem;
+    border-color: var(--color-highlight-thin);
     border-style: solid none;
     border-width: var(--thin-border);
 }
 
-.btn, .btn > span {
+.btn, .btn > span, .toolbar-sep {
 	display: inline-block;
 	height: var(--button-size);
 }
@@ -261,6 +327,21 @@ a:active {
 	text-align: center;
 	white-space: nowrap;
 	padding: 0;
+}
+
+select.btn {
+	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAAUCAAAAAA/s+ULAAAAAnRSTlMAAHaTzTgAAAA+SURBVHjarcyxDQAwCMAw//90UT9AItljb5l1tUftUXvUHrVH7VF71B61R+1Re9QetUftUXvUHrVH7X3xMA8B2qJs1mnhcwAAAABJRU5ErkJggg==);
+    background-repeat: no-repeat;
+    background-size: 4rem 1rem;
+    background-position: right center;
+	text-align: left;
+	padding-left: 2rem;
+	padding-right: 6rem;
+}
+
+select.btn option {
+	color: var(--color-text);
+    background-color: var(--color-background);
 }
 
 .btn > span {
@@ -306,87 +387,88 @@ input[type="checkbox"]:checked + .icon + .icon {
 }
 
 .blue {
-	color: #06f;
+	color: var(--color-blue);
 }
 
 .green {
-	color: #4f4;
+	color: var(--color-green);
 }
 
 .yellow {
-	color: #fe4;
+	color: var(--color-yellow);
 }
 
 .orange {
-	color: #f90;
+	color: var(--color-orange);
 }
 
 .red {
-	color: #f44;
+	color: var(--color-red);
 }
 
 .pink {
-	color: #f4f;
+	color: var(--color-pink);
 }
 
 .white {
-	color: #fff;
+	color: var(--color-white);
 }
 
 .btn,
 .slider-control-thumb {
-	background-color: #06f;
+	color: var(--color-text-on-blue);
+	background-color: var(--color-blue);
 }
 
 /* Adding this to the group above makes the entire group stop working in Firefox */
 .scrollable::-webkit-scrollbar-thumb {
-	background-color: #06f;
+	background-color: var(--color-blue);
 }
 
 .btn.green {
-	color: #000;
-	background-color: #4f4;
+	color: var(--color-text-on-green);
+	background-color: var(--color-green);
 }
 
 .btn.yellow {
-	color: #000;
-	background-color: #fe4;
+	color: var(--color-text-on-yellow);
+	background-color: var(--color-yellow);
 }
 
 .btn.orange {
-	color: #000;
-	background-color: #f90;
+	color: var(--color-text-on-orange);
+	background-color: var(--color-orange);
 }
 
 .btn.red {
-	color: #000;
-	background-color: #f44;
+	color: var(--color-text-on-red);
+	background-color: var(--color-red);
 }
 
 .btn.pink {
-	color: #000;
-	background-color: #f4f;
+	color: var(--color-text-on-pink);
+	background-color: var(--color-pink);
 }
 
 .btn.white {
-	color: #000;
-	background-color: #fff;
+	color: var(--color-text-on-white);
+	background-color: var(--color-white);
 }
 
 .btn.transparent {
-	color: #fff;
+	color: var(--color-text);
 	background-color: transparent;
 }
 
 .btn:hover,
 .btn:focus,
 .slider-control-container:hover .slider-control-thumb {
-	background-color: #17f;
+	background-color: var(--color-blue-hover);
 }
 
 /* Adding this to the group above makes the entire group stop working in Firefox */
 .scrollable::-webkit-scrollbar-thumb:hover {
-	background-color: #17f;
+	background-color: var(--color-blue-hover);
 }
 
 /*
@@ -400,126 +482,126 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 @media (hover: none) {
 	.btn:hover,
 	.slider-control-container:hover .slider-control-thumb {
-		background-color: #06f;
+		background-color: var(--color-blue);
 	}
 
 	/* Adding this to the group above makes the entire group stop working in Firefox */
 	.scrollable::-webkit-scrollbar-thumb:hover {
-		background-color: #06f;
+		background-color: var(--color-blue);
 	}
 }
 
 .btn:active,
 .slider-control-container.active:hover .slider-control-thumb,
 .slider-control-container.active .slider-control-thumb {
-	background-color: #28f;
+	background-color: var(--color-blue-active);
 }
 
 /* Adding this to the group above makes the entire group stop working in Firefox */
 .scrollable::-webkit-scrollbar-thumb:active {
-	background-color: #28f;
+	background-color: var(--color-blue-active);
 }
 
 .btn.green:focus,
 .btn.green:hover {
-	color: #000;
-	background-color: #7f7;
+	color: var(--color-text-on-green);
+	background-color: var(--color-green-hover);
 }
 
 @media (hover: none) {
 	.btn.green:hover {
-		background-color: #4f4;
+		background-color: var(--color-green);
 	}
 }
 
 .btn.green:active {
-	color: #000;
-	background-color: #afa;
+	color: var(--color-text-on-green);
+	background-color: var(--color-green-active);
 }
 
 .btn.yellow:focus,
 .btn.yellow:hover {
-	color: #000;
-	background-color: #ff7;
+	color: var(--color-text-on-yellow);
+	background-color: var(--color-yellow-hover);
 }
 
 @media (hover: none) {
 	.btn.yellow:hover {
-		background-color: #fe4;
+		background-color: var(--color-yellow);
 	}
 }
 
 .btn.yellow:active {
-	color: #000;
-	background-color: #ffa;
+	color: var(--color-text-on-yellow);
+	background-color: var(--color-yellow-active);
 }
 
 .btn.orange:focus,
 .btn.orange:hover {
-	color: #000;
-	background-color: #fa1;
+	color: var(--color-text-on-orange);
+	background-color: var(--color-orange-hover);
 }
 
 @media (hover: none) {
 	.btn.orange:hover {
-		background-color: #f90;
+		background-color: var(--color-orange);
 	}
 }
 
 .btn.orange:active {
-	color: #000;
-	background-color: #fb2;
+	color: var(--color-text-on-orange);
+	background-color: var(--color-orange-active);
 }
 
 .btn.red:focus,
 .btn.red:hover {
-	color: #000;
-	background-color: #f55;
+	color: var(--color-text-on-red);
+	background-color: var(--color-red-hover);
 }
 
 @media (hover: none) {
 	.btn.red:hover {
-		background-color: #f44;
+		background-color: var(--color-red);
 	}
 }
 
 .btn.red:active {
-	color: #000;
-	background-color: #f66;
+	color: var(--color-text-on-red);
+	background-color: var(--color-red-active);
 }
 
 .btn.pink:focus,
 .btn.pink:hover {
-	color: #000;
-	background-color: #f5f;
+	color: var(--color-text-on-pink);
+	background-color: var(--color-pink-hover);
 }
 
 @media (hover: none) {
 	.btn.pink:hover {
-		background-color: #f4f;
+		background-color: var(--color-pink);
 	}
 }
 
 .btn.pink:active {
-	color: #000;
-	background-color: #f6f;
+	color: var(--color-text-on-pink);
+	background-color: var(--color-pink-active);
 }
 
 .btn.white:focus,
 .btn.white:hover {
-	color: #000;
-	background-color: #fff;
+	color: var(--color-text-on-white);
+	background-color: var(--color-white-hover);
 }
 
 @media (hover: none) {
 	.btn.white:hover {
-		background-color: #fff;
+		background-color: var(--color-white);
 	}
 }
 
 .btn.white:active {
-	color: #000;
-	background-color: #fff;
+	color: var(--color-text-on-white);
+	background-color: var(--color-white-active);
 }
 
 .btn.transparent:hover > span > .icon,
@@ -533,28 +615,38 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 		background-color: transparent;
 	}
 
-	.btn.transparent.green:hover:not(:active):not(:focus) {
-		color: #4f4;
+	.btn.transparent:hover:not(:active):not(:focus) > span > .icon.blue {
+		color: var(--color-blue);
 	}
 
-	.btn.transparent.yellow:hover:not(:active):not(:focus) {
-		color: #fe4;
+	.btn.transparent.green:hover:not(:active):not(:focus),
+	.btn.transparent:hover:not(:active):not(:focus) > span > .icon.green {
+		color: var(--color-green);
 	}
 
-	.btn.transparent.orange:hover:not(:active):not(:focus) {
-		color: #f90;
+	.btn.transparent.yellow:hover:not(:active):not(:focus),
+	.btn.transparent:hover:not(:active):not(:focus) > span > .icon.yellow {
+		color: var(--color-yellow);
 	}
 
-	.btn.transparent.red:hover:not(:active):not(:focus) {
-		color: #f44;
+	.btn.transparent.orange:hover:not(:active):not(:focus),
+	.btn.transparent:hover:not(:active):not(:focus) > span > .icon.orange {
+		color: var(--color-orange);
 	}
 
-	.btn.transparent.pink:hover:not(:active):not(:focus) {
-		color: #f4f;
+	.btn.transparent.red:hover:not(:active):not(:focus),
+	.btn.transparent:hover:not(:active):not(:focus) > span > .icon.red {
+		color: var(--color-red);
 	}
 
-	.btn.transparent.white:hover:not(:active):not(:focus) {
-		color: #fff;
+	.btn.transparent.pink:hover:not(:active):not(:focus),
+	.btn.transparent:hover:not(:active):not(:focus) > span > .icon.pink {
+		color: var(--color-pink);
+	}
+
+	.btn.transparent.white:hover:not(:active):not(:focus),
+	.btn.transparent:hover:not(:active):not(:focus) > span > .icon.white {
+		color: var(--color-white);
 	}
 }
 
@@ -569,7 +661,6 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 }
 
 .slider-control.vertical {
-	padding-left: var(--extra-touch-padding-top);
 	width: var(--button-size);
 }
 
@@ -689,23 +780,23 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 
 .slider-control-filled-ruler,
 .list-item.current {
-	background-color: #0e418e; /*rgba(0, 102, 255, 0.5);*/
+	background-color: var(--color-blue-on-dark-50);
 }
 
 .slider-control-container:hover .slider-control-filled-ruler {
-	background-color: #164a8e; /*rgba(17, 120, 255, 0.5);*/
+	background-color: var(--color-blue-hover-on-dark-50);
 }
 
 @media (hover: none) {
 	.slider-control-container:hover .slider-control-filled-ruler {
-		background-color: #0e418e; /*rgba(0, 102, 255, 0.5);*/
+		background-color: var(--color-blue-on-dark-50);
 	}
 }
 
 .slider-control-container.active:hover .slider-control-filled-ruler,
 .slider-control-container.active .slider-control-filled-ruler,
 .list-item.current:active {
-	background-color: #1f538e; /*rgba(34, 137, 255, 0.5);*/
+	background-color: var(--color-blue-active-on-dark-50);
 }
 
 .list,
@@ -720,7 +811,7 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 .scrollable {
 	overflow: hidden auto;
 	padding: 0 var(--thick-border) 0 0;
-	scrollbar-color: #06f #1c1c1c;
+	scrollbar-color: var(--color-blue) var(--color-background);
 }
 
 .scrollable::-webkit-scrollbar {
@@ -767,7 +858,7 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 }
 
 .playlist-item > span {
-	color: #999;
+	color: var(--color-text-secodary);
 }
 
 .playlist-item > .length {
@@ -820,13 +911,12 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 #optional-panel {
 	position: relative;
 	margin: 2rem 0 2rem 2rem;
+	text-align: center;
 }
 
 #optional-panel-container {
 	display: flex;
-	height: 100%;
-	min-height: var(--optional-panel-container-height);
-	width: 512px;
+	min-height: 100%;
 	flex-direction: column;
 	justify-content: center;
 }
@@ -838,7 +928,7 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 	top: 0;
 	width: 2px;
 	height: 2px;
-	background-color: #1c1c1c;
+	background-color: var(--color-background);
 	transform-origin: top left;
 	transform: scale(2048, 1200);
 }
@@ -849,9 +939,9 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 }
 
 .toolbar-sep {
-	display: inline-block;
-	width: var(--thin-border);
-	border-left: var(--thin-border) solid #303030;
+	height: var(--button-size);
+	border-left: var(--thin-border) solid var(--color-highlight-thin);
+	margin: 0 1rem;
 }
 
 .toolbar-left, .toolbar-right {
@@ -883,10 +973,25 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 	user-select: text;
 }
 
+.simple-filter {
+	width: 512px;
+}
+
+.simple-filter-freq {
+	height: 7rem;
+}
+
+.simple-filter-slider {
+	width: 10rem !important;
+	height: 64rem;
+	font-size: 3rem;
+	line-height: 3.5rem;
+}
+
 .border-top {
 	margin-top: 2rem;
 	padding-top: 2rem;
-	border-top: var(--thin-border) solid #303030;
+	border-top: var(--thin-border) solid var(--color-highlight-thin);
 }
 
 .toolbar.border-top > .toolbar-left,
@@ -897,7 +1002,7 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 .border-bottom {
 	margin-bottom: 2rem;
 	padding-bottom: 2rem;
-	border-bottom: var(--thin-border) solid #303030;
+	border-bottom: var(--thin-border) solid var(--color-highlight-thin);
 }
 
 .small-left-margin {
@@ -1079,12 +1184,12 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 }
 
 .modal-container.background {
-    background: transparent;
-	transition: background-color ease-in-out 0.3s;
+    background-color: transparent;
+	transition: opacity ease-in-out 0.3s, background-color ease-in-out 0.3s;
 }
 
 .modal-container.background.in {
-    background: rgba(0, 0, 0, 0.5);
+    background-color: var(--color-fade);
 }
 
 .hidden {
@@ -1116,5 +1221,9 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 
 	#panel-container.toggled > #fixed-panel {
 		display: none;
+	}
+
+	.simple-filter {
+		width: auto;
 	}
 }

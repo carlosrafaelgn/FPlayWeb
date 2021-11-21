@@ -72,6 +72,7 @@ class AppUI {
 
 	private static playlistControl: ListControl<Song>;
 
+	private static graphicalFilterControlType: HTMLButtonElement;
 	private static graphicalFilterControlEnabled: HTMLInputElement;
 
 	private static _loading = false;
@@ -189,7 +190,7 @@ class AppUI {
 				--thin-border: ${_thinBorderPX}px;
 				--thick-border: ${_thickBorderPX}px;
 				--scrollbar-size: ${AppUI.scrollbarSizeREM}rem;
-				--optional-panel-container-height: ${(348 + AppUI.buttonSizePX)}px;
+				--optional-panel-container-height: ${(356 + AppUI.buttonSizePX)}px;
 			}`;
 
 			//if (App.player)
@@ -338,6 +339,10 @@ class AppUI {
 		AppUI.playlistControl = new ListControl("playlist-control");
 		AppUI.playlistControl.onitemclicked = AppUI.playlistControlItemClicked;
 		AppUI.playlistControl.onitemcontextmenu = AppUI.playlistControlItemContextMenu;
+
+		AppUI.graphicalFilterControlType = document.getElementById("graphical-filter-control-type") as HTMLButtonElement;
+		ButtonControl.setText(AppUI.graphicalFilterControlType, appSettings.graphicalFilterControlSimpleMode ? Strings.TraditionalFilter : Strings.AdvancedFilter);
+		AppUI.graphicalFilterControlType.onclick = AppUI.graphicalFilterControlTypeClicked;
 
 		AppUI.graphicalFilterControlEnabled = document.getElementById("graphical-filter-control-enabled") as HTMLInputElement;
 		AppUI.graphicalFilterControlEnabled.checked = appSettings.graphicalFilterControlEnabled || false;
@@ -558,6 +563,14 @@ class AppUI {
 			return;
 
 		App.player.play(index);
+	}
+
+	private static graphicalFilterControlTypeClicked(): void {
+		if (!App.player)
+			return;
+
+		App.player.graphicalFilterControl.simpleMode = !App.player.graphicalFilterControl.simpleMode;
+		ButtonControl.setText(AppUI.graphicalFilterControlType, App.player.graphicalFilterControl.simpleMode ? Strings.TraditionalFilter : Strings.AdvancedFilter);
 	}
 
 	private static graphicalFilterControlEnabledClicked(): void {

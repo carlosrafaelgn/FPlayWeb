@@ -31,7 +31,7 @@ class DataWriter {
 	private _length: number;
 	private _capacity: number;
 
-	constructor(initialCapacity?: number) {
+	public constructor(initialCapacity?: number) {
 		this._capacity = ((initialCapacity && initialCapacity > 0) ? initialCapacity : 16384);
 		this.arrayBuffer = new ArrayBuffer(this._capacity);
 		this.dataView = new DataView(this.arrayBuffer);

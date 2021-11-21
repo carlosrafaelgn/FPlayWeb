@@ -32,12 +32,16 @@ class GraphicalFilterControl { //extends HTMLElement {
 		"Powerful": "oaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGgoKCgoKCgoKCfn5+fn5+enp6enp2dnZ2cnJybm5qampqZmZmYmJiXl5eWlpWVlZSUlJOTkpKSkZGRkZCQkI+Pj46Ojo6NjY2NjYyMjIyLi4uLi4uKioqKioqKioqKiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmKioqKioqKioqKioqKiouLi4uLjIyMjIyNjY2Njo6Ojo+Pj4+QkJCRkpKSk5OTk5SUlJWVlZWWlpaXl5eXmJiYmZmZmZqampqbm5ubnJycnJ2dnZ2enp6enp+fn5+fn6CgoKCgoKCgoKGhoaGhoaGhoaGhoaGhoaE="
 	};
 
-	public filterChangedCallback: FilterChangedCallback | null;
-	public editor: GraphicalFilterEditorControl;
+	private readonly container: HTMLDivElement;
+	private readonly simpleEditor: SimpleFilterEditorControl;
+	public readonly editor: GraphicalFilterEditorControl;
 
 	private _enabled: boolean;
+	private _simpleMode: boolean;
 
-	constructor(editorElement: HTMLDivElement, audioContext: AudioContext, enabled?: boolean) {
+	public filterChangedCallback: FilterChangedCallback | null;
+
+	public constructor(container: HTMLDivElement, audioContext: AudioContext, enabled?: boolean, simpleMode?: boolean) {
 		//super();
 
 		//const shadowRoot = this.attachShadow({ mode: "open" }),
@@ -52,7 +56,19 @@ class GraphicalFilterControl { //extends HTMLElement {
 
 		this.filterChangedCallback = null;
 		this._enabled = !!enabled;
-		this.editor = new GraphicalFilterEditorControl(editorElement, 2048, audioContext, this.filterChanged.bind(this), InternalStorage.loadGraphicalFilterEditorSettings(), {
+		this._simpleMode = !!simpleMode;
+
+		this.container = container;
+
+		let element = document.createElement("div");
+		if (!this._simpleMode)
+			container.appendChild(element);
+
+		const graphicalFilterEditorSettings = InternalStorage.loadGraphicalFilterEditorSettings();
+		if (this._simpleMode)
+			graphicalFilterEditorSettings.editMode = GraphicalFilterEditorControl.editModeShelfEq;
+
+		this.editor = new GraphicalFilterEditorControl(element, 2048, audioContext, this.filterChanged.bind(this), graphicalFilterEditorSettings, {
 			svgRenderer: true,
 
 			radioHTML: Icon.createHTML("icon-radio", false, "menu-icon"),
@@ -63,6 +79,11 @@ class GraphicalFilterControl { //extends HTMLElement {
 			openMenuHTML: '<span>' + Icon.createHTML("icon-expand-less", true) + '</span>',
 			closeMenuHTML: '<span>' + Icon.createHTML("icon-expand-more", true) + '</span>'
 		});
+
+		element = document.createElement("div");
+		if (this._simpleMode)
+			container.appendChild(element);
+		this.simpleEditor = new SimpleFilterEditorControl(element, this.editor);
 
 		const labels = this.editor.element.querySelectorAll("div.GELBL");
 		for (let i = labels.length - 1; i >= 0; i--) {
@@ -94,6 +115,39 @@ class GraphicalFilterControl { //extends HTMLElement {
 			return;
 
 		this._enabled = enabled;
+
+		if (this.filterChangedCallback && this.editor && this.editor.filter)
+			this.filterChangedCallback();
+	}
+
+	public get simpleMode(): boolean {
+		return this._simpleMode;
+	}
+
+	public set simpleMode(simpleMode: boolean) {
+		if (this._simpleMode === simpleMode)
+			return;
+
+		this._simpleMode = simpleMode;
+
+		let remove: HTMLElement | null = null;
+		let add: HTMLElement | null = null;
+
+		if (simpleMode) {
+			this.editor.editMode = GraphicalFilterEditorControl.editModeShelfEq;
+			this.simpleEditor.updateSliders();
+			remove = this.editor.element;
+			add = this.simpleEditor.element;
+		} else {
+			remove = this.simpleEditor.element;
+			add = this.editor.element;
+		}
+
+		if (remove && remove.parentNode)
+			remove.parentNode.removeChild(remove);
+
+		if (this.container && add && !add.parentNode)
+			this.container.appendChild(add);
 
 		if (this.filterChangedCallback && this.editor && this.editor.filter)
 			this.filterChangedCallback();

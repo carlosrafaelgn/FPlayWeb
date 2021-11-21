@@ -43,6 +43,7 @@ class SliderControl {
 	private _min: number;
 	private _max: number;
 	private _value: number;
+	private valueOnMouseDown: number;
 	private delta: number;
 	private percent: number;
 
@@ -51,8 +52,9 @@ class SliderControl {
 
 	public onvaluechanged: ((value: number) => void) | null;
 	public ondragended: ((value: number) => void) | null;
+	public onkeyboardchanged: ((value: number) => void) | null;
 
-	constructor(element: string | HTMLElement, keyboardFocusable: boolean, vertical: boolean, min: number, max: number, value?: number, leftChild?: HTMLElement | null, rightChild?: HTMLElement | null) {
+	public constructor(element: string | HTMLElement, keyboardFocusable: boolean, vertical: boolean, min: number, max: number, value?: number, leftChild?: HTMLElement | null, rightChild?: HTMLElement | null) {
 		this._element = (((typeof element) === "string") ? document.getElementById(element as string) : element) as HTMLElement;
 		this._element.classList.add("slider-control");
 		if (vertical)
@@ -75,6 +77,7 @@ class SliderControl {
 
 		this.onvaluechanged = null;
 		this.ondragended = null;
+		this.onkeyboardchanged = null;
 
 		const container = document.createElement("span");
 		container.className = "slider-control-container" + classSuffix;
@@ -119,6 +122,7 @@ class SliderControl {
 		this._value = min - 1;
 		this.percent = 0;
 		this.value = (value === undefined ? min : value);
+		this.valueOnMouseDown = this._value;
 
 		this.pointerHandler = new PointerHandler(container, this.mouseDown.bind(this), this.mouseMove.bind(this), this.mouseUp.bind(this));
 
@@ -314,6 +318,8 @@ class SliderControl {
 		// Firefox ignores :active pseudo-class when event.preventDefault() is called
 		this.container.classList.add("active");
 
+		this.valueOnMouseDown = this._value;
+
 		this.mouseMove(e);
 
 		return true;
@@ -338,25 +344,38 @@ class SliderControl {
 		// Firefox ignores :active pseudo-class when event.preventDefault() is called
 		this.container.classList.remove("active");
 
-		if (this.ondragended)
+		if (this.ondragended && this._value !== this.valueOnMouseDown)
 			this.ondragended(this._value);
 	}
 
 	private keyDown(e: KeyboardEvent): any {
+		if (this.pointerHandler.captured)
+			return;
+
+		const oldValue = this._value;
+
 		switch (e.key) {
 			case "ArrowDown":
 			case "ArrowLeft":
-				this.value = this._value - 1;
+				this.value = oldValue - 1;
+				if (this.onkeyboardchanged && this._value !== oldValue)
+					this.onkeyboardchanged(this._value);
 				break;
 			case "ArrowUp":
 			case "ArrowRight":
-				this.value = this._value + 1;
+				this.value = oldValue + 1;
+				if (this.onkeyboardchanged && this._value !== oldValue)
+					this.onkeyboardchanged(this._value);
 				break;
 			case "PageDown":
-				this.value = this._value - (this.delta * 0.1);
+				this.value = oldValue - (this.delta * 0.1);
+				if (this.onkeyboardchanged && this._value !== oldValue)
+					this.onkeyboardchanged(this._value);
 				break;
 			case "PageUp":
-				this.value = this._value + (this.delta * 0.1);
+				this.value = oldValue + (this.delta * 0.1);
+				if (this.onkeyboardchanged && this._value !== oldValue)
+					this.onkeyboardchanged(this._value);
 				break;
 		}
 	}

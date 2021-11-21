@@ -83,8 +83,8 @@ class CheckboxControl {
 
 		button.appendChild(span);
 		span.appendChild(input);
-		span.appendChild(Icon.createLarge("icon-checkbox-0"));
-		span.appendChild(Icon.createLarge("icon-checkbox-1"));
+		span.appendChild(Icon.createLarge("icon-checkbox-0", "margin"));
+		span.appendChild(Icon.createLarge("icon-checkbox-1", "margin orange"));
 		span.appendChild(document.createTextNode(label));
 		input.removeAttribute("value");
 		input.removeAttribute("title");

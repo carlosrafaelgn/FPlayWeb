@@ -55,7 +55,7 @@ class BufferedFileHandle {
 		return this._eof;
 	}
 
-	constructor(file: File, buffer: Uint8Array) {
+	public constructor(file: File, buffer: Uint8Array) {
 		if (buffer.length < BufferedFileHandle.minBufferLength)
 			throw new Error("Buffer length too small: " + buffer.length);
 		this.file = file;

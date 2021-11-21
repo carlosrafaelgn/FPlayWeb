@@ -25,7 +25,7 @@
 //
 
 class PlaylistAdapter extends ListAdapter<Song> {
-	constructor(list: Playlist) {
+	public constructor(list: Playlist) {
 		super(list);
 	}
 
@@ -107,7 +107,7 @@ class Playlist extends List<Song> {
 
 	public onsonglengthchanged: ((song: Song) => void) | null;
 
-	constructor(songs?: Song[] | null, currentIndex?: number) {
+	public constructor(songs?: Song[] | null, currentIndex?: number) {
 		super(songs, currentIndex);
 
 		this.onsonglengthchanged = null;

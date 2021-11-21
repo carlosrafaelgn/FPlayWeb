@@ -166,10 +166,10 @@ class Modal {
 		// https://developer.mozilla.org/en-US/docs/Web/CSS/::backdrop
 		// https://caniuse.com/mdn-api_htmldialogelement_showmodal
 		this.containerElement = document.createElement("div");
-		this.containerElement.className = (!options.transparentBackground ? "modal-container background" : "modal-container");
+		this.containerElement.className = (!options.transparentBackground ? "modal-container fade background" : "modal-container fade");
 
 		this.modalElement = document.createElement("form");
-		this.modalElement.className = "modal slide";
+		this.modalElement.className = "modal";
 		this.modalElement.onsubmit = this.submit.bind(this);
 
 		this.modalHeaderElement = document.createElement("div");
@@ -246,7 +246,6 @@ class Modal {
 				options.onshowing();
 
 			this.containerElement.classList.add("in");
-			this.modalElement.classList.add("in");
 
 			setTimeout(() => {
 				this.fading = false;
@@ -279,7 +278,6 @@ class Modal {
 
 		this.fading = true;
 		this.containerElement.classList.remove("in");
-		this.modalElement.classList.remove("in");
 
 		setTimeout(() => {
 			Modal.modal = null;

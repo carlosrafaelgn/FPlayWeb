@@ -39,6 +39,8 @@ class Strings {
 	public static Disable = "Disable";
 	public static Enabled = "Enabled";
 	public static Disabled = "Disabled";
+	public static AdvancedFilter = "Advanced Filter";
+	public static TraditionalFilter = "Traditional Filter";
 	public static OK = "OK";
 	public static Cancel = "Cancel";
 	public static Clear = "Clear";
@@ -81,10 +83,12 @@ This project is licensed under the <a target="_blank" href="https://github.com/c
 			Strings.About = "Sobre";
 			Strings.Edit = "Edit";
 			Strings.Delete = "Excluir";
-			Strings.Enable = "Habilitar";
-			Strings.Disable = "Desabilitar";
-			Strings.Enabled = "Habilitado";
-			Strings.Disabled = "Desabilitado";
+			Strings.Enable = "Ativar";
+			Strings.Disable = "Desativar";
+			Strings.Enabled = "Ativado";
+			Strings.Disabled = "Desativado";
+			Strings.AdvancedFilter = "Filtro Avançado";
+			Strings.TraditionalFilter = "Filtro Tradicional";
 			//Strings.OK = "OK";
 			Strings.Cancel = "Cancelar";
 			Strings.Clear = "Limpar";

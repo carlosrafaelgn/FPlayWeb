@@ -29,7 +29,7 @@ abstract class ListAdapter<T extends ListItem> {
 
 	public control: ListControl<T> | null;
 
-	constructor(list: List<T>, control?: ListControl<T> | null) {
+	public constructor(list: List<T>, control?: ListControl<T> | null) {
 		this.list = list;
 
 		this.control = (control || null);
@@ -89,7 +89,7 @@ abstract class List<T extends ListItem> {
 
 	public modified: boolean;
 
-	constructor(items?: T[] | null, currentIndex?: number) {
+	public constructor(items?: T[] | null, currentIndex?: number) {
 		this.items = (items || []);
 
 		this._currentIndex = (currentIndex === undefined ? -1 : currentIndex);
