@@ -25,9 +25,11 @@
 //
 
 class ListControlItem<T extends ListItem> {
+	// index is only used when useVirtualItems is false
 	public index: number;
 	public selected: boolean;
 	public current: boolean;
+	// item is only used when useVirtualItems is false
 	public item: T | null;
 	public readonly element: HTMLElement;
 
@@ -47,14 +49,22 @@ class ListControlItem<T extends ListItem> {
 		if (this.element)
 			this.element.classList.remove("current", "selected");
 	}
+
+	public zero(): void {
+		this.index = -1;
+		this.selected = false;
+		this.current = false;
+		this.item = null;
+		(this as any).element = null;
+	}
 }
 
 class ListControl<T extends ListItem> {
 	public readonly element: HTMLElement;
 
 	private readonly container: HTMLDivElement;
-
 	private readonly resizeObserver: ResizeObserver;
+	private readonly useVirtualItems: boolean;
 
 	private _adapter: ListAdapter<T> | null;
 
@@ -63,24 +73,30 @@ class ListControl<T extends ListItem> {
 	private itemHeightAndMargin: number;
 	private firstIndex: number;
 	private lastIndex: number;
-	private currentItem: T | null;
+	private currentListItem: T | null;
+	// currentItem is only used when useVirtualItems is false
+	private currentItem: ListControlItem<T> | null;
 	private clientHeight: number;
 	private containerHeight: number;
 	private visibleCount: number;
 	private items: ListControlItem<T>[];
-	private refreshItemsEnqueued: boolean;
+	private refreshVisibleItemsEnqueued: boolean;
+	private notifyCurrentItemChangedEnqueued: boolean;
 
 	private readonly boundZoomChanged: any;
-	private readonly boundRefreshItems: any;
+	private readonly boundRefreshVisibleItemsInternal: any;
+	private readonly boundNotifyCurrentItemChangedInternal: any;
 
-	public onitemclicked: ((item: T, index: number) => void) | null;
+	public onitemclicked: ((item: T, index: number, button: number) => void) | null;
 	public onitemcontextmenu: ((item: T, index: number) => void) | null;
 
-	public constructor(element: string | HTMLElement) {
+	public constructor(element: string | HTMLElement, useVirtualItems: boolean) {
 		this.element = (((typeof element) === "string") ? document.getElementById(element as string) : element) as HTMLElement;
 		this.element.classList.add("list", "scrollable");
 		if (!this.element.getAttribute("tabindex"))
 			this.element.setAttribute("tabindex", "0");
+
+		this.useVirtualItems = useVirtualItems;
 
 		const container = document.createElement("div");
 		container.className = "list-container";
@@ -90,9 +106,12 @@ class ListControl<T extends ListItem> {
 		this._adapter = null;
 
 		this.boundZoomChanged = this.zoomChanged.bind(this);
-		this.boundRefreshItems = this.refreshVisibleItemsInternal.bind(this);
+		this.boundRefreshVisibleItemsInternal = this.refreshVisibleItemsInternal.bind(this);
 
-		this.element.addEventListener("scroll", this.scroll.bind(this), { passive: true });
+		if (useVirtualItems)
+			this.element.addEventListener("scroll", this.scroll.bind(this), { passive: true });
+		else
+			this.boundNotifyCurrentItemChangedInternal = this.notifyCurrentItemChangedInternal.bind(this);
 
 		this.resizeObserver = new ResizeObserver(this.resize.bind(this));
 		this.resizeObserver.observe(this.element);
@@ -102,12 +121,14 @@ class ListControl<T extends ListItem> {
 		this.itemHeightAndMargin = 2;
 		this.firstIndex = 0;
 		this.lastIndex = 0;
+		this.currentListItem = null;
 		this.currentItem = null;
 		this.clientHeight = 1;
 		this.containerHeight = 0;
 		this.visibleCount = 1;
 		this.items = [];
-		this.refreshItemsEnqueued = false;
+		this.refreshVisibleItemsEnqueued = false;
+		this.notifyCurrentItemChangedEnqueued = false;
 
 		this.onitemclicked = null;
 		this.onitemcontextmenu = null;
@@ -155,6 +176,9 @@ class ListControl<T extends ListItem> {
 			adapter.control = this;
 
 			this.prepareAdapter();
+
+			if (!this.useVirtualItems && adapter.list.length)
+				this.notifyItemsAdded(0, adapter.list.length);
 		}
 	}
 
@@ -166,7 +190,7 @@ class ListControl<T extends ListItem> {
 		this.itemHeight = adapter.itemHeight;
 		this.itemMargin = AppUI.thickBorderPX;
 		this.itemHeightAndMargin = this.itemHeight + this.itemMargin;
-		this.currentItem = adapter.list.currentItem;
+		this.currentListItem = adapter.list.currentItem;
 
 		this.adjustContainerHeight();
 		this.resize();
@@ -184,7 +208,8 @@ class ListControl<T extends ListItem> {
 			items[i].index = -1;
 		}
 
-		this.scroll();
+		if (this.useVirtualItems)
+			this.scroll();
 
 		/*const items = this.items,
 			length = adapter.list.length,
@@ -219,11 +244,18 @@ class ListControl<T extends ListItem> {
 			container.removeChild(container.firstChild);
 
 		const items = this.items;
-		for (let i = items.length - 1; i >= 0; i--)
-			items[i].reset();
+		if (this.useVirtualItems) {
+			for (let i = items.length - 1; i >= 0; i--)
+				items[i].reset();
+		} else {
+			for (let i = items.length - 1; i >= 0; i--)
+				items[i].zero();
+			items.splice(0);
+		}
 
 		this.firstIndex = 0;
 		this.lastIndex = 0;
+		this.currentListItem = null;
 		this.currentItem = null;
 		this.element.scrollTop = 0;
 		this.containerHeight = 0;
@@ -268,7 +300,6 @@ class ListControl<T extends ListItem> {
 		if (firstIndex > oldFirstIndex) {
 			const delta = firstIndex - oldFirstIndex;
 			if (delta && delta < visibleCount) {
-				const count = visibleCount - delta;
 				for (let src = delta, dst = 0; src < visibleCount; src++, dst++) {
 					const temp = items[dst];
 					items[dst] = items[src];
@@ -288,7 +319,7 @@ class ListControl<T extends ListItem> {
 
 		const list = adapter.list,
 			length = list.length,
-			currentItem = adapter.list.currentItem,
+			currentListItem = adapter.list.currentItem,
 			container = this.container;
 
 		let i = 0;
@@ -299,7 +330,7 @@ class ListControl<T extends ListItem> {
 				item = items[i];
 
 			if (item.item !== listItem) {
-				const current = (currentItem === listItem);
+				const current = (currentListItem === listItem);
 				if (item.current !== current) {
 					item.current = current;
 					if (current)
@@ -317,7 +348,7 @@ class ListControl<T extends ListItem> {
 
 			if (item.index !== firstIndex) {
 				item.index = firstIndex;
-				item.element.style.top = top + "px";
+				item.element.style.transform = "translateY(" + top + "px)";
 			}
 		}
 
@@ -337,7 +368,7 @@ class ListControl<T extends ListItem> {
 	}
 
 	private refreshVisibleItemsInternal(): void {
-		this.refreshItemsEnqueued = false;
+		this.refreshVisibleItemsEnqueued = false;
 
 		const adapter = this._adapter,
 			element = this.element;
@@ -350,10 +381,19 @@ class ListControl<T extends ListItem> {
 			itemHeightAndMargin = this.itemHeightAndMargin,
 			list = adapter.list,
 			length = list.length,
-			currentItem = adapter.list.currentItem,
+			currentListItem = adapter.list.currentItem,
 			container = this.container;
 
-		this.currentItem = currentItem;
+		if (!this.useVirtualItems) {
+			const visibleCount = this.visibleCount;
+
+			for (let i = 0, firstIndex = this.indexFromY(0); i <= visibleCount && firstIndex < length; i++, firstIndex++)
+				adapter.prepareElement(list.item(firstIndex), firstIndex, length, items[firstIndex].element);
+
+			return;
+		}
+
+		this.currentListItem = currentListItem;
 
 		let i = 0,
 			firstIndex = this.firstIndex;
@@ -371,7 +411,7 @@ class ListControl<T extends ListItem> {
 			const listItem = list.item(firstIndex),
 				item = items[i];
 
-			const current = (currentItem === listItem);
+			const current = (currentListItem === listItem);
 			if (item.current !== current) {
 				item.current = current;
 				if (current)
@@ -388,7 +428,7 @@ class ListControl<T extends ListItem> {
 
 			if (item.index !== firstIndex) {
 				item.index = firstIndex;
-				item.element.style.top = top + "px";
+				item.element.style.transform = "translateY(" + top + "px)";
 			}
 		}
 
@@ -419,22 +459,26 @@ class ListControl<T extends ListItem> {
 		if (this.visibleCount !== visibleCount) {
 			this.visibleCount = visibleCount;
 
-			const items = this.items;
+			if (this.useVirtualItems) {
+				const items = this.items;
 
-			// Check out the comments inside scroll() and refreshVisibleItemsInternal(),
-			// for an explanation about this offset
-			while ((visibleCount + 4) > items.length)
-				items.push(new ListControlItem(adapter.createEmptyElement()));
+				// Check out the comments inside scroll() and refreshVisibleItemsInternal(),
+				// for an explanation about this offset
+				while ((visibleCount + 4) > items.length)
+					items.push(new ListControlItem<T>(adapter.createEmptyElement("list-item virtual")));
+			}
 		}
 
 		if (oldClientHeight !== clientHeight) {
 			this.clientHeight = clientHeight;
-			this.scroll();
+
+			if (this.useVirtualItems)
+				this.scroll();
 		}
 	}
 
 	private containerClick(e: MouseEvent): void {
-		if (!this.element || !this.adapter || !e.target || !(e.target as HTMLElement).classList.contains("list-item") || !this.onitemclicked)
+		if (!this.element || !this.adapter || !this.onitemclicked) // || !e.target || !(e.target as HTMLElement).classList.contains("list-item"))
 			return;
 
 		const rect = this.element.getBoundingClientRect(),
@@ -443,13 +487,13 @@ class ListControl<T extends ListItem> {
 		if (index >= 0) {
 			const item = this.adapter.list.item(index);
 			if (item)
-				this.onitemclicked(item, index);
+				this.onitemclicked(item, index, e.button);
 		}
 	}
 
-	private containerContextMenu(e: MouseEvent): void {
-		if (!this.element || !this.adapter || !e.target || !(e.target as HTMLElement).classList.contains("list-item") || !this.onitemcontextmenu)
-			return;
+	private containerContextMenu(e: MouseEvent): boolean {
+		if (!this.element || !this.adapter || !this.onitemcontextmenu) // || !e.target || !(e.target as HTMLElement).classList.contains("list-item"))
+			return cancelEvent(e);
 
 		const rect = this.element.getBoundingClientRect(),
 			index = this.indexFromY(e.clientY - rect.top);
@@ -459,6 +503,8 @@ class ListControl<T extends ListItem> {
 			if (item)
 				this.onitemcontextmenu(item, index);
 		}
+
+		return cancelEvent(e);
 	}
 
 	public yFromIndex(index: number): number {
@@ -468,7 +514,7 @@ class ListControl<T extends ListItem> {
 	public indexFromY(y: number): number {
 		if (!this.element || !this.adapter)
 			return -1;
-		const index = ((y + this.element.scrollTop) / this.itemHeightAndMargin) | 0;
+		const index = ((y + this.element.scrollTop + 0.9) / this.itemHeightAndMargin) | 0;
 		return ((index < 0 || index >= this.adapter.list.length) ? -1 : index);
 	}
 
@@ -497,9 +543,9 @@ class ListControl<T extends ListItem> {
 	}
 
 	public refreshVisibleItems(): void {
-		if (!this.refreshItemsEnqueued) {
-			this.refreshItemsEnqueued = true;
-			queueMicrotask(this.boundRefreshItems);
+		if (!this.refreshVisibleItemsEnqueued) {
+			this.refreshVisibleItemsEnqueued = true;
+			queueMicrotask(this.boundRefreshVisibleItemsInternal);
 		}
 	}
 
@@ -508,14 +554,130 @@ class ListControl<T extends ListItem> {
 	}
 
 	public notifyItemsAdded(firstIndex: number, lastIndex: number): void {
-		this.refreshVisibleItems();
+		if (this.useVirtualItems) {
+			this.refreshVisibleItems();
+		} else {
+			const adapter = this.adapter,
+				count = lastIndex - firstIndex + 1;
+
+			if (!adapter || count <= 0)
+				return;
+
+			const container = this.container,
+				items = this.items,
+				list = adapter.list,
+				length = list.length,
+				currentListItem = list.currentItem,
+				newItems: ListControlItem<T>[] = new Array(count);
+
+			for (let i = lastIndex; i >= firstIndex; i--) {
+				const listItem = list.item(i),
+					item = new ListControlItem<T>(adapter.createEmptyElement("list-item real"));
+
+				adapter.prepareElement(listItem, i, length, item.element);
+				newItems[i - firstIndex] = item;
+
+				if (currentListItem === listItem) {
+					if (this.currentItem) {
+						this.currentItem.current = false;
+						this.currentItem.element.classList.remove("current");
+					}
+
+					this.currentItem = item;
+					item.current = true;
+					item.element.classList.add("current");
+				}
+			}
+
+			const insertBeforeReference = (firstIndex >= items.length ? null : items[firstIndex].element);
+
+			if (firstIndex >= items.length)
+				items.push(...newItems);
+			else
+				items.splice(firstIndex, 0, ...newItems);
+
+			if (this.items.length !== list.length)
+				throw new Error("Assertion error: this.items.length !== list.length");
+
+			this.adjustContainerHeight();
+
+			for (let i = 0; i < count; i++)
+				container.insertBefore(newItems[i].element, insertBeforeReference);
+
+			for (let i = items.length - 1; i > lastIndex; i--)
+				adapter.prepareElementIndexOrLengthChanged(list.item(i), i, length, items[i].element);
+
+			for (let i = firstIndex - 1; i >= 0; i--)
+				adapter.prepareElementIndexOrLengthChanged(list.item(i), i, length, items[i].element);
+		}
 	}
 
 	public notifyItemsRemoved(firstIndex: number, lastIndex: number): void {
-		this.refreshVisibleItems();
+		if (this.useVirtualItems) {
+			this.refreshVisibleItems();
+		} else {
+			const adapter = this.adapter,
+				count = lastIndex - firstIndex + 1;
+
+			if (!adapter || count <= 0)
+				return;
+
+			const container = this.container,
+				items = this.items,
+				list = adapter.list,
+				length = list.length,
+				removedItems = items.splice(firstIndex, count);
+
+			for (let i = removedItems.length - 1; i >= 0; i--) {
+				const item = removedItems[i];
+
+				if (item.current)
+					this.currentItem = null;
+
+				container.removeChild(item.element);
+				item.zero();
+			}
+
+			if (this.items.length !== list.length)
+				throw new Error("Assertion error: this.items.length !== list.length");
+
+			for (let i = items.length - 1; i >= 0; i--)
+				adapter.prepareElementIndexOrLengthChanged(list.item(i), i, length, items[i].element);
+
+			this.adjustContainerHeight();
+		}
 	}
 
-	public notifyCurrentItemChanged(): void {
-		this.refreshVisibleItems();
+	public notifyCurrentItemChanged(oldIndex: number, newIdex: number): void {
+		if (this.useVirtualItems) {
+			this.refreshVisibleItems();
+		} else if (!this.notifyCurrentItemChangedEnqueued) {
+			this.notifyCurrentItemChangedEnqueued = true;
+			queueMicrotask(this.boundNotifyCurrentItemChangedInternal);
+		}
+	}
+
+	private notifyCurrentItemChangedInternal(): void {
+		this.notifyCurrentItemChangedEnqueued = false;
+
+		const adapter = this.adapter;
+
+		if (!adapter)
+			return;
+
+		if (this.currentItem) {
+			this.currentItem.current = false;
+			this.currentItem.element.classList.remove("current");
+		}
+
+		const currentIndex = adapter.list.currentIndex;
+
+		if (currentIndex >= 0 && currentIndex < this.items.length) {
+			this.currentItem = this.items[currentIndex];
+			this.currentItem.current = true;
+			this.currentItem.element.classList.add("current");
+		} else {
+			this.currentItem = null;
+		}
 	}
 }

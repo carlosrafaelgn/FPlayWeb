@@ -33,9 +33,9 @@ class PlaylistAdapter extends ListAdapter<Song> {
 		return AppUI.remToPX(14);
 	}
 
-	public createEmptyElement(): HTMLElement {
+	public createEmptyElement(baseClass: string): HTMLElement {
 		const div = document.createElement("div");
-		div.className = "list-item playlist-item";
+		div.className = baseClass + " playlist-item";
 
 		div.appendChild(Icon.create("icon-artist", "orange margin"));
 
@@ -65,6 +65,10 @@ class PlaylistAdapter extends ListAdapter<Song> {
 		(element.childNodes[1].firstChild as Text).nodeValue = item.artist;
 		(element.childNodes[4] as Text).nodeValue = item.title;
 		(element.childNodes[6].firstChild as Text).nodeValue = item.length;
+		(element.childNodes[7].firstChild as Text).nodeValue = `${(index + 1)} / ${length}`;
+	}
+
+	public prepareElementIndexOrLengthChanged(item: Song, index: number, length: number, element: HTMLElement): void {
 		(element.childNodes[7].firstChild as Text).nodeValue = `${(index + 1)} / ${length}`;
 	}
 }

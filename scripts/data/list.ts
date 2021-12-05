@@ -67,16 +67,18 @@ abstract class ListAdapter<T extends ListItem> {
 			this.control.notifyItemsRemoved(firstIndex, lastIndex);
 	}
 
-	public currentItemChanged(): void {
+	public currentItemChanged(oldIndex: number, newIdex: number): void {
 		if (this.control)
-			this.control.notifyCurrentItemChanged();
+			this.control.notifyCurrentItemChanged(oldIndex, newIdex);
 	}
 
 	public abstract get itemHeight(): number;
 
-	public abstract createEmptyElement(): HTMLElement;
+	public abstract createEmptyElement(baseClass: string): HTMLElement;
 
 	public abstract prepareElement(item: T, index: number, length: number, element: HTMLElement): void;
+
+	public abstract prepareElementIndexOrLengthChanged(item: T, index: number, length: number, element: HTMLElement): void;
 }
 
 abstract class List<T extends ListItem> {
@@ -144,7 +146,7 @@ abstract class List<T extends ListItem> {
 	}
 
 	public get currentIndex(): number {
-		return this._currentIndex;
+		return (this._currentItem ? this._currentIndex : -1);
 	}
 
 	public set currentIndex(currentIndex: number) {
@@ -153,17 +155,19 @@ abstract class List<T extends ListItem> {
 		if (currentIndex < 0)
 			currentIndex = 0;
 
-		const newItem = ((currentIndex < this.items.length) ? this.items[currentIndex] : null);
+		const newItem = ((currentIndex < this.items.length) ? this.items[currentIndex] : null),
+			oldIndex = this._currentIndex,
+			oldItem = this._currentItem;
 
 		this._currentIndex = (newItem ? currentIndex : -1);
 
-		if (this._currentItem !== newItem) {
+		if (oldIndex !== currentIndex || oldItem !== newItem) {
 			this.modified = true;
 
 			this._currentItem = newItem;
 
 			if (this._adapter)
-				this._adapter.currentItemChanged();
+				this._adapter.currentItemChanged(oldItem ? oldIndex : -1, this._currentIndex);
 		}
 	}
 
@@ -205,7 +209,8 @@ abstract class List<T extends ListItem> {
 	}
 
 	public clear(): void {
-		const oldCurrentItem = this._currentItem;
+		const oldCurrentIndex = this._currentIndex,
+			oldCurrentItem = this._currentItem;
 
 		if (this.items)
 			(this.items as Array<any>).fill(null);
@@ -220,7 +225,7 @@ abstract class List<T extends ListItem> {
 			this._adapter.cleared();
 
 			if (oldCurrentItem)
-				this._adapter.currentItemChanged();
+				this._adapter.currentItemChanged(oldCurrentIndex, -1);
 		}
 	}
 
@@ -240,6 +245,9 @@ abstract class List<T extends ListItem> {
 		if (this._adapter)
 			this._adapter.itemsAdded(index, index);
 
+		if (this._currentIndex >= 0 && index <= this._currentIndex)
+			this._currentIndex++;
+
 		return index;
 	}
 
@@ -258,6 +266,9 @@ abstract class List<T extends ListItem> {
 
 		if (this._adapter)
 			this._adapter.itemsAdded(index, index + items.length - 1);
+
+		if (this._currentIndex >= 0 && index <= this._currentIndex)
+			this._currentIndex += items.length;
 
 		return index;
 	}
@@ -286,7 +297,7 @@ abstract class List<T extends ListItem> {
 				this._currentItem = null;
 
 				if (this._adapter)
-					this._adapter.currentItemChanged();
+					this._adapter.currentItemChanged(this._currentIndex, -1);
 			}
 		}
 

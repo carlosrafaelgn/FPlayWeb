@@ -23,23 +23,6 @@
 }
 
 :root {
-	--color-background: #1c1c1c;
-
-	--color-highlight: #303030;
-	--color-highlight-thin: #06f;
-	--color-highlight-hover: #484848;
-	--color-highlight-active: #5a5a5a;
-
-	--color-close-hover: #c00;
-	--color-close-active: #d11;
-
-	--color-shadow-modal: #000;
-
-	--color-fade: rgba(0, 0, 0, 0.5);
-
-	--color-text: #fff;
-	--color-text-secodary: #999;
-
 	--color-text-on-blue: #fff;
 	--color-blue: #06f;
 	--color-blue-hover: #17f;
@@ -77,6 +60,25 @@
 	--color-white: #fff;
 	--color-white-hover: #fff;
 	--color-white-active: #fff;
+
+	--color-background: #1c1c1c;
+
+	--color-highlight: #303030;
+	--color-highlight-hover: #484848;
+	--color-highlight-active: #5a5a5a;
+
+	--color-close-hover: #c00;
+	--color-close-active: #d11;
+
+	--color-shadow-modal: #000;
+
+	--color-fade: rgba(0, 0, 0, 0.5);
+
+	--color-text: #fff;
+	--color-text-secodary: #999;
+
+	--color-border: var(--color-blue);
+	--color-border-secondary: var(--color-orange);
 }
 
 * {
@@ -84,7 +86,7 @@
 }
 
 html,
-.modal-body {
+.modal {
 	background-color: var(--color-background);
 }
 
@@ -162,7 +164,7 @@ h1 {
 }
 
 h1,
-.modal,
+.modal-header,
 .slider-control-ruler,
 .list-item {
 	background-color: var(--color-highlight);
@@ -302,19 +304,20 @@ a:active {
 	text-align: center;
 }
 
-.modal-header, .modal-footer {
-	padding: 2rem;
-}
-
 .modal-header {
+	padding: 2rem;
 	font-weight: 700;
+    border-bottom: var(--thin-border) solid var(--color-border-secondary);
 }
 
 .modal-body {
 	padding: 8rem 2rem;
-    border-color: var(--color-highlight-thin);
-    border-style: solid none;
-    border-width: var(--thin-border);
+}
+
+.modal-footer {
+	padding: 2rem 0;
+	margin: 0 2rem;
+    border-top: var(--thin-border) solid var(--color-border);
 }
 
 .btn, .btn > span, .toolbar-sep {
@@ -829,10 +832,8 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 }
 
 .list-item {
-	position: absolute;
 	padding: 1rem;
-	left: 0;
-	right: 0;
+	width: 100%;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -841,6 +842,17 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 .list-item > .icon,
 .list-item > span {
 	pointer-events: none;
+}
+
+.list-item.virtual {
+	position: absolute;
+	left: 0;
+	top: 0;
+}
+
+.list-item.real {
+	position: relative;
+	margin-bottom: var(--thick-border);
 }
 
 .playlist-item {
@@ -911,7 +923,10 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 #optional-panel {
 	position: relative;
 	margin: 2rem 0 2rem 2rem;
+	width: 512px;
+	min-width: 512px;
 	text-align: center;
+	box-sizing: content-box;
 }
 
 #optional-panel-container {
@@ -940,7 +955,7 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 
 .toolbar-sep {
 	height: var(--button-size);
-	border-left: var(--thin-border) solid var(--color-highlight-thin);
+	border-left: var(--thin-border) solid var(--color-border);
 	margin: 0 1rem;
 }
 
@@ -975,6 +990,7 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 
 .simple-filter {
 	width: 512px;
+	white-space: nowrap;
 }
 
 .simple-filter-freq {
@@ -991,7 +1007,7 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 .border-top {
 	margin-top: 2rem;
 	padding-top: 2rem;
-	border-top: var(--thin-border) solid var(--color-highlight-thin);
+	border-top: var(--thin-border) solid var(--color-border);
 }
 
 .toolbar.border-top > .toolbar-left,
@@ -1002,7 +1018,7 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 .border-bottom {
 	margin-bottom: 2rem;
 	padding-bottom: 2rem;
-	border-bottom: var(--thin-border) solid var(--color-highlight-thin);
+	border-bottom: var(--thin-border) solid var(--color-border);
 }
 
 .small-left-margin {
@@ -1207,12 +1223,8 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 		margin-left: 0;
 		margin-right: 0;
 		width: 100%;
+		min-width: 0;
 		overflow: auto;
-	}
-
-	#optional-panel-container {
-		margin-left: auto;
-		margin-right: auto;
 	}
 
 	#panel-container:not(.toggled) > #optional-panel {

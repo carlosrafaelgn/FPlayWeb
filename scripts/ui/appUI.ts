@@ -336,7 +336,7 @@ class AppUI {
 		AppUI.volumeSlider.rightChild = AppUI.volumeLabel;
 		AppUI.volumeSlider.onvaluechanged = AppUI.volumeSliderValueChanged;
 
-		AppUI.playlistControl = new ListControl("playlist-control");
+		AppUI.playlistControl = new ListControl("playlist-control", true);
 		AppUI.playlistControl.onitemclicked = AppUI.playlistControlItemClicked;
 		AppUI.playlistControl.onitemcontextmenu = AppUI.playlistControlItemContextMenu;
 
@@ -551,8 +551,8 @@ class AppUI {
 			AppUI.changeText(AppUI.volumeLabel, AppUI.volumeStr(value));
 	}
 
-	private static playlistControlItemClicked(item: Song, index: number): void {
-		if (!App.player)
+	private static playlistControlItemClicked(item: Song, index: number, button: number): void {
+		if (!App.player || button)
 			return;
 
 		App.player.play(index);
@@ -562,7 +562,7 @@ class AppUI {
 		if (!App.player)
 			return;
 
-		App.player.play(index);
+		//App.player.play(index);
 	}
 
 	private static graphicalFilterControlTypeClicked(): void {
@@ -687,7 +687,7 @@ class AppUI {
 	public static showAbout(): void {
 		Modal.show({
 			html: Strings.AboutHTML,
-			title: Strings.About
+			title: Strings.About + " (v" + (window as any).CACHE_VERSION + ")"
 		});
 	}
 }
