@@ -107,7 +107,7 @@ class InternalStorage {
 	}
 
 	public static loadStereoPannerSettings(): number {
-		return Math.max(-10, Math.min(10, parseInt(localStorage.getItem("stereoPannerSettings") as string) | 0));
+		return Math.max(-StereoPannerControl.maxAbsoluteValue, Math.min(StereoPannerControl.maxAbsoluteValue, parseInt(localStorage.getItem("stereoPannerSettings") as string) | 0));
 	}
 
 	public static saveStereoPannerSettings(pan: number): void {
