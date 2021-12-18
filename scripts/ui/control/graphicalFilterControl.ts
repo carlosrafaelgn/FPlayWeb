@@ -39,9 +39,9 @@ class GraphicalFilterControl { //extends HTMLElement {
 	private _enabled: boolean;
 	private _simpleMode: boolean;
 
-	public filterChangedCallback: FilterChangedCallback | null;
+	public filterChangedCallback: FilterChangedCallback | null | undefined;
 
-	public constructor(container: HTMLDivElement, audioContext: AudioContext, enabled?: boolean, simpleMode?: boolean) {
+	public constructor(container: HTMLDivElement, audioContext: AudioContext, enabled?: boolean, simpleMode?: boolean, filterChangedCallback?: FilterChangedCallback | null) {
 		//super();
 
 		//const shadowRoot = this.attachShadow({ mode: "open" }),
@@ -54,7 +54,7 @@ class GraphicalFilterControl { //extends HTMLElement {
 		//shadowRoot.appendChild(style);
 		//shadowRoot.appendChild(editorElement);
 
-		this.filterChangedCallback = null;
+		this.filterChangedCallback = filterChangedCallback;
 		this._enabled = !!enabled;
 		this._simpleMode = !!simpleMode;
 

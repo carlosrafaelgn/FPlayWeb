@@ -74,6 +74,7 @@ class AppUI {
 
 	private static graphicalFilterControlType: HTMLButtonElement;
 	private static graphicalFilterControlEnabled: HTMLInputElement;
+	private static stereoPannerControlEnabled: HTMLInputElement;
 
 	private static _loading = false;
 
@@ -348,6 +349,10 @@ class AppUI {
 		AppUI.graphicalFilterControlEnabled.checked = appSettings.graphicalFilterControlEnabled || false;
 		AppUI.graphicalFilterControlEnabled.onclick = AppUI.graphicalFilterControlEnabledClicked;
 
+		AppUI.stereoPannerControlEnabled = document.getElementById("stereo-panner-control-enabled") as HTMLInputElement;
+		AppUI.stereoPannerControlEnabled.checked = appSettings.stereoPannerControlEnabled || false;
+		AppUI.stereoPannerControlEnabled.onclick = AppUI.stereoPannerControlEnabledClicked;
+
 		if (!App.frameless)
 			AppUI.panelContainer.classList.add("web");
 
@@ -578,6 +583,13 @@ class AppUI {
 			return;
 
 		App.player.graphicalFilterControl.enabled = AppUI.graphicalFilterControlEnabled.checked;
+	}
+
+	private static stereoPannerControlEnabledClicked(): void {
+		if (!App.player)
+			return;
+
+		App.player.stereoPannerControl.enabled = AppUI.stereoPannerControlEnabled.checked;
 	}
 
 	public static async addFiles(webDirectory?: boolean): Promise<void> {

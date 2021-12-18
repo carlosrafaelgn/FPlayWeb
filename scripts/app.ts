@@ -59,6 +59,7 @@ interface AppSettings {
 	playerVolume?: number;
 	graphicalFilterControlEnabled?: boolean;
 	graphicalFilterControlSimpleMode?: boolean;
+	stereoPannerControlEnabled?: boolean;
 }
 
 class App {
@@ -110,7 +111,8 @@ class App {
 				devicePixelRatio: devicePixelRatio,
 				playerVolume: App.player.volume,
 				graphicalFilterControlEnabled: App.player.graphicalFilterControl.enabled,
-				graphicalFilterControlSimpleMode: App.player.graphicalFilterControl.simpleMode
+				graphicalFilterControlSimpleMode: App.player.graphicalFilterControl.simpleMode,
+				stereoPannerControlEnabled: App.player.stereoPannerControl.enabled
 			});
 
 			App.player.destroy(true);
@@ -320,7 +322,14 @@ class App {
 
 		const appSettings = InternalStorage.loadAppSettings();
 
-		App.player = new Player(document.getElementById("filter-container") as HTMLDivElement, appSettings.playerVolume, appSettings.graphicalFilterControlEnabled, appSettings.graphicalFilterControlSimpleMode);
+		App.player = new Player(
+			document.getElementById("filter-container") as HTMLDivElement,
+			document.getElementById("stereo-panner-slider") as HTMLSpanElement,
+			appSettings.playerVolume,
+			appSettings.graphicalFilterControlEnabled,
+			appSettings.graphicalFilterControlSimpleMode,
+			appSettings.stereoPannerControlEnabled
+		);
 
 		try {
 			const playlist = await InternalStorage.loadPlaylist();

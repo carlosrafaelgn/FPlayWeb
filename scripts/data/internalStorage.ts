@@ -66,7 +66,8 @@ class InternalStorage {
 		return {
 			playerVolume: 100,
 			graphicalFilterControlEnabled: false,
-			graphicalFilterControlSimpleMode: false
+			graphicalFilterControlSimpleMode: false,
+			stereoPannerControlEnabled: false
 		};
 	}
 
@@ -103,6 +104,14 @@ class InternalStorage {
 			localStorage.setItem("graphicalFilterEditorSettings", JSON.stringify(graphicalFilterEditorSettings));
 		else
 			localStorage.removeItem("graphicalFilterEditorSettings");
+	}
+
+	public static loadStereoPannerSettings(): number {
+		return Math.max(-10, Math.min(10, parseInt(localStorage.getItem("stereoPannerSettings") as string) | 0));
+	}
+
+	public static saveStereoPannerSettings(pan: number): void {
+		localStorage.setItem("stereoPannerSettings", (pan | 0).toString());
 	}
 
 	public static async loadPlaylist(name?: string | null): Promise<Playlist | null> {

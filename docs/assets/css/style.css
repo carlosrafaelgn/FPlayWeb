@@ -1004,6 +1004,10 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 	line-height: 3.5rem;
 }
 
+#stereo-panner-slider {
+	width: 35rem;
+}
+
 .border-top {
 	margin-top: 2rem;
 	padding-top: 2rem;

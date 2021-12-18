@@ -31,11 +31,14 @@ class Player {
 
 	public readonly audioContext: AudioContext;
 	public readonly graphicalFilterControl: GraphicalFilterControl;
+	public readonly stereoPannerControl: StereoPannerControl;
 
 	private audio: HTMLAudioElement;
 	private audioContextTimeout: number;
 	private audioContextSuspended: boolean;
 	private source: MediaElementAudioSourceNode;
+	private filterOutput: AudioNode;
+	private stereoPannerInput: AudioNode;
 
 	private _alive: boolean;
 	private _loading: boolean;
@@ -59,7 +62,7 @@ class Player {
 	public oncurrenttimeschanged: ((currentTimeS: number) => void) | null;
 	public onerror: ((message: string) => void) | null;
 
-	public constructor(filterContainer: HTMLDivElement, volume?: number, graphicalFilterControlEnabled?: boolean, graphicalFilterControlSimpleMode?: boolean) {
+	public constructor(filterContainer: HTMLDivElement, stereoPannerSlider: HTMLElement, volume?: number, graphicalFilterControlEnabled?: boolean, graphicalFilterControlSimpleMode?: boolean, stereoPannerControlEnabled?: boolean) {
 		this.audioContextTimeout = 0;
 		this.audioContextSuspended = true;
 		// https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/AudioContext#options
@@ -73,8 +76,9 @@ class Player {
 		this.audioContext.suspend();
 		this.audioContext.onstatechange = this.audioContextStateChanged.bind(this);
 
-		this.graphicalFilterControl = new GraphicalFilterControl(filterContainer, this.audioContext, graphicalFilterControlEnabled, graphicalFilterControlSimpleMode);
-		this.graphicalFilterControl.filterChangedCallback = this.filterChanged.bind(this);
+		this.graphicalFilterControl = new GraphicalFilterControl(filterContainer, this.audioContext, graphicalFilterControlEnabled, graphicalFilterControlSimpleMode, this.filterChanged.bind(this));
+
+		this.stereoPannerControl = new StereoPannerControl(stereoPannerSlider, this.audioContext, stereoPannerControlEnabled, this.stereoPannerChanged.bind(this));
 
 		this.onsongchanged = null;
 		this.onloadingchanged = null;
@@ -129,7 +133,11 @@ class Player {
 
 		this.volume = (volume === undefined ? Player.maxVolume : volume);
 
+		this.filterOutput = this.source;
+		this.stereoPannerInput = this.audioContext.destination;
+
 		this.filterChanged();
+		this.stereoPannerChanged();
 
 		// https://developers.google.com/web/updates/2017/02/media-session
 		// https://w3c.github.io/mediasession
@@ -171,6 +179,9 @@ class Player {
 
 			if (this.graphicalFilterControl)
 				this.graphicalFilterControl.saveSettings();
+
+			if (this.stereoPannerControl)
+				this.stereoPannerControl.saveSettings();
 		}
 	}
 
@@ -178,11 +189,37 @@ class Player {
 		if (!this._alive)
 			return;
 
+		const source = this.source,
+			destination = this.stereoPannerInput;
+
+		this.filterOutput = source;
+
 		if (!this.graphicalFilterControl.enabled ||
-			!this.graphicalFilterControl.editor.filter.connectSourceAndDestination(this.source, this.audioContext.destination)) {
-			this.source.disconnect();
-			this.graphicalFilterControl.editor.filter.disconnectOutputFromDestination();
-			this.source.connect(this.audioContext.destination, 0, 0);
+			!this.graphicalFilterControl.editor.filter.connectSourceAndDestination(source, destination)) {
+			source.disconnect();
+			this.graphicalFilterControl.editor.filter.disconnectSourceAndDestination();
+			source.connect(destination, 0, 0);
+		} else {
+			this.filterOutput = this.graphicalFilterControl.editor.filter.outputNode as AudioNode;
+		}
+	}
+
+	private stereoPannerChanged(): void {
+		if (!this._alive)
+			return;
+
+		const source = this.filterOutput,
+			destination = this.audioContext.destination;
+
+		this.stereoPannerInput = destination;
+
+		if (!this.stereoPannerControl.enabled ||
+			!this.stereoPannerControl.connectSourceAndDestination(source, destination)) {
+			source.disconnect();
+			this.stereoPannerControl.disconnectSourceAndDestination();
+			source.connect(destination, 0, 0);
+		} else {
+			this.stereoPannerInput = this.stereoPannerControl.inputNode as AudioNode;
 		}
 	}
 

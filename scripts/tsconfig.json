@@ -34,6 +34,7 @@
 		"graphicalFilterEditor/scripts/analyzer/plainAnalyzer.ts",
 		"graphicalFilterEditor/scripts/analyzer/soundParticlesAnalyzer.ts",
 		"graphicalFilterEditor/scripts/analyzer/waveletAnalyzer.ts",
+		"filter/stereoPannerControl.ts",
 		"libmikmod/webaudio/ts/shared/shared.ts",
 		"libmikmod/webaudio/ts/frontend/libmikmod.ts",
 		"ui/control/buttonControl.ts",

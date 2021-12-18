@@ -1,7 +1,7 @@
 //
 // MIT License
 //
-// Copyright (c) 2012-2020 Carlos Rafael Gimenes das Neves
+// Copyright (c) 2021 Carlos Rafael Gimenes das Neves
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,92 +21,85 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-// https://github.com/carlosrafaelgn/GraphicalFilterEditor
+// https://github.com/carlosrafaelgn/FPlayWeb
 //
 
-interface FilterChangedCallback {
-	(): void;
-}
+class StereoPannerControl extends Filter {
+	private readonly stereoPanner: StereoPannerNode | null;
+	private readonly slider: SliderControl;
 
-enum GraphicalFilterEditorIIRType {
-	None = 0,
-	Peaking = 1,
-	Shelf = 2
-}
+	private _enabled: boolean;
+	private _pan: number;
 
-abstract class Filter {
-	private source: AudioNode | null;
+	public constructor(sliderElement: HTMLElement, audioContext: AudioContext, enabled?: boolean, filterChangedCallback?: FilterChangedCallback | null) {
+		super(filterChangedCallback);
 
-	public filterChangedCallback: FilterChangedCallback | null | undefined;
+		this._enabled = !!enabled;
+		this._pan = InternalStorage.loadStereoPannerSettings();
 
-	public constructor(filterChangedCallback?: FilterChangedCallback | null) {
-		this.source = null;
-		this.filterChangedCallback = filterChangedCallback;
+		this.stereoPanner = audioContext.createStereoPanner();
+		this.stereoPanner.pan.value = this._pan;
+
+		const commitChanges = (value: number): void => {
+			this._pan = value;
+			if (this.stereoPanner)
+				this.stereoPanner.pan.value = value / 10;
+		};
+
+		this.slider = new SliderControl(sliderElement, true, false, -10, 10, this._pan);
+		this.slider.ondragended = commitChanges;
+		this.slider.onkeyboardchanged = commitChanges;
 	}
 
-	public abstract get inputNode(): AudioNode | null;
-	public abstract get outputNode(): AudioNode | null;
-
-	public connectSourceAndDestination(source: AudioNode | null, destination: AudioNode | null): boolean {
-		const s = this.connectSourceToInput(source);
-		return this.connectOutputToDestination(destination) && s;
+	public get enabled(): boolean {
+		return this._enabled;
 	}
 
-	public disconnectSourceAndDestination(): boolean {
-		const s = this.disconnectSourceFromInput();
-		return this.disconnectOutputFromDestination() && s;
+	public set enabled(enabled: boolean) {
+		if (this._enabled === enabled)
+			return;
+
+		this._enabled = enabled;
+
+		if (this.stereoPanner && this.filterChangedCallback)
+			this.filterChangedCallback();
 	}
 
-	public disconnectSourceFromInput(): boolean {
-		if (this.source) {
-			this.source.disconnect();
-			this.source = null;
-			return true;
-		}
-		return false;
+	public get pan(): number {
+		return this._pan;
 	}
 
-	public connectSourceToInput(source: AudioNode | null): boolean {
-		this.disconnectSourceFromInput();
-		this.source = source;
-		if (source) {
-			source.disconnect();
-			const inputNode = this.inputNode;
-			if (inputNode) {
-				source.connect(inputNode, 0, 0);
-				return true;
-			}
-		}
-		return false;
+	public set pan(pan: number) {
+		if (this._pan === pan)
+			return;
+
+		this._pan = Math.max(-10, Math.min(10, pan | 0));
+
+		if (this.stereoPanner)
+			this.stereoPanner.pan.value = this._pan / 10;
 	}
 
-	public connectOutputToDestination(destination: AudioNode | null): boolean {
-		const outputNode = this.outputNode;
-		if (outputNode) {
-			outputNode.disconnect();
-			if (destination)
-				outputNode.connect(destination, 0, 0);
-			return true;
-		}
-		return false;
+	public saveSettings(): void {
+		InternalStorage.saveStereoPannerSettings(this._pan);
 	}
 
-	public disconnectOutputFromDestination(): boolean {
-		const outputNode = this.outputNode;
-		if (outputNode) {
-			outputNode.disconnect();
-			return true;
-		}
-		return false;
+	public get inputNode(): AudioNode | null {
+		return this.stereoPanner;
+	}
+
+	public get outputNode(): AudioNode | null {
+		return this.stereoPanner;
 	}
 
 	public destroy(): void {
-		this.disconnectSourceFromInput();
-		this.disconnectOutputFromDestination();
+		if (this.stereoPanner) {
+			super.destroy();
+			zeroObject(this);
+		}
 	}
 }
 
-class GraphicalFilterEditor extends Filter {
+/*
 	// Must be in sync with c/common.h
 	// Sorry, but due to the frequency mapping I created, this class will only work with
 	// 500 visible bins... in order to change this, a new frequency mapping must be created...
@@ -177,6 +170,7 @@ class GraphicalFilterEditor extends Filter {
 	private binCount: number;
 	private audioContext: AudioContext;
 	private filterKernel: AudioBuffer;
+	private source: AudioNode | null;
 	private _convolver: ConvolverNode | null;
 	private biquadFilters: AudioNode[] | null;
 	private biquadFilterInput: AudioNode | null;
@@ -187,6 +181,7 @@ class GraphicalFilterEditor extends Filter {
 	private biquadFilterActualAccum: Float32Array | null;
 	private biquadFilterActualMag: Float32Array | null;
 	private biquadFilterActualPhase: Float32Array | null;
+	private filterChangedCallback: FilterChangedCallback | null | undefined;
 	private curveSnapshot: Int32Array | null;
 
 	private readonly filterKernelBuffer: Float32Array;
@@ -196,11 +191,7 @@ class GraphicalFilterEditor extends Filter {
 	public readonly equivalentZones: Int32Array;
 	public readonly equivalentZonesFrequencyCount: Int32Array;
 
-	public filterChangedCallback: FilterChangedCallback | null | undefined;
-
 	public constructor(filterLength: number, audioContext: AudioContext, filterChangedCallback?: FilterChangedCallback | null, _iirType?: GraphicalFilterEditorIIRType) {
-		super(filterChangedCallback);
-
 		if (filterLength < 8 || (filterLength & (filterLength - 1)))
 			throw "Sorry, class available only for fft sizes that are a power of 2 >= 8! :(";
 
@@ -226,6 +217,7 @@ class GraphicalFilterEditor extends Filter {
 		this.equivalentZones = new Int32Array(buffer, cLib._graphicalFilterEditorGetEquivalentZones(this.editorPtr), GraphicalFilterEditor.equivalentZoneCount);
 		this.equivalentZonesFrequencyCount = new Int32Array(buffer, cLib._graphicalFilterEditorGetEquivalentZonesFrequencyCount(this.editorPtr), GraphicalFilterEditor.equivalentZoneCount + 1);
 
+		this.source = null;
 		this._convolver = null;
 		this.biquadFilters = null;
 		this.biquadFilterInput = null;
@@ -269,9 +261,49 @@ class GraphicalFilterEditor extends Filter {
 		return this.biquadFilterOutput || this._convolver;
 	}
 
+	public connectSourceAndDestination(source: AudioNode | null, destination: AudioNode | null): boolean {
+		const s = this.connectSourceToInput(source);
+		return this.connectOutputToDestination(destination) && s;
+	}
+
+	public connectSourceToInput(source: AudioNode | null): boolean {
+		if (this.source)
+			this.source.disconnect();
+		this.source = source;
+		if (source) {
+			source.disconnect();
+			const inputNode = this.inputNode;
+			if (inputNode) {
+				source.connect(inputNode, 0, 0);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public connectOutputToDestination(destination: AudioNode | null): boolean {
+		const outputNode = this.outputNode;
+		if (this.outputNode) {
+			this.outputNode.disconnect();
+			if (destination)
+				this.outputNode.connect(destination, 0, 0);
+			return true;
+		}
+		return false;
+	}
+
+	public disconnectOutputFromDestination(): boolean {
+		const outputNode = this.outputNode;
+		if (this.outputNode) {
+			this.outputNode.disconnect();
+			return true;
+		}
+		return false;
+	}
+
 	public destroy(): void {
 		if (this.editorPtr) {
-			super.destroy();
+			this.disconnectOutputFromDestination();
 			cLib._graphicalFilterEditorFree(this.editorPtr);
 			zeroObject(this);
 		}
@@ -940,3 +972,4 @@ class GraphicalFilterEditor extends Filter {
 		return false;
 	}
 }
+*/

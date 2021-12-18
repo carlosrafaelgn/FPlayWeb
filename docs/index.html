@@ -30,27 +30,33 @@
 	<meta name="mobile-web-app-capable" content="yes" />
 	<meta name="mobile-web-app-status-bar-style" content="black-translucent" />
 	<meta name="mobile-web-app-title" content="FPlay" />
-	<meta content="https://fplay.com.br/assets/images/favicons/favicon-512x512.png" itemprop="image" />
-	<link rel="fluid-icon" href="https://fplay.com.br/assets/images/favicons/favicon-512x512.png" title="FPlay" />
-	<link rel="apple-touch-icon" sizes="57x57" href="assets/images/favicons/apple-icon-57x57.png" />
-	<link rel="apple-touch-icon" sizes="60x60" href="assets/images/favicons/apple-icon-60x60.png" />
-	<link rel="apple-touch-icon" sizes="72x72" href="assets/images/favicons/apple-icon-72x72.png" />
-	<link rel="apple-touch-icon" sizes="76x76" href="assets/images/favicons/apple-icon-76x76.png" />
-	<link rel="apple-touch-icon" sizes="96x96" href="assets/images/favicons/favicon-96x96.png" />
-	<link rel="apple-touch-icon" sizes="114x114" href="assets/images/favicons/apple-icon-114x114.png" />
-	<link rel="apple-touch-icon" sizes="120x120" href="assets/images/favicons/apple-icon-120x120.png" />
-	<link rel="apple-touch-icon" sizes="144x144" href="assets/images/favicons/apple-icon-144x144.png" />
-	<link rel="apple-touch-icon" sizes="152x152" href="assets/images/favicons/apple-icon-152x152.png" />
-	<link rel="apple-touch-icon" sizes="180x180" href="assets/images/favicons/apple-icon-180x180.png" />
-	<link rel="icon" type="image/png" sizes="512x512" href="assets/images/favicons/favicon-512x512.png" />
-	<link rel="icon" type="image/png" sizes="192x192" href="assets/images/favicons/favicon-192x192.png" />
-	<link rel="icon" type="image/png" sizes="96x96" href="assets/images/favicons/favicon-96x96.png" />
-	<link rel="icon" type="image/png" sizes="48x48" href="assets/images/favicons/favicon-48x48.png" />
-	<link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicons/favicon-32x32.png" />
-	<link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicons/favicon-16x16.png" />
-	<link rel="Shortcut Icon" href="assets/images/favicons/favicon.png" />
-	<link rel="manifest" href="assets/images/favicons/manifest.webmanifest" />
-	<meta name="msapplication-config" content="assets/images/favicons/browserconfig.xml" />
+    <meta name="twitter:card" value="summary" />
+    <meta name="twitter:title" value="FPlay" />
+    <meta name="twitter:description" value="Experimental music player" />
+    <meta name="twitter:image" value="/assets/images/favicons/favicon-512x512.png" />
+    <meta itemprop="name" content="FPlay" />
+    <meta itemprop="description" content="Experimental music player" />
+	<meta itemprop="image" content="/assets/images/favicons/favicon-512x512.png" />
+	<link rel="fluid-icon" href="/assets/images/favicons/favicon-512x512.png" title="FPlay" />
+	<link rel="apple-touch-icon" sizes="57x57" href="/assets/images/favicons/apple-icon-57x57.png" />
+	<link rel="apple-touch-icon" sizes="60x60" href="/assets/images/favicons/apple-icon-60x60.png" />
+	<link rel="apple-touch-icon" sizes="72x72" href="/assets/images/favicons/apple-icon-72x72.png" />
+	<link rel="apple-touch-icon" sizes="76x76" href="/assets/images/favicons/apple-icon-76x76.png" />
+	<link rel="apple-touch-icon" sizes="114x114" href="/assets/images/favicons/apple-icon-114x114.png" />
+	<link rel="apple-touch-icon" sizes="120x120" href="/assets/images/favicons/apple-icon-120x120.png" />
+	<link rel="apple-touch-icon" sizes="144x144" href="/assets/images/favicons/apple-icon-144x144.png" />
+	<link rel="apple-touch-icon" sizes="152x152" href="/assets/images/favicons/apple-icon-152x152.png" />
+	<link rel="apple-touch-icon" sizes="180x180" href="/assets/images/favicons/apple-icon-180x180.png" />
+	<link rel="icon" type="image/png" sizes="512x512" href="/assets/images/favicons/favicon-512x512.png" />
+	<link rel="icon" type="image/png" sizes="192x192" href="/assets/images/favicons/favicon-192x192.png" />
+	<link rel="icon" type="image/png" sizes="96x96" href="/assets/images/favicons/favicon-96x96.png" />
+	<link rel="icon" type="image/png" sizes="48x48" href="/assets/images/favicons/favicon-48x48.png" />
+	<link rel="icon" type="image/png" sizes="32x32" href="/assets/images/favicons/favicon-32x32.png" />
+	<link rel="icon" type="image/png" sizes="16x16" href="/assets/images/favicons/favicon-16x16.png" />
+	<link rel="Shortcut Icon" href="/favicon.ico" />
+	<link rel="Shortcut Icon" href="/favicon.png" />
+	<link rel="manifest" href="/assets/images/favicons/manifest.webmanifest" />
+	<meta name="msapplication-config" content="/assets/images/favicons/browserconfig.xml" />
 	<meta name="theme-color" content="#303030" />
 
 	<title>FPlay</title>
@@ -70,8 +76,8 @@
 			--optional-panel-container-height: 388px;
 		}
 	</style>
-	<link rel="stylesheet" type="text/css" href="assets/css/graphicalFilterEditor.css?20211205" />
-	<link rel="stylesheet" type="text/css" href="assets/css/style.css?20211205" />
+	<link rel="stylesheet" type="text/css" href="/assets/css/graphicalFilterEditor.css?20211218" />
+	<link rel="stylesheet" type="text/css" href="/assets/css/style.css?20211218" />
 </head>
 <body>
 	<noscript>Sorry! You need to enable JavaScript in order to run the player :(</noscript>
@@ -119,6 +125,7 @@
 				</div>
 
 				<div id="filter-container" class="top-margin"></div>
+				<div class="border-top"><input class="btn transparent" type="checkbox" id="stereo-panner-control-enabled" title="Enabled" /><span class="left-margin" id="stereo-panner-slider" data-string="aria-label|Panning"></span></div>
 			</div>
 		</div>
 	</div>
@@ -131,7 +138,7 @@
 		//<![CDATA[
 		"use strict";
 
-		var CACHE_VERSION = "20211205";
+		var CACHE_VERSION = "20211218";
 
 		(function () {
 			function loadScript(src, successCallback, errorCallback) {
