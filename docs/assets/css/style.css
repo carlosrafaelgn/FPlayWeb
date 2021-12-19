@@ -659,7 +659,6 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 }
 
 .slider-control:not(.vertical) {
-	padding-top: var(--extra-touch-padding-top);
 	height: var(--button-size);
 }
 

@@ -81,6 +81,7 @@ class GraphicalFilterControl { //extends HTMLElement {
 		});
 
 		element = document.createElement("div");
+		element.className = "bottom-margin";
 		if (this._simpleMode)
 			container.appendChild(element);
 		this.simpleEditor = new SimpleFilterEditorControl(element, this.editor);
