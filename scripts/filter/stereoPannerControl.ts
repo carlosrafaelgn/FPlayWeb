@@ -32,6 +32,7 @@ class StereoPannerControl extends Filter {
 	private readonly gain: GainNode | null;
 	private readonly channelMerger: ChannelMergerNode | null;
 	private readonly slider: SliderControl;
+	private readonly label: HTMLSpanElement;
 
 	private _enabled: boolean;
 	private _pan: number;
@@ -54,10 +55,20 @@ class StereoPannerControl extends Filter {
 		const boundCommitChanges = this.commitChanges.bind(this);
 
 		this.slider = new SliderControl(sliderElement, true, false, -StereoPannerControl.maxAbsoluteValue, StereoPannerControl.maxAbsoluteValue, this._pan);
+		this.label = document.createElement("span");
+		this.label.className = "db-label large small-left-margin";
+		this.slider.rightChild = this.label;
 		this.slider.ondragended = boundCommitChanges;
 		this.slider.onkeyboardchanged = boundCommitChanges;
+		this.slider.onvaluechanged = this.sliderValueChanged.bind(this);
+
+		this.sliderValueChanged(this._pan);
 
 		this.commitChanges(this._pan);
+	}
+
+	private sliderValueChanged(value: number): void {
+		AppUI.changeText(this.label, (!value ? "-0" : ((value < 0 ? Strings.RightAbbrev : Strings.LeftAbbrev) + " " + ((value = Math.abs(value)) >= StereoPannerControl.maxAbsoluteValue ? GraphicalFilterEditorStrings.MinusInfinity : ("-" + value)))) + " dB");
 	}
 
 	private commitChanges(pan: number): void {

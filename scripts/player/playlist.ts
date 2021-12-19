@@ -40,7 +40,7 @@ class PlaylistAdapter extends ListAdapter<Song> {
 		div.appendChild(Icon.create("icon-artist", "orange margin"));
 
 		let span = document.createElement("span");
-		span.textContent = Formatter.none;
+		AppUI.changeText(span, Formatter.none);
 		div.appendChild(span);
 
 		div.appendChild(document.createElement("br"));
@@ -50,12 +50,12 @@ class PlaylistAdapter extends ListAdapter<Song> {
 
 		span = document.createElement("span");
 		span.className = "length";
-		span.textContent = Formatter.none;
+		AppUI.changeText(span, Formatter.none);
 		div.appendChild(span);
 
 		span = document.createElement("span");
 		span.className = "float-right";
-		span.textContent = Formatter.none;
+		AppUI.changeText(span, Formatter.none);
 		div.appendChild(span);
 
 		return div;

@@ -885,12 +885,16 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 }
 
 #volume-slider {
-	width: 35rem;
+	width: 38rem;
 }
 
-.volume-label {
+#volume-label, .db-label {
 	font-size: 3rem;
 	width: 13rem;
+}
+
+.db-label.large {
+	width: 15rem;
 }
 
 #panel-container {
@@ -1004,7 +1008,7 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 }
 
 #stereo-panner-slider {
-	width: 35rem;
+	width: 38rem;
 }
 
 .border-top {
@@ -1036,6 +1040,10 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 	margin-left: 4rem;
 }
 
+.button-left-margin {
+	margin-left: var(--button-padding-top);
+}
+
 .small-top-margin {
 	margin-top: 1rem;
 }
@@ -1046,6 +1054,10 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 
 .large-top-margin {
 	margin-top: 4rem;
+}
+
+.button-top-margin {
+	margin-top: var(--button-padding-top);
 }
 
 .small-right-margin,
@@ -1061,6 +1073,10 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 	margin-right: 4rem;
 }
 
+.button-right-margin {
+	margin-right: var(--button-padding-top);
+}
+
 .small-bottom-margin {
 	margin-bottom: 1rem;
 }
@@ -1071,6 +1087,10 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 
 .large-bottom-margin {
 	margin-bottom: 4rem;
+}
+
+.button-bottom-margin {
+	margin-bottom: var(--button-padding-top);
 }
 
 @media (max-width: 511px) {
@@ -1138,10 +1158,10 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 
 @media (max-width: 339px) {
 	#volume-slider {
-		width: 21rem;
+		width: 24rem;
 	}
 
-	.slider-control-focus-container > .volume-label {
+	#volume-label {
 		display: none;
 	}
 }

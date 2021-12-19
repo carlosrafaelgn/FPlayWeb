@@ -32,7 +32,11 @@ class GraphicalFilterControl { //extends HTMLElement {
 		"Powerful": "oaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGgoKCgoKCgoKCfn5+fn5+enp6enp2dnZ2cnJybm5qampqZmZmYmJiXl5eWlpWVlZSUlJOTkpKSkZGRkZCQkI+Pj46Ojo6NjY2NjYyMjIyLi4uLi4uKioqKioqKioqKiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmKioqKioqKioqKioqKiouLi4uLjIyMjIyNjY2Njo6Ojo+Pj4+QkJCRkpKSk5OTk5SUlJWVlZWWlpaXl5eXmJiYmZmZmZqampqbm5ubnJycnJ2dnZ2enp6enp+fn5+fn6CgoKCgoKCgoKGhoaGhoaGhoaGhoaGhoaE="
 	};
 
+	private static readonly simpleModeMinWidth = "280px";
+	private static readonly advancedModeMinWidth = "512px";
+
 	private readonly container: HTMLDivElement;
+	private readonly outerContainer: HTMLDivElement;
 	private readonly simpleEditor: SimpleFilterEditorControl;
 	public readonly editor: GraphicalFilterEditorControl;
 
@@ -41,7 +45,7 @@ class GraphicalFilterControl { //extends HTMLElement {
 
 	public filterChangedCallback: FilterChangedCallback | null | undefined;
 
-	public constructor(container: HTMLDivElement, audioContext: AudioContext, enabled?: boolean, simpleMode?: boolean, filterChangedCallback?: FilterChangedCallback | null) {
+	public constructor(container: HTMLDivElement, outerContainer: HTMLDivElement, audioContext: AudioContext, enabled?: boolean, simpleMode?: boolean, filterChangedCallback?: FilterChangedCallback | null) {
 		//super();
 
 		//const shadowRoot = this.attachShadow({ mode: "open" }),
@@ -59,10 +63,13 @@ class GraphicalFilterControl { //extends HTMLElement {
 		this._simpleMode = !!simpleMode;
 
 		this.container = container;
+		this.outerContainer = outerContainer;
 
 		let element = document.createElement("div");
-		if (!this._simpleMode)
+		if (!this._simpleMode) {
+			outerContainer.style.minWidth = GraphicalFilterControl.advancedModeMinWidth;
 			container.appendChild(element);
+		}
 
 		const graphicalFilterEditorSettings = InternalStorage.loadGraphicalFilterEditorSettings();
 		if (this._simpleMode)
@@ -81,9 +88,11 @@ class GraphicalFilterControl { //extends HTMLElement {
 		});
 
 		element = document.createElement("div");
-		element.className = "bottom-margin";
-		if (this._simpleMode)
+		element.className = "button-bottom-margin";
+		if (this._simpleMode) {
+			outerContainer.style.minWidth = GraphicalFilterControl.simpleModeMinWidth;
 			container.appendChild(element);
+		}
 		this.simpleEditor = new SimpleFilterEditorControl(element, this.editor);
 
 		const labels = this.editor.element.querySelectorAll("div.GELBL");
@@ -135,11 +144,13 @@ class GraphicalFilterControl { //extends HTMLElement {
 		let add: HTMLElement | null = null;
 
 		if (simpleMode) {
+			this.outerContainer.style.minWidth = GraphicalFilterControl.simpleModeMinWidth;
 			this.editor.editMode = GraphicalFilterEditorControl.editModeShelfEq;
 			this.simpleEditor.updateSliders();
 			remove = this.editor.element;
 			add = this.simpleEditor.element;
 		} else {
+			this.outerContainer.style.minWidth = GraphicalFilterControl.advancedModeMinWidth;
 			remove = this.simpleEditor.element;
 			add = this.editor.element;
 		}

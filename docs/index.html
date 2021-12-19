@@ -76,8 +76,8 @@
 			--optional-panel-container-height: 388px;
 		}
 	</style>
-	<link rel="stylesheet" type="text/css" href="/assets/css/graphicalFilterEditor.css?20211219" />
-	<link rel="stylesheet" type="text/css" href="/assets/css/style.css?20211219" />
+	<link rel="stylesheet" type="text/css" href="/assets/css/graphicalFilterEditor.css?20211219a" />
+	<link rel="stylesheet" type="text/css" href="/assets/css/style.css?20211219a" />
 </head>
 <body>
 	<noscript>Sorry! You need to enable JavaScript in order to run the player :(</noscript>
@@ -92,7 +92,7 @@
 			<div id="playlist-control" tabindex="-1"></div>
 
 			<div id="middle-panel" class="toolbar border-top">
-				<button type="button" class="btn square transparent toolbar-left hidden-normal" onclick="AppUI.switchView()" title="ShowFilter" data-string="aria-label|ShowFilter">
+				<button type="button" class="btn square transparent toolbar-left hidden-normal" onclick="AppUI.switchView()" title="ShowEffects" data-string="aria-label|ShowEffects">
 					<i class="large icon-filter"></i>
 				</button>
 				<button type="button" class="btn square green transparent" onclick="AppUI.addFiles()" title="AddFiles" data-string="aria-label|AddFiles">
@@ -116,16 +116,19 @@
 
 		<div id="optional-panel" class="scrollable">
 			<div id="optional-panel-container">
-				<div class="toolbar">
-					<button type="button" class="btn transparent" id="graphical-filter-control-type">
-						<i class="large margin icon-filter"></i>
-					</button><input class="btn transparent" type="checkbox" id="graphical-filter-control-enabled" title="Enabled" /><span class="toolbar-sep hidden-normal"></span><button type="button" class="btn square transparent hidden-normal" onclick="AppUI.switchView()" title="ShowPlaylist" data-string="aria-label|ShowPlaylist">
+				<div class="toolbar border-bottom hidden-normal">
+					<button type="button" class="btn transparent" onclick="AppUI.switchView()" title="ShowPlaylist" data-string="ShowPlaylist">
 						<i class="large icon-playlist"></i>
 					</button>
 				</div>
+				<div class="toolbar">
+					<button type="button" class="btn transparent" id="graphical-filter-control-type">
+						<i class="large margin icon-filter"></i>
+					</button><input class="btn transparent" type="checkbox" id="graphical-filter-control-enabled" title="Enabled" />
+				</div>
 
 				<div id="filter-container" class="top-margin"></div>
-				<div class="border-top"><input class="btn transparent" type="checkbox" id="stereo-panner-control-enabled" title="Enabled" /><span class="left-margin" id="stereo-panner-slider" data-string="aria-label|Panning"></span></div>
+				<div class="border-top"><input class="btn transparent" type="checkbox" id="stereo-panner-control-enabled" title="Panning" /><span class="left-margin" id="stereo-panner-slider" data-string="aria-label|Panning"></span></div>
 			</div>
 		</div>
 	</div>
@@ -138,7 +141,7 @@
 		//<![CDATA[
 		"use strict";
 
-		var CACHE_VERSION = "20211219";
+		var CACHE_VERSION = "20211219a";
 
 		(function () {
 			function loadScript(src, successCallback, errorCallback) {

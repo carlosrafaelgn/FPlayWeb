@@ -324,6 +324,7 @@ class App {
 
 		App.player = new Player(
 			document.getElementById("filter-container") as HTMLDivElement,
+			document.getElementById("optional-panel-container") as HTMLDivElement,
 			document.getElementById("stereo-panner-slider") as HTMLSpanElement,
 			appSettings.playerVolume,
 			appSettings.graphicalFilterControlEnabled,

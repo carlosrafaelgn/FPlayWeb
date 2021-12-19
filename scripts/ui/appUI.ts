@@ -332,7 +332,8 @@ class AppUI {
 		AppUI.volumeSlider = new SliderControl("volume-slider", true, false, 0, Player.maxVolume, appSettings.playerVolume);
 		AppUI.volumeSlider.leftChild = Icon.createLarge("icon-volume", "green small-right-margin");
 		AppUI.volumeLabel = document.createElement("span");
-		AppUI.volumeLabel.className = "volume-label small-left-margin";
+		AppUI.volumeLabel.className = "small-left-margin";
+		AppUI.volumeLabel.setAttribute("id", "volume-label");
 		AppUI.changeText(AppUI.volumeLabel, AppUI.volumeStr(AppUI.volumeSlider.value));
 		AppUI.volumeSlider.rightChild = AppUI.volumeLabel;
 		AppUI.volumeSlider.onvaluechanged = AppUI.volumeSliderValueChanged;

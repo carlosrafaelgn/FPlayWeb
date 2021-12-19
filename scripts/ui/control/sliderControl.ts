@@ -27,8 +27,8 @@
 class SliderControl {
 	private readonly _element: HTMLElement;
 
-	private _leftChild: Node | null;
-	private _rightChild: Node | null;
+	private _leftChild: HTMLElement | null;
+	private _rightChild: HTMLElement | null;
 
 	private focusContainer: HTMLSpanElement;
 	private container: HTMLSpanElement;
@@ -146,11 +146,11 @@ class SliderControl {
 		return this._element;
 	}
 
-	public get leftChild(): Node | null {
+	public get leftChild(): HTMLElement | null {
 		return this._leftChild;
 	}
 
-	public set leftChild(leftChild: Node | null) {
+	public set leftChild(leftChild: HTMLElement | null) {
 		if (!this.focusContainer)
 			return;
 
@@ -166,11 +166,11 @@ class SliderControl {
 		this._leftChild = leftChild;
 	}
 
-	public get rightChild(): Node | null {
+	public get rightChild(): HTMLElement | null {
 		return this._rightChild;
 	}
 
-	public set rightChild(rightChild: Node | null) {
+	public set rightChild(rightChild: HTMLElement | null) {
 		if (!this.focusContainer)
 			return;
 

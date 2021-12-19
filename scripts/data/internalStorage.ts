@@ -66,7 +66,7 @@ class InternalStorage {
 		return {
 			playerVolume: 100,
 			graphicalFilterControlEnabled: false,
-			graphicalFilterControlSimpleMode: false,
+			graphicalFilterControlSimpleMode: (window.innerWidth < (512 + 32)),
 			stereoPannerControlEnabled: false
 		};
 	}
