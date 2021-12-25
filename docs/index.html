@@ -76,8 +76,8 @@
 			--optional-panel-container-height: 388px;
 		}
 	</style>
-	<link rel="stylesheet" type="text/css" href="/assets/css/graphicalFilterEditor.css?20211219a" />
-	<link rel="stylesheet" type="text/css" href="/assets/css/style.css?20211219a" />
+	<link rel="stylesheet" type="text/css" href="/assets/css/graphicalFilterEditor.css?20211220" />
+	<link rel="stylesheet" type="text/css" href="/assets/css/style.css?20211220" />
 </head>
 <body>
 	<noscript>Sorry! You need to enable JavaScript in order to run the player :(</noscript>
@@ -117,18 +117,18 @@
 		<div id="optional-panel" class="scrollable">
 			<div id="optional-panel-container">
 				<div class="toolbar border-bottom hidden-normal">
-					<button type="button" class="btn transparent" onclick="AppUI.switchView()" title="ShowPlaylist" data-string="ShowPlaylist">
-						<i class="large icon-playlist"></i>
-					</button>
+					<button type="button" class="btn transparent" onclick="AppUI.switchView()" title="ShowPlaylist" data-string="ShowPlaylist"><i class="large margin icon-playlist"></i></button>
 				</div>
+
 				<div class="toolbar">
-					<button type="button" class="btn transparent" id="graphical-filter-control-type">
-						<i class="large margin icon-filter"></i>
-					</button><input class="btn transparent" type="checkbox" id="graphical-filter-control-enabled" title="Enabled" />
+					<input class="btn transparent" type="checkbox" id="graphical-filter-control-enabled" title="Enabled" /><button type="button" class="btn transparent" id="graphical-filter-control-type"><i class="large margin icon-filter"></i></button>
 				</div>
 
 				<div id="filter-container" class="top-margin"></div>
-				<div class="border-top"><input class="btn transparent" type="checkbox" id="stereo-panner-control-enabled" title="Panning" /><span class="left-margin" id="stereo-panner-slider" data-string="aria-label|Panning"></span></div>
+
+				<div class="border-top"><input class="btn transparent" type="checkbox" id="stereo-panner-control-enabled" title="Panning" data-icon="icon-multiple-stop" /><span class="left-margin" id="stereo-panner-slider" data-string="aria-label|Panning"></span></div>
+
+				<div class="border-top" id="mono-down-mixer-control-container"><input class="btn transparent" type="checkbox" id="mono-down-mixer-control-enabled" title="DownMixToMono" data-icon="icon-call-merge-flipped" /></div>
 			</div>
 		</div>
 	</div>
@@ -141,7 +141,7 @@
 		//<![CDATA[
 		"use strict";
 
-		var CACHE_VERSION = "20211219a";
+		var CACHE_VERSION = "20211220";
 
 		(function () {
 			function loadScript(src, successCallback, errorCallback) {

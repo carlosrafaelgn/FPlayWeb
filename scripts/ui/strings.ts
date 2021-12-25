@@ -39,8 +39,8 @@ class Strings {
 	public static Disable = "Disable";
 	public static Enabled = "Enabled";
 	public static Disabled = "Disabled";
-	public static AdvancedFilter = "Advanced Filter";
-	public static TraditionalFilter = "Traditional Filter";
+	public static AdvancedFilter = "Advanced filter";
+	public static TraditionalFilter = "Traditional filter";
 	public static OK = "OK";
 	public static Cancel = "Cancel";
 	public static Clear = "Clear";
@@ -58,12 +58,13 @@ class Strings {
 	public static RightAbbrev = "R";
 	public static Volume = "Volume";
 	public static Panning = "Panning";
+	public static DownMixToMono = "Down-mix to mono";
 	public static UnknownError = "Unknown error";
-	public static AddFiles = "Add Files";
-	public static AddFolders = "Add Folders";
-	public static ShowEffects = "Show Effects";
-	public static ShowPlaylist = "Show Playlist";
-	public static UpdateAvailable = "Update Available!";
+	public static AddFiles = "Add files";
+	public static AddFolders = "Add folders";
+	public static ShowEffects = "Show effects";
+	public static ShowPlaylist = "Show playlist";
+	public static UpdateAvailable = "Update available!";
 	public static PleaseRefresh = "Please, refresh the page to update the app. 😊";
 	public static AboutHTML = `FPlay for web is an experimental audio player. 😊<br />
 <br />
@@ -90,8 +91,8 @@ This project is licensed under the <a target="_blank" href="https://github.com/c
 			Strings.Disable = "Desativar";
 			Strings.Enabled = "Ativado";
 			Strings.Disabled = "Desativado";
-			Strings.AdvancedFilter = "Filtro Avançado";
-			Strings.TraditionalFilter = "Filtro Tradicional";
+			Strings.AdvancedFilter = "Filtro avançado";
+			Strings.TraditionalFilter = "Filtro tradicional";
 			//Strings.OK = "OK";
 			Strings.Cancel = "Cancelar";
 			Strings.Clear = "Limpar";
@@ -109,12 +110,13 @@ This project is licensed under the <a target="_blank" href="https://github.com/c
 			Strings.RightAbbrev = "D";
 			//Strings.Volume = "Volume";
 			//Strings.Panning = "Panning";
+			Strings.DownMixToMono = "Fazer down-mix para mono";
 			Strings.UnknownError = "Erro desconhecido";
-			Strings.AddFiles = "Adicionar Arquivos";
-			Strings.AddFolders = "Adicionar Pastas";
-			Strings.ShowEffects = "Exibir Efeitos";
-			Strings.ShowPlaylist = "Exibir Playlist";
-			Strings.UpdateAvailable = "Atualização Disponível!";
+			Strings.AddFiles = "Adicionar arquivos";
+			Strings.AddFolders = "Adicionar pastas";
+			Strings.ShowEffects = "Exibir efeitos";
+			Strings.ShowPlaylist = "Exibir playlist";
+			Strings.UpdateAvailable = "Atualização disponível!";
 			Strings.PleaseRefresh = "Por favor, recarregue a página para atualizar a aplicação. 😊";
 			Strings.AboutHTML = `FPlay para web é um player de áudio experimental. 😊<br />
 <br />

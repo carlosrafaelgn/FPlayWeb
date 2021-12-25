@@ -75,6 +75,7 @@ class AppUI {
 	private static graphicalFilterControlType: HTMLButtonElement;
 	private static graphicalFilterControlEnabled: HTMLInputElement;
 	private static stereoPannerControlEnabled: HTMLInputElement;
+	private static monoDownMixerControlEnabled: HTMLInputElement;
 
 	private static _loading = false;
 
@@ -354,6 +355,15 @@ class AppUI {
 		AppUI.stereoPannerControlEnabled.checked = appSettings.stereoPannerControlEnabled || false;
 		AppUI.stereoPannerControlEnabled.onclick = AppUI.stereoPannerControlEnabledClicked;
 
+		if (MonoDownMixerControl.isSupported()) {
+			AppUI.monoDownMixerControlEnabled = document.getElementById("mono-down-mixer-control-enabled") as HTMLInputElement;
+			AppUI.monoDownMixerControlEnabled.checked = appSettings.monoDownMixerControlEnabled || false;
+			AppUI.monoDownMixerControlEnabled.onclick = AppUI.monoDownMixerControlEnabledClicked;
+		} else {
+			const monoDownMixerControlContainer = document.getElementById("mono-down-mixer-control-container") as HTMLDivElement;
+			(monoDownMixerControlContainer.parentNode as HTMLDivElement).removeChild(monoDownMixerControlContainer);
+		}
+
 		if (!App.frameless)
 			AppUI.panelContainer.classList.add("web");
 
@@ -593,6 +603,13 @@ class AppUI {
 		App.player.stereoPannerControl.enabled = AppUI.stereoPannerControlEnabled.checked;
 	}
 
+	private static monoDownMixerControlEnabledClicked(): void {
+		if (!App.player)
+			return;
+
+		App.player.monoDownMixerControl.enabled = AppUI.monoDownMixerControlEnabled.checked;
+	}
+
 	public static async addFiles(webDirectory?: boolean): Promise<void> {
 		if (!App.player || AppUI._loading)
 			return;
@@ -699,7 +716,7 @@ class AppUI {
 
 	public static showAbout(): void {
 		Modal.show({
-			html: Strings.AboutHTML,
+			html: Strings.AboutHTML + ((App.player && App.player.audioContext) ? ('<br/><br/><small>Base latency: ' + App.player.audioContext.baseLatency + ' s / Output latency: ' + (isNaN((App.player.audioContext as any).outputLatency) ? "-" : (App.player.audioContext as any).outputLatency) +  ' s</small>') : ''),
 			title: Strings.About + " (v" + (window as any).CACHE_VERSION + ")"
 		});
 	}

@@ -24,33 +24,35 @@
 // https://github.com/carlosrafaelgn/FPlayWeb
 //
 
-class StereoPannerControl extends Filter {
+class StereoPannerControl extends ConnectableNode {
 	public static readonly maxAbsoluteValue = 20;
 
-	private readonly audioContext: AudioContext;
 	private readonly channelSplitter: ChannelSplitterNode | null;
 	private readonly gain: GainNode | null;
 	private readonly channelMerger: ChannelMergerNode | null;
 	private readonly slider: SliderControl;
 	private readonly label: HTMLSpanElement;
 
-	private _enabled: boolean;
 	private _pan: number;
+	private _appliedGain: number;
 	private leftGain: boolean;
 	private rightGain: boolean;
 
-	public constructor(sliderElement: HTMLElement, audioContext: AudioContext, enabled?: boolean, filterChangedCallback?: FilterChangedCallback | null) {
-		super(filterChangedCallback);
+	public onappliedgainchanged: ((appliedGain: number) => void) | null;
 
-		this._enabled = !!enabled;
+	public constructor(sliderElement: HTMLElement, audioContext: AudioContext) {
+		super();
+
 		this._pan = InternalStorage.loadStereoPannerSettings();
+		this._appliedGain = 1;
 
-		this.audioContext = audioContext;
 		this.channelSplitter = audioContext.createChannelSplitter(2);
 		this.gain = audioContext.createGain();
 		this.channelMerger = audioContext.createChannelMerger(2);
 		this.leftGain = false;
 		this.rightGain = false;
+
+		this.onappliedgainchanged = null;
 
 		const boundCommitChanges = this.commitChanges.bind(this);
 
@@ -67,22 +69,33 @@ class StereoPannerControl extends Filter {
 		this.commitChanges(this._pan);
 	}
 
+	protected get input(): AudioNode | null {
+		return this.channelSplitter;
+	}
+
+	protected get output(): AudioNode | null {
+		return this.channelMerger;
+	}
+
 	private sliderValueChanged(value: number): void {
 		AppUI.changeText(this.label, (!value ? "-0" : ((value < 0 ? Strings.RightAbbrev : Strings.LeftAbbrev) + " " + ((value = Math.abs(value)) >= StereoPannerControl.maxAbsoluteValue ? GraphicalFilterEditorStrings.MinusInfinity : ("-" + value)))) + " dB");
 	}
 
 	private commitChanges(pan: number): void {
-		const audioContext = this.audioContext,
-			channelSplitter = this.channelSplitter,
+		const channelSplitter = this.channelSplitter,
 			gain = this.gain,
 			channelMerger = this.channelMerger;
 
 		if (!channelSplitter || !gain || !channelMerger)
 			return;
 
+		const absPan = Math.abs(pan),
+			absPanChanged = (Math.abs(this._pan) !== absPan);
+
 		this._pan = pan;
 
-		if (!pan) {
+		if (!absPan) {
+			this._appliedGain = 1;
 			this.leftGain = false;
 			this.rightGain = false;
 			gain.disconnect();
@@ -93,8 +106,8 @@ class StereoPannerControl extends Filter {
 			const leftGain = (pan > 0),
 				rightGain = !leftGain;
 
-			pan = Math.abs(pan);
-			gain.gain.setValueAtTime(pan >= StereoPannerControl.maxAbsoluteValue ? 0 : Math.pow(10, -pan / 20), audioContext.currentTime + 0.1);
+			this._appliedGain = (absPan >= StereoPannerControl.maxAbsoluteValue ? 0 : Math.pow(10, -absPan / 20));
+			gain.gain.value = this._appliedGain;
 
 			if (leftGain !== this.leftGain || rightGain !== this.rightGain) {
 				channelSplitter.disconnect();
@@ -114,20 +127,28 @@ class StereoPannerControl extends Filter {
 				}
 			}
 		}
+
+		if (absPanChanged && this.enabled && this.onappliedgainchanged)
+			this.onappliedgainchanged(this._appliedGain);
 	}
 
 	public get enabled(): boolean {
-		return this._enabled;
+		// Overriding only the getter, or only the setter, does not work in all browsers
+		return super.enabled;
 	}
 
 	public set enabled(enabled: boolean) {
-		if (this._enabled === enabled)
+		if (enabled === this.enabled)
 			return;
 
-		this._enabled = enabled;
+		super.enabled = enabled;
 
-		if (this.channelSplitter && this.filterChangedCallback)
-			this.filterChangedCallback();
+		if (this.onappliedgainchanged)
+			this.onappliedgainchanged(this.appliedGain);
+	}
+
+	public get appliedGain(): number {
+		return (this.enabled ? this._appliedGain : 1);
 	}
 
 	public get pan(): number {
@@ -147,20 +168,5 @@ class StereoPannerControl extends Filter {
 
 	public saveSettings(): void {
 		InternalStorage.saveStereoPannerSettings(this._pan);
-	}
-
-	public get inputNode(): AudioNode | null {
-		return this.channelSplitter;
-	}
-
-	public get outputNode(): AudioNode | null {
-		return this.channelMerger;
-	}
-
-	public destroy(): void {
-		if (this.channelSplitter) {
-			super.destroy();
-			zeroObject(this);
-		}
 	}
 }

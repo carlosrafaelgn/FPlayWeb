@@ -29,6 +29,8 @@ interface CheckboxControlOptions {
 	parent?: HTMLElement | null;
 	id?: string | null;
 	className?: string | null;
+	icon?: string | null;
+	iconColor?: string | null;
 }
 
 class CheckboxControl {
@@ -52,7 +54,7 @@ class CheckboxControl {
 		if (options.className)
 			input.className = options.className;
 
-		const button = CheckboxControl.prepare(input);
+		const button = CheckboxControl.prepare(input, options.icon, options.iconColor);
 
 		if (options.parent)
 			options.parent.appendChild(button);
@@ -60,7 +62,7 @@ class CheckboxControl {
 		return button;
 	}
 
-	private static prepare(input: HTMLInputElement): HTMLButtonElement {
+	private static prepare(input: HTMLInputElement, icon?: string | null, iconColor?: string | null): HTMLButtonElement {
 		const button = document.createElement("button"),
 			span = document.createElement("span"),
 			parent = input.parentNode as HTMLElement | null,
@@ -76,6 +78,12 @@ class CheckboxControl {
 		button.className = input.className;
 		input.className = "";
 
+		if (!icon)
+			icon = input.getAttribute("data-icon");
+
+		if (icon && !iconColor)
+			iconColor = input.getAttribute("data-icon-color");
+
 		if (parent) {
 			parent.insertBefore(button, input);
 			parent.removeChild(input);
@@ -85,6 +93,8 @@ class CheckboxControl {
 		span.appendChild(input);
 		span.appendChild(Icon.createLarge("icon-checkbox-0", "margin"));
 		span.appendChild(Icon.createLarge("icon-checkbox-1", "margin orange"));
+		if (icon)
+			span.appendChild(Icon.createLarge(icon, iconColor ? ("margin " + iconColor) : "margin"));
 		span.appendChild(document.createTextNode(label));
 		input.removeAttribute("value");
 		input.removeAttribute("title");

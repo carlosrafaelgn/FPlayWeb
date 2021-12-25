@@ -30,15 +30,16 @@ class Player {
 	private static readonly nop = function () { };
 
 	public readonly audioContext: AudioContext;
+	private readonly sourceNode: SourceNode;
 	public readonly graphicalFilterControl: GraphicalFilterControl;
 	public readonly stereoPannerControl: StereoPannerControl;
+	public readonly monoDownMixerControl: MonoDownMixerControl;
+	private readonly destinationNode: DestinationNode;
 
 	private audio: HTMLAudioElement;
 	private audioContextTimeout: number;
 	private audioContextSuspended: boolean;
 	private source: MediaElementAudioSourceNode;
-	private filterOutput: AudioNode;
-	private stereoPannerInput: AudioNode;
 
 	private _alive: boolean;
 	private _loading: boolean;
@@ -62,23 +63,33 @@ class Player {
 	public oncurrenttimeschanged: ((currentTimeS: number) => void) | null;
 	public onerror: ((message: string) => void) | null;
 
-	public constructor(filterContainer: HTMLDivElement, outerFilterContainer: HTMLDivElement, stereoPannerSlider: HTMLElement, volume?: number, graphicalFilterControlEnabled?: boolean, graphicalFilterControlSimpleMode?: boolean, stereoPannerControlEnabled?: boolean) {
+	public constructor(filterContainer: HTMLDivElement, outerFilterContainer: HTMLDivElement, stereoPannerSlider: HTMLElement, volume?: number, graphicalFilterControlEnabled?: boolean, graphicalFilterControlSimpleMode?: boolean, stereoPannerControlEnabled?: boolean, monoDownMixerControlEnabled?: boolean) {
 		this.audioContextTimeout = 0;
 		this.audioContextSuspended = true;
 		// https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/AudioContext#options
 		// https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/baseLatency
 		// https://bugs.chromium.org/p/chromium/issues/detail?id=1231090
+		const latencyHint: AudioContextLatencyCategory | number = ((navigator.userAgent && navigator.userAgent.indexOf("Firefox") >= 0) ? 1.0 : "playback");
 		this.audioContext = (window.AudioContext ? new window.AudioContext({
-			latencyHint: "playback"
+			latencyHint
 		}) : new (window as any)["webkitAudioContext"]({
-			latencyHint: "playback"
+			latencyHint
 		})) as AudioContext;
 		this.audioContext.suspend();
 		this.audioContext.onstatechange = this.audioContextStateChanged.bind(this);
 
-		this.graphicalFilterControl = new GraphicalFilterControl(filterContainer, outerFilterContainer, this.audioContext, graphicalFilterControlEnabled, graphicalFilterControlSimpleMode, this.filterChanged.bind(this));
+		this.graphicalFilterControl = new GraphicalFilterControl(filterContainer, outerFilterContainer, this.audioContext, graphicalFilterControlSimpleMode);
+		this.graphicalFilterControl.enabled = !!graphicalFilterControlEnabled;
 
-		this.stereoPannerControl = new StereoPannerControl(stereoPannerSlider, this.audioContext, stereoPannerControlEnabled, this.stereoPannerChanged.bind(this));
+		this.stereoPannerControl = new StereoPannerControl(stereoPannerSlider, this.audioContext);
+		this.stereoPannerControl.enabled = !!stereoPannerControlEnabled;
+
+		this.monoDownMixerControl = new MonoDownMixerControl(this.audioContext);
+		this.monoDownMixerControl.enabled = (MonoDownMixerControl.isSupported() && !!monoDownMixerControlEnabled);
+		this.stereoPannerControl.onappliedgainchanged = (appliedGain) => {
+			if (this.monoDownMixerControl)
+				this.monoDownMixerControl.multiplier = 1 / (1 + appliedGain);
+		};
 
 		this.onsongchanged = null;
 		this.onloadingchanged = null;
@@ -133,11 +144,16 @@ class Player {
 
 		this.volume = (volume === undefined ? Player.maxVolume : volume);
 
-		this.filterOutput = this.source;
-		this.stereoPannerInput = this.audioContext.destination;
+		this.sourceNode = new SourceNode(this.source);
+		this.sourceNode.enabled = true;
 
-		this.filterChanged();
-		this.stereoPannerChanged();
+		this.destinationNode = new DestinationNode(this.audioContext.destination);
+		this.destinationNode.enabled = true;
+
+		this.sourceNode.connectToDestination(this.graphicalFilterControl);
+		this.graphicalFilterControl.connectToDestination(this.stereoPannerControl);
+		this.stereoPannerControl.connectToDestination(this.monoDownMixerControl);
+		this.monoDownMixerControl.connectToDestination(this.destinationNode);
 
 		// https://developers.google.com/web/updates/2017/02/media-session
 		// https://w3c.github.io/mediasession
@@ -177,49 +193,15 @@ class Player {
 		} else {
 			this._alive = false;
 
+			this.sourceNode.disconnectFromDestination();
+			this.graphicalFilterControl.disconnectFromDestination();
+			this.stereoPannerControl.disconnectFromDestination();
+
 			if (this.graphicalFilterControl)
 				this.graphicalFilterControl.saveSettings();
 
 			if (this.stereoPannerControl)
 				this.stereoPannerControl.saveSettings();
-		}
-	}
-
-	private filterChanged(): void {
-		if (!this._alive)
-			return;
-
-		const source = this.source,
-			destination = this.stereoPannerInput;
-
-		this.filterOutput = source;
-
-		if (!this.graphicalFilterControl.enabled ||
-			!this.graphicalFilterControl.editor.filter.connectSourceAndDestination(source, destination)) {
-			source.disconnect();
-			this.graphicalFilterControl.editor.filter.disconnectSourceAndDestination();
-			source.connect(destination, 0, 0);
-		} else {
-			this.filterOutput = this.graphicalFilterControl.editor.filter.outputNode as AudioNode;
-		}
-	}
-
-	private stereoPannerChanged(): void {
-		if (!this._alive)
-			return;
-
-		const source = this.filterOutput,
-			destination = this.audioContext.destination;
-
-		this.stereoPannerInput = destination;
-
-		if (!this.stereoPannerControl.enabled ||
-			!this.stereoPannerControl.connectSourceAndDestination(source, destination)) {
-			source.disconnect();
-			this.stereoPannerControl.disconnectSourceAndDestination();
-			source.connect(destination, 0, 0);
-		} else {
-			this.stereoPannerInput = this.stereoPannerControl.inputNode as AudioNode;
 		}
 	}
 

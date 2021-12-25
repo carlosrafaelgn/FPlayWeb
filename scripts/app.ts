@@ -60,6 +60,7 @@ interface AppSettings {
 	graphicalFilterControlEnabled?: boolean;
 	graphicalFilterControlSimpleMode?: boolean;
 	stereoPannerControlEnabled?: boolean;
+	monoDownMixerControlEnabled?: boolean;
 }
 
 class App {
@@ -112,7 +113,8 @@ class App {
 				playerVolume: App.player.volume,
 				graphicalFilterControlEnabled: App.player.graphicalFilterControl.enabled,
 				graphicalFilterControlSimpleMode: App.player.graphicalFilterControl.simpleMode,
-				stereoPannerControlEnabled: App.player.stereoPannerControl.enabled
+				stereoPannerControlEnabled: App.player.stereoPannerControl.enabled,
+				monoDownMixerControlEnabled: App.player.monoDownMixerControl.enabled
 			});
 
 			App.player.destroy(true);
@@ -329,7 +331,8 @@ class App {
 			appSettings.playerVolume,
 			appSettings.graphicalFilterControlEnabled,
 			appSettings.graphicalFilterControlSimpleMode,
-			appSettings.stereoPannerControlEnabled
+			appSettings.stereoPannerControlEnabled,
+			appSettings.monoDownMixerControlEnabled
 		);
 
 		try {

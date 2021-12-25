@@ -27,7 +27,7 @@
 // Fewer browsers support custom elements / shadow DOM than Web Audio
 // https://caniuse.com/mdn-api_window_customelements
 // https://caniuse.com/mdn-api_element_attachshadow
-class GraphicalFilterControl { //extends HTMLElement {
+class GraphicalFilterControl extends ConnectableNode { //extends HTMLElement {
 	public static readonly defaultPresets: { [name: string]: string } = {
 		"Powerful": "oaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGgoKCgoKCgoKCfn5+fn5+enp6enp2dnZ2cnJybm5qampqZmZmYmJiXl5eWlpWVlZSUlJOTkpKSkZGRkZCQkI+Pj46Ojo6NjY2NjYyMjIyLi4uLi4uKioqKioqKioqKiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmKioqKioqKioqKioqKiouLi4uLjIyMjIyNjY2Njo6Ojo+Pj4+QkJCRkpKSk5OTk5SUlJWVlZWWlpaXl5eXmJiYmZmZmZqampqbm5ubnJycnJ2dnZ2enp6enp+fn5+fn6CgoKCgoKCgoKGhoaGhoaGhoaGhoaGhoaE="
 	};
@@ -40,13 +40,10 @@ class GraphicalFilterControl { //extends HTMLElement {
 	private readonly simpleEditor: SimpleFilterEditorControl;
 	public readonly editor: GraphicalFilterEditorControl;
 
-	private _enabled: boolean;
 	private _simpleMode: boolean;
 
-	public filterChangedCallback: FilterChangedCallback | null | undefined;
-
-	public constructor(container: HTMLDivElement, outerContainer: HTMLDivElement, audioContext: AudioContext, enabled?: boolean, simpleMode?: boolean, filterChangedCallback?: FilterChangedCallback | null) {
-		//super();
+	public constructor(container: HTMLDivElement, outerContainer: HTMLDivElement, audioContext: AudioContext, simpleMode?: boolean) {
+		super();
 
 		//const shadowRoot = this.attachShadow({ mode: "open" }),
 		//	editorElement = document.createElement("div"),
@@ -58,8 +55,6 @@ class GraphicalFilterControl { //extends HTMLElement {
 		//shadowRoot.appendChild(style);
 		//shadowRoot.appendChild(editorElement);
 
-		this.filterChangedCallback = filterChangedCallback;
-		this._enabled = !!enabled;
 		this._simpleMode = !!simpleMode;
 
 		this.container = container;
@@ -111,23 +106,17 @@ class GraphicalFilterControl { //extends HTMLElement {
 		menuButton.style.float = "right";
 	}
 
+	protected get input(): AudioNode | null {
+		return this.editor.filter.inputNode;
+	}
+
+	protected get output(): AudioNode | null {
+		return this.editor.filter.outputNode;
+	}
+
 	private filterChanged(): void {
-		if (this.filterChangedCallback)
-			this.filterChangedCallback();
-	}
-
-	public get enabled(): boolean {
-		return this._enabled;
-	}
-
-	public set enabled(enabled: boolean) {
-		if (this._enabled === enabled)
-			return;
-
-		this._enabled = enabled;
-
-		if (this.filterChangedCallback && this.editor && this.editor.filter)
-			this.filterChangedCallback();
+		if (this.enabled)
+			this.nodesChanged();
 	}
 
 	public get simpleMode(): boolean {
@@ -161,8 +150,7 @@ class GraphicalFilterControl { //extends HTMLElement {
 		if (this.container && add && !add.parentNode)
 			this.container.appendChild(add);
 
-		if (this.filterChangedCallback && this.editor && this.editor.filter)
-			this.filterChangedCallback();
+		this.filterChanged();
 	}
 
 	public saveSettings(): void {
