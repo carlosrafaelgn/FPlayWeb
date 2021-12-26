@@ -76,8 +76,8 @@
 			--optional-panel-container-height: 388px;
 		}
 	</style>
-	<link rel="stylesheet" type="text/css" href="/assets/css/graphicalFilterEditor.css?20211220" />
-	<link rel="stylesheet" type="text/css" href="/assets/css/style.css?20211220" />
+	<link rel="stylesheet" type="text/css" href="/assets/css/graphicalFilterEditor.css?20211226" />
+	<link rel="stylesheet" type="text/css" href="/assets/css/style.css?20211226" />
 </head>
 <body>
 	<noscript>Sorry! You need to enable JavaScript in order to run the player :(</noscript>
@@ -141,7 +141,7 @@
 		//<![CDATA[
 		"use strict";
 
-		var CACHE_VERSION = "20211220";
+		var CACHE_VERSION = "20211226";
 
 		(function () {
 			function loadScript(src, successCallback, errorCallback) {
@@ -184,14 +184,17 @@
 			}
 
 			function loadLibScript() {
-				window["fplayUsingWebAssembly"] = ("WebAssembly" in window);
+				var webAssemblyInWindow = ("WebAssembly" in window),
+					fplayUsingWebAssembly = false;
 
-				if (window["fplayUsingWebAssembly"])
-					window["CLibWasmBinaryReader"] = function () {
-						return fetch("assets/lib/graphicalFilterEditor/lib.wasm?" + CACHE_VERSION).then(function (response) {
-							return response.arrayBuffer();
-						});
-					};
+				if (fplayUsingWebAssembly)
+					window["CLibWasmBinary"] = fetch("assets/lib/graphicalFilterEditor/lib.wasm?" + CACHE_VERSION).then(function (response) {
+						return response.arrayBuffer();
+					});
+				else
+					window["CLibMemoryArrayBuffer"] = fetch("assets/lib/graphicalFilterEditor/lib.js.mem?" + CACHE_VERSION).then(function (response) {
+						return response.arrayBuffer();
+					});
 
 				// Unfortunately, as of September 2020, emscripten does not automaticaly loads
 				// the pure JS version of the compiled code, even when specifying the flag WASM=2
@@ -202,7 +205,7 @@
 				// https://github.com/emscripten-core/emscripten/blob/master/src/settings.js
 				// https://github.com/emscripten-core/emscripten/pull/10118
 				// https://github.com/emscripten-core/emscripten/issues/11357
-				loadScript("assets/lib/graphicalFilterEditor/lib" + (window["fplayUsingWebAssembly"] ? "" : "-nowasm") + ".js?" + CACHE_VERSION, function () {
+				loadScript("assets/lib/graphicalFilterEditor/lib" + (fplayUsingWebAssembly ? "" : "-nowasm") + ".js?" + CACHE_VERSION, function () {
 					// Trying to add a script to the body element, then removing it and adding
 					// another version leads to duplicate variable declaration (using let/const),
 					// because all globals remain declared, even if the script tag is removed.
@@ -211,7 +214,7 @@
 					// https://caniuse.com/wasm / https://caniuse.com/mdn-javascript_operators_await
 					// if a browser has support for WebAssembly it also has support for async/await
 					// (but not the opposite).
-					if (window["fplayUsingWebAssembly"])
+					if (webAssemblyInWindow)
 						loadMainScript("");
 					else
 						loadMainScript("es6");
