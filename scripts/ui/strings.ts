@@ -75,7 +75,7 @@ This project is licensed under the <a target="_blank" href="https://github.com/c
 	public static toFixed(x: number, fractionDigits: number): string { return x.toFixed(fractionDigits); }
 
 	public static init(): void {
-		const language = ((navigator as any)["userLanguage"] as string || navigator.language);
+		const language = ((App.hostInterface && App.hostInterface.getBrowserLanguage()) || (navigator as any)["userLanguage"] as string || navigator.language);
 		if (language && language.toLowerCase().indexOf("pt") === 0) {
 			Strings.language = "pt-br";
 

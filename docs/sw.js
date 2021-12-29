@@ -32,7 +32,7 @@
 // whenever it detects a change in the source code of the
 // service worker).
 const CACHE_PREFIX = "fplay-static-cache-";
-const CACHE_VERSION = "20211226";
+const CACHE_VERSION = "20211229";
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
 
 self.addEventListener("install", (event) => {
@@ -180,7 +180,7 @@ self.addEventListener("fetch", (event) => {
 				// Therefore, try to fulfill requests for favicons with
 				// the largest favicon we have available in our cache.
 				if (url.indexOf("favicon") >= 0)
-					return cache.match("/assets/images/favicons/favicon-512x512.png", { ignoreVary: true });
+					return cache.match("assets/images/favicons/favicon-512x512.png", { ignoreVary: true });
 
 				// The resource was not in our cache, was not available
 				// from the network and was also not a favicon...

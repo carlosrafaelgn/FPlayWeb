@@ -30,7 +30,9 @@ class Formatter {
 	public static readonly noneInt = -1;
 	public static readonly empty = "";
 
+	public static readonly httpURLPrefix = "http";
 	public static readonly fileURLPrefix = "file://";
+	public static readonly contentURLPrefix = "content";
 	private static readonly fileURLPrefixWindows = "file:///";
 	private static readonly regExpSepWindows = /\\/g;
 
@@ -60,7 +62,7 @@ class Formatter {
 	}
 
 	public static pathToURL(urlOrAbsolutePath: string): string {
-		return ((!urlOrAbsolutePath || urlOrAbsolutePath.startsWith(Formatter.fileURLPrefix)) ? urlOrAbsolutePath :
+		return ((!urlOrAbsolutePath || urlOrAbsolutePath.startsWith(Formatter.httpURLPrefix) || urlOrAbsolutePath.startsWith(Formatter.fileURLPrefix) || urlOrAbsolutePath.startsWith(Formatter.contentURLPrefix)) ? urlOrAbsolutePath :
 			encodeURI(!urlOrAbsolutePath.startsWith("/") ? (Formatter.fileURLPrefixWindows + urlOrAbsolutePath.replace(Formatter.regExpSepWindows, "/")) : (Formatter.fileURLPrefix + urlOrAbsolutePath))
 		);
 	}

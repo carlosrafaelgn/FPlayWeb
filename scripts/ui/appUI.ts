@@ -614,7 +614,9 @@ class AppUI {
 		if (!App.player || AppUI._loading)
 			return;
 
-		const filePaths = (App.electron ? await App.showOpenFileDialog() : await App.showOpenDialogWeb(webDirectory));
+		const electron = (App.hostType === App.hostTypeElectron),
+			filePaths = (electron ? await App.showOpenFileDialog() : await App.showOpenDialogWeb(webDirectory));
+
 		if (!filePaths || !App.player)
 			return;
 
@@ -627,14 +629,14 @@ class AppUI {
 				AppUI.preparePlaylist();
 			}
 
-			const buffer = (App.electron ? null : new Uint8Array(BufferedFileHandle.minBufferLength << 1)),
-				tempBuffer = (App.electron ? null : [new Uint8Array(256)]);
+			const buffer = (electron ? null : new Uint8Array(BufferedFileHandle.minBufferLength << 1)),
+				tempBuffer = (electron ? null : [new Uint8Array(256)]);
 
 			for (let i = 0; i < filePaths.length; i++) {
 				if (!App.player || !App.player.playlist)
 					break;
 
-				if (App.electron)
+				if (electron)
 					await App.player.playlist.addSong(filePaths[i] as string);
 				else
 					await App.player.playlist.addSongWeb(filePaths[i] as File, buffer, tempBuffer);
@@ -678,7 +680,7 @@ class AppUI {
 		if (!App.player || AppUI._loading)
 			return;
 
-		if (!App.electron)
+		if (App.hostType !== App.hostTypeElectron)
 			return AppUI.addFiles(true);
 
 		const directoryPaths = await App.showOpenDirectoryDialog();

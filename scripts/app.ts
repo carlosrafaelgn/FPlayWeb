@@ -63,11 +63,22 @@ interface AppSettings {
 	monoDownMixerControlEnabled?: boolean;
 }
 
+interface HostInterface {
+	getHostType(): string;
+	getFileURLsJSON(): string | null;
+	getBrowserLanguage(): String;
+	exit(): void;
+}
+
 class App {
-	public static readonly electron = !!(window as any)["electronIpcRenderer"];
-	public static readonly frameless = App.electron;
-	private static readonly ipcRenderer = (window as any)["electronIpcRenderer"] as IpcRenderer;
+	public static readonly hostTypeElectron = "Electron";
+
+	private static readonly ipcRenderer = ((window as any)["electronIpcRenderer"] as IpcRenderer || null);
 	private static readonly closeHandlers: AppCloseHandler[] = [];
+	public static readonly frameless = !!(window as any)["electronIpcRenderer"];
+	public static readonly hostInterface: HostInterface | null = ((window as any)["hostInterface"] as HostInterface || null);
+	public static readonly insideNativeHost = App.frameless || !!App.hostInterface;
+	public static readonly hostType = ((App.hostInterface && App.hostInterface.getHostType()) || null);
 
 	private static readonly iconLoading = document.getElementById("icon-loading") as HTMLElement;
 
@@ -129,7 +140,7 @@ class App {
 				}
 			}
 
-			if (!App.electron)
+			if (!App.insideNativeHost)
 				return;
 
 			if (playlist)
@@ -224,8 +235,10 @@ class App {
 		const appSettings = InternalStorage.loadAppSettings(),
 			webFrame = (window as any)["electronWebFrame"] as WebFrame;
 
-		delete (window as any)["electronIpcRenderer"];
-		delete (window as any)["electronWebFrame"];
+		if (App.ipcRenderer)
+			delete (window as any)["electronIpcRenderer"];
+		if (webFrame)
+			delete (window as any)["electronWebFrame"];
 
 		if ("serviceWorker" in navigator) {
 			window.addEventListener("beforeinstallprompt", App.beforeInstallPrompt);
@@ -258,7 +271,7 @@ class App {
 			App.ipcRenderer.on("mainWindowClosing", App.mainWindowClosing);
 
 			App.triggerMainWindowStateChanged();
-		} else {
+		} else if (!App.hostInterface) {
 			// https://developers.google.com/web/updates/2018/07/page-lifecycle-api#the-unload-event
 			window.addEventListener(("onpagehide" in window) ? "pagehide" : "unload", App.mainWindowClosing);
 		}
@@ -281,7 +294,7 @@ class App {
 			App.titleBar.insertBefore(App.iconLoading, (document.getElementById("icon-main") as HTMLElement).nextSibling);
 		}
 
-		if (!App.electron) {
+		if (App.hostType !== App.hostTypeElectron) {
 			const div = document.createElement("div");
 			div.style.display = "none";
 			App.fileInput = document.createElement("input");
@@ -304,8 +317,24 @@ class App {
 
 				const files = new Array(App.fileInput.files.length) as File[];
 
-				for (let i = files.length - 1; i >= 0; i--)
-					files[i] = App.fileInput.files[i];
+				let fileURLs: string[] | null = null;
+				try {
+					const fileURLsJSON = ((App.hostInterface && App.hostInterface.getFileURLsJSON()) || null);
+					if (fileURLsJSON)
+						fileURLs = JSON.parse(fileURLsJSON);
+				} catch (ex: any) {
+					// Just ignore...
+				}
+
+				if (fileURLs && fileURLs.length === files.length) {
+					for (let i = files.length - 1; i >= 0; i--) {
+						files[i] = App.fileInput.files[i];
+						(files[i] as any)["data-path"] = fileURLs[i];
+					}
+				} else {
+					for (let i = files.length - 1; i >= 0; i--)
+						files[i] = App.fileInput.files[i];
+				}
 
 				App.fileInput.value = "";
 
