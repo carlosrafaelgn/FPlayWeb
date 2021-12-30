@@ -128,7 +128,17 @@ class InternalStorage {
 		}
 	}
 
-	public static async savePlaylist(playlist: Playlist, name?: string | null): Promise<void> {
+	public static loadPlaylistWeb(name?: string | null): Playlist | null {
+		const json = localStorage.getItem(name || "defaultPlaylist");
+
+		return (json ? Playlist.deserializeWeb(json) : null);
+	}
+
+	public static savePlaylist(playlist: Playlist, name?: string | null): Promise<void> {
 		return InternalStorage.cachePut(InternalStorage.cacheNamePlaylists, name, new Response(playlist.serialize().trimmedArrayBuffer));
+	}
+
+	public static savePlaylistWeb(playlist: Playlist, name?: string | null): void {
+		return localStorage.setItem(name || "defaultPlaylist", JSON.stringify(playlist.serializeWeb()));
 	}
 }

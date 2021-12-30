@@ -140,8 +140,11 @@ class App {
 				}
 			}
 
-			if (!App.insideNativeHost)
+			if (!App.insideNativeHost) {
+				if (playlist)
+					InternalStorage.savePlaylistWeb(playlist);
 				return;
+			}
 
 			if (playlist)
 				promises.push(InternalStorage.savePlaylist(playlist));
@@ -365,7 +368,7 @@ class App {
 		);
 
 		try {
-			const playlist = await InternalStorage.loadPlaylist();
+			const playlist = (!App.insideNativeHost ? InternalStorage.loadPlaylistWeb() : await InternalStorage.loadPlaylist());
 
 			if (!App.player || !App.player.alive)
 				return;
@@ -505,9 +508,9 @@ class App {
 	}
 	*/
 
-	public static async showOpenDialogWeb(directory?: boolean): Promise<File[] | null> {
+	public static showOpenDialogWeb(directory?: boolean): Promise<File[] | null> {
 		if (!App.fileInput)
-			return null;
+			return Promise.resolve(null);
 
 		//if (directory) {
 		//	if ("showDirectoryPicker" in window)

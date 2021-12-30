@@ -36,4 +36,6 @@ abstract class ListItem {
 	public abstract estimateSerializedLength(): number;
 
 	public abstract serialize(writer: DataWriter): DataWriter;
+
+	public abstract serializeWeb(): any;
 }

@@ -515,6 +515,11 @@ class Player {
 					URL.revokeObjectURL(this.lastObjectURL);
 				this.lastObjectURL = URL.createObjectURL(currentSong.file);
 				source.src = this.lastObjectURL;
+			} else {
+				this.stop();
+				if (this.onerror)
+					this.onerror(Strings.MissingSongError);
+				return;
 			}
 			source.onerror = this.boundPlaybackError;
 

@@ -106,7 +106,7 @@ class AppUI {
 		let firstTime = true,
 			n = x.toFixed(5);
 
-		n = n.substr(0, n.length - 1);
+		n = n.substring(0, n.length - 1);
 
 		for (; ; ) {
 			const lastChar1 = n.charAt(n.length - 1),
@@ -123,19 +123,19 @@ class AppUI {
 				}
 			} else {
 				let i = n.lastIndexOf(".");
-				let sub1 = n.substr(i + 1, 2),
-					sub2 = n.substr(i + 3, 2);
+				let sub1 = n.substring(i + 1, i + 1 + 2),
+					sub2 = n.substring(i + 3, i + 3 + 2);
 				if (sub1 === sub2) {
-					n = n.substr(0, i + 1);
+					n = n.substring(0, i + 1);
 					while (n.length < 24)
 						n += sub1;
 				} else {
 					n = x.toFixed(7);
 					i = n.lastIndexOf(".");
-					sub1 = n.substr(i + 1, 3);
-					sub2 = n.substr(i + 4, 3);
+					sub1 = n.substring(i + 1, i + 1 + 3);
+					sub2 = n.substring(i + 4, i + 4 + 3);
 					if (sub1 === sub2) {
-						n = n.substr(0, i + 1);
+						n = n.substring(0, i + 1);
 						while (n.length < 24)
 							n += sub1;
 					} else {
@@ -511,7 +511,7 @@ class AppUI {
 	}
 
 	private static playerError(message: string): void {
-		alert(message);
+		Modal.show({ text: message });
 	}
 
 	private static playlistSongLengthChanged(song: Song): void {
@@ -629,21 +629,26 @@ class AppUI {
 				AppUI.preparePlaylist();
 			}
 
-			const buffer = (electron ? null : new Uint8Array(BufferedFileHandle.minBufferLength << 1)),
+			const playlist = App.player.playlist,
+				buffer = (electron ? null : new Uint8Array(BufferedFileHandle.minBufferLength << 1)),
 				tempBuffer = (electron ? null : [new Uint8Array(256)]);
 
-			for (let i = 0; i < filePaths.length; i++) {
-				if (!App.player || !App.player.playlist)
-					break;
+			let missingSongWasAdded = false;
 
-				if (electron)
-					await App.player.playlist.addSong(filePaths[i] as string);
-				else
-					await App.player.playlist.addSongWeb(filePaths[i] as File, buffer, tempBuffer);
+			for (let i = 0; i < filePaths.length && App.player; i++) {
+				if (electron) {
+					await playlist.addSong(filePaths[i] as string);
+				} else {
+					const oldLength = playlist.length;
+					if (await playlist.addSongWeb(filePaths[i] as File, buffer, tempBuffer) && oldLength === playlist.length)
+						missingSongWasAdded = true;
+				}
 			}
+
+			if (missingSongWasAdded && AppUI.playlistControl)
+				AppUI.playlistControl.refreshVisibleItems();
 		} catch (ex: any) {
-			// @@@
-			alert("addFiles error: " + (ex.message || ex.toString()));
+			Modal.show({ text: "addFiles error: " + (ex.message || ex.toString()) });
 		} finally {
 			AppUI._loading = false;
 			App.updateLoadingIcon();
@@ -702,8 +707,7 @@ class AppUI {
 					break;
 			}
 		} catch (ex: any) {
-			// @@@
-			alert("addDirectories error: " + (ex.message || ex.toString()));
+			Modal.show({ text: "addDirectories error: " + (ex.message || ex.toString()) });
 		} finally {
 			AppUI._loading = false;
 			AppUI.directoryCancelled = false;

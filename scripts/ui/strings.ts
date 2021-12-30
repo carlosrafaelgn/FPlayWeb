@@ -41,6 +41,8 @@ class Strings {
 	public static Disabled = "Disabled";
 	public static AdvancedFilter = "Advanced filter";
 	public static TraditionalFilter = "Traditional filter";
+	public static Missing = "Missing";
+	public static MissingSongError = "The song is missing! 😢 Please, just add it again before playing it. When you add a missing song, it keeps its position in the playlist! 😊";
 	public static OK = "OK";
 	public static Cancel = "Cancel";
 	public static Clear = "Clear";
@@ -93,6 +95,8 @@ This project is licensed under the <a target="_blank" href="https://github.com/c
 			Strings.Disabled = "Desativado";
 			Strings.AdvancedFilter = "Filtro avançado";
 			Strings.TraditionalFilter = "Filtro tradicional";
+			Strings.Missing = "Faltando";
+			Strings.MissingSongError = "A música está faltando! 😢 Por favor, apenas adicione novamente a música antes de tocar. Quando você adiciona uma música que está faltando, ela fica na mesma posição dentro da playlist! 😊";
 			//Strings.OK = "OK";
 			Strings.Cancel = "Cancelar";
 			Strings.Clear = "Limpar";

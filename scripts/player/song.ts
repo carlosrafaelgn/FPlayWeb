@@ -25,16 +25,16 @@
 //
 
 interface SongInfo {
-	id: number;
 	url: string;
-	isHttp: boolean;
 	title: string;
 	artist: string;
 	album: string;
 	track: number;
 	lengthMS: number;
 	year: number;
-	length: string;
+
+	fileName: string | null;
+	fileSize: number;
 }
 
 class Song extends ListItem implements SongInfo {
@@ -45,8 +45,8 @@ class Song extends ListItem implements SongInfo {
 	public static deserialize(reader: DataReader): Song {
 		// NEVER change this order! (changing will destroy existing playlists)
 		reader.readUint8(); // version
-		const song = new Song(reader.readString(), reader.readString(), reader.readString(), reader.readString(), reader.readInt16(), reader.readInt32(), reader.readInt16());
 		reader.readInt32(); // flags
+		const song = new Song(reader.readString(), reader.readString(), reader.readString(), reader.readString(), reader.readInt16(), reader.readInt32(), reader.readInt16(), reader.readString(), reader.readInt32());
 		return song;
 	}
 
@@ -60,28 +60,32 @@ class Song extends ListItem implements SongInfo {
 	public readonly year: number;
 	public length: string;
 
-	public file?: File | null;
+	public file?: File;
+	public readonly fileName: string | null;
+	public readonly fileSize: number;
 
-	public constructor(urlOrMetadata: string | Metadata, title?: string | null, artist?: string | null, album?: string | null, track?: number | null, lengthMS?: number | null, year?: number | null) {
+	public constructor(urlOrMetadata: string | Metadata, title?: string | null, artist?: string | null, album?: string | null, track?: number, lengthMS?: number, year?: number, fileName?: string | null, fileSize?: number) {
 		super();
 
 		if ((typeof urlOrMetadata) !== "string") {
-			const songInfo = urlOrMetadata as Metadata;
-			urlOrMetadata = songInfo.url;
-			title = songInfo.title;
-			artist = songInfo.artist;
-			album = songInfo.album;
-			track = songInfo.track;
-			lengthMS = songInfo.lengthMS;
-			year = songInfo.year;
-			if (songInfo.file) {
+			const metadata = urlOrMetadata as Metadata;
+			urlOrMetadata = metadata.url;
+			title = metadata.title;
+			artist = metadata.artist;
+			album = metadata.album;
+			track = metadata.track;
+			lengthMS = metadata.lengthMS;
+			year = metadata.year;
+			if (metadata.file) {
 				if (!urlOrMetadata)
-					this.file = songInfo.file;
+					this.file = metadata.file;
 				if (!title) {
-					const i = songInfo.file.name.lastIndexOf(".");
-					title = ((i > 0) ? songInfo.file.name.substr(0, i) : songInfo.file.name);
+					const i = metadata.file.name.lastIndexOf(".");
+					title = ((i > 0) ? metadata.file.name.substring(0, i) : metadata.file.name);
 				}
 			}
+			fileName = metadata.fileName;
+			fileSize = metadata.fileSize;
 		}
 
 		this.url = urlOrMetadata as string;
@@ -91,11 +95,11 @@ class Song extends ListItem implements SongInfo {
 			// Extract file name from url/path
 			urlOrMetadata = decodeURI(urlOrMetadata as string);
 			let i = urlOrMetadata.lastIndexOf("/");
-			title = ((i >= 0) ? urlOrMetadata.substr(i + 1) : urlOrMetadata);
+			title = ((i >= 0) ? urlOrMetadata.substring(i + 1) : urlOrMetadata);
 			if (!this.isHttp) {
 				i = title.lastIndexOf(".");
 				if (i > 0)
-					title = title.substr(0, i);
+					title = title.substring(0, i);
 			}
 		}
 
@@ -106,18 +110,22 @@ class Song extends ListItem implements SongInfo {
 		this.lengthMS = ((lengthMS && lengthMS > 0) ? lengthMS : Formatter.noneInt);
 		this.year = ((year && year > 0) ? year : Formatter.noneInt);
 		this.length = Formatter.formatTimeMS(this.lengthMS);
+		this.fileName = fileName || null;
+		this.fileSize = fileSize || 0;
 	}
 
 	public estimateSerializedLength(): number {
-		return (this.url.length +
+		return ((this.url.length +
 			this.title.length +
 			this.artist.length +
-			this.album.length) << 1;
+			this.album.length + 
+			(this.fileName ? this.fileName.length : 0)) << 1) + 17;
 	}
 
 	public serialize(writer: DataWriter): DataWriter {
 		// NEVER change this order! (changing will destroy existing playlists)
 		return writer.writeUint8(0) // version
+			.writeInt32(0) // flags
 			.writeString(this.url)
 			.writeString(this.title)
 			.writeString(this.artist)
@@ -125,21 +133,21 @@ class Song extends ListItem implements SongInfo {
 			.writeInt16(this.track)
 			.writeInt32(this.lengthMS)
 			.writeInt16(this.year)
-			.writeInt32(0); // flags
+			.writeString(this.fileName || null)
+			.writeInt32(this.fileSize || 0);
 	}
 
-	public info(): SongInfo {
+	public serializeWeb(): SongInfo {
 		return {
-			id: this.id,
 			url: this.url,
-			isHttp: this.isHttp,
 			title: this.title,
 			artist: this.artist,
 			album: this.album,
 			track: this.track,
 			lengthMS: this.lengthMS,
 			year: this.year,
-			length: this.length
+			fileName: this.fileName,
+			fileSize: this.fileSize
 		};
 	}
 }

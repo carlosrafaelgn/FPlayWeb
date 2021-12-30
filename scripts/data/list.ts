@@ -198,6 +198,20 @@ abstract class List<T extends ListItem> {
 		return writer;
 	}
 
+	public serializeWeb(): any {
+		const items = this.items,
+			count = items.length,
+			tmp = new Array(count);
+
+		for (let i = 0; i < count; i++)
+			tmp[i] = items[i].serializeWeb();
+
+		return {
+			currentIndex: this._currentIndex,
+			items: tmp
+		};
+	}
+
 	public moveCurrentToPrevious(): number {
 		this.currentIndex = (!this._currentItem ? this._currentIndex : (this._currentIndex <= 0 ? (this.items.length - 1) : (this._currentIndex - 1)));
 		return this._currentIndex;

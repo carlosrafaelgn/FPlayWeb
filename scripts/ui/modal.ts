@@ -39,7 +39,8 @@ interface ModalButtonOptions extends CommonButtonControlOptions {
 }
 
 interface ModalOptions {
-	html: string | HTMLElement;
+	text?: string;
+	html?: string | HTMLElement;
 	title?: string;
 	titleStringKey?: string;
 	transparentBackground?: boolean;
@@ -178,6 +179,11 @@ class Modal {
 
 		this.modalBodyElement = document.createElement("div");
 		this.modalBodyElement.className = "modal-body";
+		if (!options.html) {
+			options.html = document.createElement("div");
+			if (options.text)
+				AppUI.changeText(options.html, options.text);
+		}
 		if ((typeof options.html) === "string")
 			this.modalBodyElement.innerHTML = options.html as string;
 		else

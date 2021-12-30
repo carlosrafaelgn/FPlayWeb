@@ -26,13 +26,16 @@
 
 interface Metadata {
 	url: string;
-	file?: File | null;
 	title?: string | null;
 	artist?: string | null;
 	album?: string | null;
-	track?: number | null;
-	lengthMS?: number | null;
-	year?: number | null;
+	track?: number;
+	lengthMS?: number;
+	year?: number;
+
+	file?: File;
+	fileName?: string;
+	fileSize?: number;
 }
 
 class BufferedFileHandle {
@@ -738,8 +741,11 @@ class MetadataExtractor {
 			url: Formatter.pathToURL((file as any)["data-path"]) || Formatter.empty
 		};
 
-		if (!metadata.url)
+		if (!metadata.url) {
 			metadata.file = file;
+			metadata.fileSize = file.size;
+			metadata.fileName = file.name;
+		}
 
 		//struct _ID3v2TagHdr {
 		//public:
