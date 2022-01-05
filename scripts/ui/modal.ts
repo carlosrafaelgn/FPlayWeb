@@ -126,9 +126,18 @@ class Modal {
 			Modal.modal.hideInternal();
 	}
 
-	public static defaultCancelAction(): void {
-		if (Modal.modal)
-			Modal.modal.defaultCancelActionInternal();
+	public static defaultCancelAction(): boolean {
+		return (Modal.modal ? Modal.modal.defaultCancelActionInternal() : false);
+	}
+
+	public static historyStatePopped(): boolean | null {
+		if (!Modal.modal)
+			return null;
+
+		if (!Modal.modal.fading)
+			Modal.defaultCancelAction();
+
+		return false;
 	}
 
 	private readonly options: ModalOptions;
@@ -139,8 +148,7 @@ class Modal {
 	private readonly modalFooterElement: HTMLDivElement;
 	private readonly defaultCancelButton: HTMLButtonElement | null;
 	private readonly defaultSubmitButton: HTMLButtonElement | null;
-	private readonly oldBodyOverflow: string;
-	private readonly changedElements: { element: HTMLElement, tabindex: string | null }[];
+	private readonly focusBlocker: FocusBlocker;
 
 	private readonly boundDocumentKeyDown: any;
 
@@ -149,17 +157,10 @@ class Modal {
 	private constructor(options: ModalOptions) {
 		this.options = options;
 
-		const elementsToDisable = document.querySelectorAll("button,input,select,textarea,.slider-control"),
-			changedElements: { element: HTMLElement, tabindex: string | null }[] = new Array(elementsToDisable.length);
-		for (let i = elementsToDisable.length - 1; i >= 0; i--) {
-			const element = elementsToDisable[i] as HTMLElement,
-				tabindex = element.getAttribute("tabindex");
-			element.setAttribute("tabindex", "-1");
-			changedElements[i] = { element, tabindex };
-		}
-		this.changedElements = changedElements;
-		this.oldBodyOverflow = document.body.style.overflow;
-		document.body.style.overflow = "hidden";
+		this.focusBlocker = new FocusBlocker();
+		this.focusBlocker.block();
+
+		HistoryHandler.pushState();
 
 		// I decided to stop using the actual dialog element + showModal() method,
 		// along with the ::backdrop pseudo-element, because of lack of support in
@@ -182,7 +183,7 @@ class Modal {
 		if (!options.html) {
 			options.html = document.createElement("div");
 			if (options.text)
-				AppUI.changeText(options.html, options.text);
+				Strings.changeText(options.html, options.text);
 		}
 		if ((typeof options.html) === "string")
 			this.modalBodyElement.innerHTML = options.html as string;
@@ -271,17 +272,6 @@ class Modal {
 
 		document.removeEventListener("keydown", this.boundDocumentKeyDown, true);
 
-		const changedElements = this.changedElements;
-		for (let i = changedElements.length - 1; i >= 0; i--) {
-			const element = changedElements[i].element,
-				tabindex = changedElements[i].tabindex;
-			if (tabindex)
-				element.setAttribute("tabindex", tabindex);
-			else
-				element.removeAttribute("tabindex");
-		}
-		document.body.style.overflow = this.oldBodyOverflow;
-
 		this.fading = true;
 		this.containerElement.classList.remove("in");
 
@@ -293,6 +283,11 @@ class Modal {
 
 			document.body.removeChild(this.containerElement);
 
+			HistoryHandler.popState();
+
+			if (this.focusBlocker)
+				this.focusBlocker.unblock();
+	
 			if (this.options.buttons) {
 				for (let i = this.options.buttons.length - 1; i >= 0; i--)
 					zeroObject(this.options.buttons[i]);
@@ -307,9 +302,12 @@ class Modal {
 			this.defaultCancelActionInternal();
 	}
 
-	private defaultCancelActionInternal(): void {
-		if (this.defaultCancelButton)
+	private defaultCancelActionInternal(): boolean {
+		if (this.defaultCancelButton) {
 			this.defaultCancelButton.click();
+			return true;
+		}
+		return false;
 	}
 
 	private submit(e: Event): boolean {

@@ -203,20 +203,6 @@ class AppUI {
 		}
 	}
 
-	public static changeText(element: HTMLElement | null, text: string | null): void {
-		if (!element)
-			return;
-
-		if (text === null)
-			text = "";
-
-		const node = element.lastChild;
-		if (!node)
-			element.appendChild(document.createTextNode(text));
-		else
-			node.nodeValue = text;
-	}
-
 	private static changeZoom(delta: number): void {
 		if (!AppUI.webFrame)
 			return;
@@ -322,12 +308,12 @@ class AppUI {
 		AppUI.currentTimeLabel = document.createElement("span");
 		AppUI.currentTimeLabel.className = "seek-label";
 		AppUI.currentTimeS = 0;
-		AppUI.changeText(AppUI.currentTimeLabel, Formatter.none);
+		Strings.changeText(AppUI.currentTimeLabel, Formatter.none);
 		AppUI.seekSlider.leftChild = AppUI.currentTimeLabel;
 
 		AppUI.songLengthLabel = document.createElement("span");
 		AppUI.songLengthLabel.className = "seek-label";
-		AppUI.changeText(AppUI.songLengthLabel, Formatter.none);
+		Strings.changeText(AppUI.songLengthLabel, Formatter.none);
 		AppUI.seekSlider.rightChild = AppUI.songLengthLabel;
 
 		AppUI.volumeSlider = new SliderControl("volume-slider", true, false, 0, Player.maxVolume, appSettings.playerVolume);
@@ -335,7 +321,7 @@ class AppUI {
 		AppUI.volumeLabel = document.createElement("span");
 		AppUI.volumeLabel.className = "small-left-margin";
 		AppUI.volumeLabel.setAttribute("id", "volume-label");
-		AppUI.changeText(AppUI.volumeLabel, AppUI.volumeStr(AppUI.volumeSlider.value));
+		Strings.changeText(AppUI.volumeLabel, AppUI.volumeStr(AppUI.volumeSlider.value));
 		AppUI.volumeSlider.rightChild = AppUI.volumeLabel;
 		AppUI.volumeSlider.onvaluechanged = AppUI.volumeSliderValueChanged;
 
@@ -388,6 +374,8 @@ class AppUI {
 
 			if (App.player.playlist && App.player.playlist.currentIndex >= 0)
 				AppUI.playlistControl.centerItemIntoView(App.player.playlist.currentIndex);
+
+			HistoryHandler.init(Menu.historyStatePopped, Modal.historyStatePopped);
 		}
 	}
 
@@ -444,9 +432,9 @@ class AppUI {
 		if (!App.player || !AppUI.playlistControl)
 			return;
 
-		AppUI.changeText(AppUI.artistLabel, (song && song.artist) || Formatter.none);
+		Strings.changeText(AppUI.artistLabel, (song && song.artist) || Formatter.none);
 
-		AppUI.changeText(AppUI.titleLabel, (song && song.title) || Formatter.none);
+		Strings.changeText(AppUI.titleLabel, (song && song.title) || Formatter.none);
 
 		if (App.player.playlist && App.player.playlist.currentIndex >= 0)
 			AppUI.playlistControl.bringItemIntoView(App.player.playlist.currentIndex);
@@ -454,18 +442,18 @@ class AppUI {
 		AppUI.currentTimeS = 0;
 
 		if (!song) {
-			AppUI.changeText(AppUI.currentTimeLabel, Formatter.none);
+			Strings.changeText(AppUI.currentTimeLabel, Formatter.none);
 
-			AppUI.changeText(AppUI.songLengthLabel, Formatter.none);
+			Strings.changeText(AppUI.songLengthLabel, Formatter.none);
 
 			if (AppUI.seekSlider) {
 				AppUI.seekSlider.disabled = true;
 				AppUI.seekSlider.value = 0;
 			}
 		} else {
-			AppUI.changeText(AppUI.currentTimeLabel, Formatter.zero);
+			Strings.changeText(AppUI.currentTimeLabel, Formatter.zero);
 
-			AppUI.changeText(AppUI.songLengthLabel, song.length);
+			Strings.changeText(AppUI.songLengthLabel, song.length);
 
 			if (AppUI.seekSlider) {
 				AppUI.seekSlider.value = 0;
@@ -504,7 +492,7 @@ class AppUI {
 		if (AppUI.currentTimeS !== s) {
 			AppUI.currentTimeS = s;
 
-			AppUI.changeText(AppUI.currentTimeLabel, Formatter.formatTimeS(s));
+			Strings.changeText(AppUI.currentTimeLabel, Formatter.formatTimeS(s));
 		}
 
 		AppUI.seekSlider.value = currentTimeS * 1000;
@@ -519,7 +507,7 @@ class AppUI {
 			return;
 
 		if (song === App.player.currentSong) {
-			AppUI.changeText(AppUI.songLengthLabel, song.length);
+			Strings.changeText(AppUI.songLengthLabel, song.length);
 
 			if (AppUI.seekSlider) {
 				if (song.lengthMS > 0) {
@@ -544,7 +532,7 @@ class AppUI {
 		if (AppUI.currentTimeS !== s) {
 			AppUI.currentTimeS = s;
 
-			AppUI.changeText(AppUI.currentTimeLabel, Formatter.formatTimeS(s));
+			Strings.changeText(AppUI.currentTimeLabel, Formatter.formatTimeS(s));
 		}
 	}
 
@@ -564,7 +552,7 @@ class AppUI {
 			App.player.volume = value;
 
 		if (AppUI.volumeLabel)
-			AppUI.changeText(AppUI.volumeLabel, AppUI.volumeStr(value));
+			Strings.changeText(AppUI.volumeLabel, AppUI.volumeStr(value));
 	}
 
 	private static playlistControlItemClicked(item: Song, index: number, button: number): void {

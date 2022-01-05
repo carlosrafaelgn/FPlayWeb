@@ -81,7 +81,7 @@ class SimpleFilterEditorControl {
 					break;
 			}
 
-			AppUI.changeText(gain, SimpleFilterEditorControl.sliderToDB(sliderValue));
+			Strings.changeText(gain, SimpleFilterEditorControl.sliderToDB(sliderValue));
 			gain.className = "small-top-margin";
 
 			span.className = "simple-filter-slider";
@@ -99,7 +99,7 @@ class SimpleFilterEditorControl {
 		const editor = this.editor;
 
 		slider.onvaluechanged = function (value) {
-			AppUI.changeText(slider.leftChild as HTMLElement, SimpleFilterEditorControl.sliderToDB(value));
+			Strings.changeText(slider.leftChild as HTMLElement, SimpleFilterEditorControl.sliderToDB(value));
 		};
 
 		const commitChanges = function (value: number): void {

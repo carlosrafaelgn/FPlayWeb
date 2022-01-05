@@ -40,7 +40,7 @@ class PlaylistAdapter extends ListAdapter<Song> {
 		div.appendChild(Icon.create("icon-artist", "orange margin"));
 
 		let span = document.createElement("span");
-		AppUI.changeText(span, Formatter.none);
+		Strings.changeText(span, Formatter.none);
 		div.appendChild(span);
 
 		div.appendChild(document.createElement("br"));
@@ -50,12 +50,12 @@ class PlaylistAdapter extends ListAdapter<Song> {
 
 		span = document.createElement("span");
 		span.className = "length";
-		AppUI.changeText(span, Formatter.none);
+		Strings.changeText(span, Formatter.none);
 		div.appendChild(span);
 
 		span = document.createElement("span");
 		span.className = "float-right";
-		AppUI.changeText(span, Formatter.none);
+		Strings.changeText(span, Formatter.none);
 		div.appendChild(span);
 
 		return div;
@@ -65,11 +65,11 @@ class PlaylistAdapter extends ListAdapter<Song> {
 		(element.childNodes[1].firstChild as Text).nodeValue = item.artist;
 		(element.childNodes[4] as Text).nodeValue = item.title;
 		(element.childNodes[6].firstChild as Text).nodeValue = item.length;
-		(element.childNodes[7].firstChild as Text).nodeValue = `${(item.url || item.file) ? (index + 1) : Strings.Missing} / ${length}`;
+		(element.childNodes[7].firstChild as Text).nodeValue = ((item.url || item.file) ? `${(index + 1)} / ${length}` : `(${Strings.Missing}) ${(index + 1)} / ${length}`);
 	}
 
 	public prepareElementIndexOrLengthChanged(item: Song, index: number, length: number, element: HTMLElement): void {
-		(element.childNodes[7].firstChild as Text).nodeValue = `${(item.url || item.file) ? (index + 1) : Strings.Missing} / ${length}`;
+		(element.childNodes[7].firstChild as Text).nodeValue = ((item.url || item.file) ? `${(index + 1)} / ${length}` : `(${Strings.Missing}) ${(index + 1)} / ${length}`);
 	}
 }
 

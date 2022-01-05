@@ -78,7 +78,7 @@ class StereoPannerControl extends ConnectableNode {
 	}
 
 	private sliderValueChanged(value: number): void {
-		AppUI.changeText(this.label, (!value ? "-0" : ((value < 0 ? Strings.RightAbbrev : Strings.LeftAbbrev) + " " + ((value = Math.abs(value)) >= StereoPannerControl.maxAbsoluteValue ? GraphicalFilterEditorStrings.MinusInfinity : ("-" + value)))) + " dB");
+		Strings.changeText(this.label, (!value ? "-0" : ((value < 0 ? Strings.RightAbbrev : Strings.LeftAbbrev) + " " + ((value = Math.abs(value)) >= StereoPannerControl.maxAbsoluteValue ? GraphicalFilterEditorStrings.MinusInfinity : ("-" + value)))) + " dB");
 	}
 
 	private commitChanges(pan: number): void {

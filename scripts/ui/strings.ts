@@ -31,6 +31,7 @@ class Strings {
 	public static OppositeDecimalSeparator = ",";
 	public static Oops = "Oops\u2026";
 
+	public static AppName = "FPlay";
 	public static Menu = "Menu";
 	public static About = "About";
 	public static Edit = "Edit";
@@ -175,5 +176,19 @@ Este projeto é licenciado sob a <a target="_blank" href="https://github.com/car
 				start = end + 1;
 			} while (start < d.length);
 		}
+	}
+
+	public static changeText(element: HTMLElement | null, text: string | null): void {
+		if (!element)
+			return;
+
+		if (text === null)
+			text = "";
+
+		const node = element.lastChild;
+		if (!node)
+			element.appendChild(document.createTextNode(text));
+		else
+			node.nodeValue = text;
 	}
 }
