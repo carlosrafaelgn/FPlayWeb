@@ -55,8 +55,8 @@ class AppUI {
 	private static readonly fixedPanel = document.getElementById("fixed-panel") as HTMLDivElement;
 	private static readonly optionalPanel = document.getElementById("optional-panel") as HTMLDivElement;
 
-	private static readonly iconPlay = document.getElementById("icon-play") as HTMLElement;
-	private static readonly iconPause = document.getElementById("icon-pause") as HTMLElement;
+	private static readonly iconPlay = document.getElementById("i-play") as HTMLElement;
+	private static readonly iconPause = document.getElementById("i-pause") as HTMLElement;
 	private static readonly artistLabel = document.getElementById("artist-label") as HTMLDivElement;
 	private static readonly titleLabel = document.getElementById("title-label") as HTMLDivElement;
 
@@ -570,32 +570,32 @@ class AppUI {
 	}
 
 	private static graphicalFilterControlTypeClicked(): void {
-		if (!App.player)
+		if (!App.graphicalFilterControl)
 			return;
 
-		App.player.graphicalFilterControl.simpleMode = !App.player.graphicalFilterControl.simpleMode;
-		ButtonControl.setText(AppUI.graphicalFilterControlType, App.player.graphicalFilterControl.simpleMode ? Strings.TraditionalFilter : Strings.AdvancedFilter);
+		App.graphicalFilterControl.simpleMode = !App.graphicalFilterControl.simpleMode;
+		ButtonControl.setText(AppUI.graphicalFilterControlType, App.graphicalFilterControl.simpleMode ? Strings.TraditionalFilter : Strings.AdvancedFilter);
 	}
 
 	private static graphicalFilterControlEnabledClicked(): void {
-		if (!App.player)
+		if (!App.graphicalFilterControl)
 			return;
 
-		App.player.graphicalFilterControl.enabled = AppUI.graphicalFilterControlEnabled.checked;
+		App.graphicalFilterControl.enabled = AppUI.graphicalFilterControlEnabled.checked;
 	}
 
 	private static stereoPannerControlEnabledClicked(): void {
-		if (!App.player)
+		if (!App.stereoPannerControl)
 			return;
 
-		App.player.stereoPannerControl.enabled = AppUI.stereoPannerControlEnabled.checked;
+		App.stereoPannerControl.enabled = AppUI.stereoPannerControlEnabled.checked;
 	}
 
 	private static monoDownMixerControlEnabledClicked(): void {
-		if (!App.player)
+		if (!App.monoDownMixerControl)
 			return;
 
-		App.player.monoDownMixerControl.enabled = AppUI.monoDownMixerControlEnabled.checked;
+		App.monoDownMixerControl.enabled = AppUI.monoDownMixerControlEnabled.checked;
 	}
 
 	public static async addFiles(webDirectory?: boolean): Promise<void> {

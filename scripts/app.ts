@@ -97,6 +97,9 @@ class App {
 	private static isMaximized = false;
 
 	public static player: Player | null;
+	public static graphicalFilterControl: GraphicalFilterControl | null;
+	public static stereoPannerControl: StereoPannerControl | null;
+	public static monoDownMixerControl: MonoDownMixerControl | null;
 
 	private static mainWindowStateChanged(channel: string, isMinimized: boolean, isMaximized: boolean): void {
 		if (App.isMinimized !== isMinimized || App.isMaximized !== isMaximized) {
@@ -122,13 +125,19 @@ class App {
 			InternalStorage.saveAppSettings({
 				devicePixelRatio: devicePixelRatio,
 				playerVolume: App.player.volume,
-				graphicalFilterControlEnabled: App.player.graphicalFilterControl.enabled,
-				graphicalFilterControlSimpleMode: App.player.graphicalFilterControl.simpleMode,
-				stereoPannerControlEnabled: App.player.stereoPannerControl.enabled,
-				monoDownMixerControlEnabled: App.player.monoDownMixerControl.enabled
+				graphicalFilterControlEnabled: (App.graphicalFilterControl ? App.graphicalFilterControl.enabled : false),
+				graphicalFilterControlSimpleMode: (App.graphicalFilterControl ? App.graphicalFilterControl.simpleMode : true),
+				stereoPannerControlEnabled: (App.stereoPannerControl ? App.stereoPannerControl.enabled : false),
+				monoDownMixerControlEnabled: (App.monoDownMixerControl ? App.monoDownMixerControl.enabled : false)
 			});
 
 			App.player.destroy(true);
+
+			if (App.graphicalFilterControl)
+				App.graphicalFilterControl.saveSettings();
+
+			if (App.stereoPannerControl)
+				App.stereoPannerControl.saveSettings();
 
 			if (closeHandlers && closeHandlers.length) {
 				for (let i = closeHandlers.length - 1; i >= 0; i--) {
@@ -357,14 +366,29 @@ class App {
 		const appSettings = InternalStorage.loadAppSettings();
 
 		App.player = new Player(
-			document.getElementById("filter-container") as HTMLDivElement,
-			document.getElementById("optional-panel-container") as HTMLDivElement,
-			document.getElementById("stereo-panner-slider") as HTMLSpanElement,
 			appSettings.playerVolume,
-			appSettings.graphicalFilterControlEnabled,
-			appSettings.graphicalFilterControlSimpleMode,
-			appSettings.stereoPannerControlEnabled,
-			appSettings.monoDownMixerControlEnabled
+
+			function (audioContext) {
+				App.graphicalFilterControl = new GraphicalFilterControl(document.getElementById("filter-container") as HTMLDivElement, document.getElementById("optional-panel-container") as HTMLDivElement, audioContext, appSettings.graphicalFilterControlSimpleMode);
+				App.graphicalFilterControl.enabled = !!appSettings.graphicalFilterControlEnabled;
+				return App.graphicalFilterControl;
+			},
+
+			function (audioContext) {
+				App.stereoPannerControl = new StereoPannerControl(document.getElementById("stereo-panner-slider") as HTMLSpanElement, audioContext);
+				App.stereoPannerControl.enabled = !!appSettings.stereoPannerControlEnabled;
+				App.stereoPannerControl.onappliedgainchanged = function (appliedGain) {
+					if (App.monoDownMixerControl)
+						App.monoDownMixerControl.multiplier = 1 / (1 + appliedGain);
+				};
+				return App.stereoPannerControl;
+			},
+
+			function (audioContext) {
+				App.monoDownMixerControl = new MonoDownMixerControl(audioContext);
+				App.monoDownMixerControl.enabled = (MonoDownMixerControl.isSupported() && !!appSettings.monoDownMixerControlEnabled);
+				return App.monoDownMixerControl;
+			}
 		);
 
 		try {

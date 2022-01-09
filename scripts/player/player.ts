@@ -24,6 +24,10 @@
 // https://github.com/carlosrafaelgn/FPlayWeb
 //
 
+interface IntermediateNodeFactory {
+	(audioContext: AudioContext): ConnectableNode;
+}
+
 class Player {
 	public static readonly maxVolume = 40;
 
@@ -31,9 +35,7 @@ class Player {
 
 	public readonly audioContext: AudioContext;
 	private readonly sourceNode: SourceNode;
-	public readonly graphicalFilterControl: GraphicalFilterControl;
-	public readonly stereoPannerControl: StereoPannerControl;
-	public readonly monoDownMixerControl: MonoDownMixerControl;
+	private readonly intermediateNodes: ConnectableNode[];
 	private readonly destinationNode: DestinationNode;
 
 	private audio: HTMLAudioElement;
@@ -63,7 +65,7 @@ class Player {
 	public oncurrenttimeschanged: ((currentTimeS: number) => void) | null;
 	public onerror: ((message: string) => void) | null;
 
-	public constructor(filterContainer: HTMLDivElement, outerFilterContainer: HTMLDivElement, stereoPannerSlider: HTMLElement, volume?: number, graphicalFilterControlEnabled?: boolean, graphicalFilterControlSimpleMode?: boolean, stereoPannerControlEnabled?: boolean, monoDownMixerControlEnabled?: boolean) {
+	public constructor(volume?: number, ...intermediateNodesFactory: IntermediateNodeFactory[]) {
 		this.audioContextTimeout = 0;
 		this.audioContextSuspended = true;
 		// https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/AudioContext#options
@@ -78,18 +80,15 @@ class Player {
 		this.audioContext.suspend();
 		this.audioContext.onstatechange = this.audioContextStateChanged.bind(this);
 
-		this.graphicalFilterControl = new GraphicalFilterControl(filterContainer, outerFilterContainer, this.audioContext, graphicalFilterControlSimpleMode);
-		this.graphicalFilterControl.enabled = !!graphicalFilterControlEnabled;
+		let intermediateNodes: ConnectableNode[];
 
-		this.stereoPannerControl = new StereoPannerControl(stereoPannerSlider, this.audioContext);
-		this.stereoPannerControl.enabled = !!stereoPannerControlEnabled;
-
-		this.monoDownMixerControl = new MonoDownMixerControl(this.audioContext);
-		this.monoDownMixerControl.enabled = (MonoDownMixerControl.isSupported() && !!monoDownMixerControlEnabled);
-		this.stereoPannerControl.onappliedgainchanged = (appliedGain) => {
-			if (this.monoDownMixerControl)
-				this.monoDownMixerControl.multiplier = 1 / (1 + appliedGain);
-		};
+		if (intermediateNodesFactory && intermediateNodesFactory.length) {
+			intermediateNodes = new Array(intermediateNodesFactory.length);
+			for (let i = 0; i < intermediateNodesFactory.length; i++)
+				intermediateNodes[i] = intermediateNodesFactory[i](this.audioContext);
+		} else {
+			intermediateNodes = [];
+		}
 
 		this.onsongchanged = null;
 		this.onloadingchanged = null;
@@ -150,10 +149,17 @@ class Player {
 		this.destinationNode = new DestinationNode(this.audioContext.destination);
 		this.destinationNode.enabled = true;
 
-		this.sourceNode.connectToDestination(this.graphicalFilterControl);
-		this.graphicalFilterControl.connectToDestination(this.stereoPannerControl);
-		this.stereoPannerControl.connectToDestination(this.monoDownMixerControl);
-		this.monoDownMixerControl.connectToDestination(this.destinationNode);
+		if (intermediateNodes.length) {
+			this.sourceNode.connectToDestination(intermediateNodes[0]);
+
+			for (let i = 0; i < intermediateNodes.length - 1; i++)
+				intermediateNodes[i].connectToDestination(intermediateNodes[i + 1]);
+
+			intermediateNodes[intermediateNodes.length - 1].connectToDestination(this.destinationNode);
+		} else {
+			this.sourceNode.connectToDestination(this.destinationNode);
+		}
+		this.intermediateNodes = intermediateNodes;
 
 		// https://developers.google.com/web/updates/2017/02/media-session
 		// https://w3c.github.io/mediasession
@@ -194,14 +200,12 @@ class Player {
 			this._alive = false;
 
 			this.sourceNode.disconnectFromDestination();
-			this.graphicalFilterControl.disconnectFromDestination();
-			this.stereoPannerControl.disconnectFromDestination();
 
-			if (this.graphicalFilterControl)
-				this.graphicalFilterControl.saveSettings();
-
-			if (this.stereoPannerControl)
-				this.stereoPannerControl.saveSettings();
+			const intermediateNodes = this.intermediateNodes;
+			if (intermediateNodes && intermediateNodes.length) {
+				for (let i = 0; i < intermediateNodes.length; i++)
+					intermediateNodes[i].disconnectFromDestination();
+			}
 		}
 	}
 
