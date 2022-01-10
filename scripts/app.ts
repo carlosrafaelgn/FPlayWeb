@@ -66,12 +66,14 @@ interface AppSettings {
 interface HostInterface {
 	getHostType(): string;
 	getFileURLsJSON(): string | null;
+	setPaused(paused: boolean): void;
 	getBrowserLanguage(): String;
 	exit(): void;
 }
 
 class App {
 	public static readonly hostTypeElectron = "Electron";
+	public static readonly hostTypeAndroid = "Android";
 
 	private static readonly ipcRenderer = ((window as any)["electronIpcRenderer"] as IpcRenderer || null);
 	private static readonly closeHandlers: AppCloseHandler[] = [];
@@ -229,7 +231,9 @@ class App {
 
 	private static sortFiles(files: File[]): File[] {
 		if (files.length) {
-			if ((files[0] as any).webkitRelativePath)
+			if ((files[0] as any)["data-path"])
+				files.sort(function (a, b) { return (a as any)["data-path"].localeCompare((b as any)["data-path"]); });
+			else if ((files[0] as any).webkitRelativePath)
 				files.sort(function (a, b) { return (a as any).webkitRelativePath.localeCompare((b as any).webkitRelativePath); });
 			else
 				files.sort(function (a, b) { return a.name.localeCompare(b.name); });
@@ -252,7 +256,7 @@ class App {
 		if (webFrame)
 			delete (window as any)["electronWebFrame"];
 
-		if ("serviceWorker" in navigator) {
+		if ("serviceWorker" in navigator && !location.href.startsWith("file://")) {
 			window.addEventListener("beforeinstallprompt", App.beforeInstallPrompt);
 
 			const promise = navigator.serviceWorker.register("sw.js");

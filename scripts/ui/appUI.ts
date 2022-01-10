@@ -297,6 +297,11 @@ class AppUI {
 		if (webFrame && appSettings.devicePixelRatio && appSettings.devicePixelRatio !== devicePixelRatio)
 			webFrame.setZoomFactor(appSettings.devicePixelRatio);
 
+		if (App.hostType === App.hostTypeAndroid) {
+			const addFolderButton = document.getElementById("add-folder-button") as HTMLElement;
+			(addFolderButton.parentNode as HTMLElement).removeChild(addFolderButton);
+		}
+
 		ButtonControl.init();
 		CheckboxControl.init();
 

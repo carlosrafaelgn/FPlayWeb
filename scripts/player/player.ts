@@ -358,6 +358,8 @@ class Player {
 		//queueMicrotask(this.boundNotifyPausedChanged);
 		if (this.onpausedchanged)
 			this.onpausedchanged(true);
+		if (App.hostInterface)
+			App.hostInterface.setPaused(true);
 	}
 
 	private playbackStarted(): void {
@@ -369,6 +371,8 @@ class Player {
 		//queueMicrotask(this.boundNotifyPausedChanged);
 		if (this.onpausedchanged)
 			this.onpausedchanged(false);
+		if (App.hostInterface)
+			App.hostInterface.setPaused(false);
 	}
 
 	private playbackAborted(): void {
@@ -388,6 +392,8 @@ class Player {
 			//queueMicrotask(this.boundNotifyPausedChanged);
 			if (this.onpausedchanged)
 				this.onpausedchanged(true);
+			if (App.hostInterface)
+				App.hostInterface.setPaused(true);
 		}
 	}
 
@@ -581,6 +587,8 @@ class Player {
 				//queueMicrotask(this.boundNotifyPausedChanged);
 				if (this.onpausedchanged)
 					this.onpausedchanged(true);
+				if (App.hostInterface)
+					App.hostInterface.setPaused(true);
 			}
 
 			this._currentSong = null;

@@ -76,8 +76,8 @@
 			--optional-panel-container-height: 388px;
 		}
 	</style>
-	<link rel="stylesheet" type="text/css" href="assets/css/graphicalFilterEditor.css?20220105" />
-	<link rel="stylesheet" type="text/css" href="assets/css/style.css?20220105" />
+	<link rel="stylesheet" type="text/css" href="assets/css/graphicalFilterEditor.css?20220109" />
+	<link rel="stylesheet" type="text/css" href="assets/css/style.css?20220109" />
 </head>
 <body>
 	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" style="display: none;">
@@ -132,7 +132,7 @@
 				</button>
 				<button type="button" class="btn square green transparent" onclick="AppUI.addFiles()" title="AddFiles" data-string="aria-label|AddFiles">
 					<i class="large icon-add-title green"></i>
-				</button><button type="button" class="btn square orange transparent" onclick="AppUI.addDirectories()" title="AddFolders" data-string="aria-label|AddFolders">
+				</button><button id="add-folder-button" type="button" class="btn square orange transparent" onclick="AppUI.addDirectories()" title="AddFolders" data-string="aria-label|AddFolders">
 					<i class="large icon-add-folder orange"></i>
 				</button><button type="button" class="btn square red transparent" onclick="App.player && App.player.playlist && App.player.playlist.clear()" title="Clear" data-string="aria-label|Clear">
 					<i class="large icon-clear red"></i>
@@ -176,9 +176,33 @@
 		//<![CDATA[
 		"use strict";
 
-		var CACHE_VERSION = "20220105";
+		var CACHE_VERSION = "20220109";
 
 		(function () {
+			if (location.href.startsWith("file://")) {
+				// Browsers don't allow using fetch() from file:// URL's, so we fake a very
+				// simple version of it that only supports plain URL's and array buffers...
+				window.fetch = function (url) {
+					return new Promise(function (resolve, reject) {
+						var xhr = new XMLHttpRequest();
+						xhr.open("GET", url, true);
+						xhr.responseType = "arraybuffer";
+						xhr.onload = function () {
+							var arrayBuffer = xhr.response;
+							resolve({
+								arrayBuffer: function () {
+									return arrayBuffer;
+								}
+							});
+						};
+						xhr.onerror = function (ev) {
+							reject(ev);
+						};
+						xhr.send();
+					});
+				};
+			}
+
 			function loadScript(src, successCallback, errorCallback) {
 				window.onerror = errorCallback;
 				var s = document.createElement("script");

@@ -101,7 +101,7 @@ class MonoDownMixerControl extends ConnectableNode {
 		this.loading = true;
 
 		try {
-			this.audioContext.audioWorklet.addModule("/assets/js/monodownmixerprocessor.js?" + (window as any).CACHE_VERSION).then(() => {
+			this.audioContext.audioWorklet.addModule("assets/js/monodownmixerprocessor.js?" + (window as any).CACHE_VERSION).then(() => {
 				this.loading = false;
 				this.loaded = true;
 				this.createAudioNode();
