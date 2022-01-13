@@ -25,16 +25,24 @@
 //
 
 class InternalStorage {
-	private static readonly cachePrefix = "https://fplay.com.br/";
-	private static readonly cacheNamePlaylists = "playlists";
+	// We avoid overwriting settings/playlists throughout this class if they have
+	// not changed, to try to spare the flash memory in devices that use them
+
+	private static readonly playlistCachePrefix = "https://fplay.com.br/";
+	private static readonly playlistCacheName = "playlists";
+
+	private static readonly appSettingsName = "appSettings";
+	private static readonly graphicalFilterEditorSettingsName = "graphicalFilterEditorSettings";
+	private static readonly stereoPannerSettingsName = "stereoPannerSettings";
+	private static readonly defaultPlaylistName = "defaultPlaylist";
 
 	private static async cacheGet(cacheName: string, name?: string | null): Promise<ArrayBuffer | null> {
 		const cache = await caches.open(cacheName);
 
 		if (!name)
-			name = InternalStorage.cachePrefix;
+			name = InternalStorage.playlistCachePrefix;
 		else
-			name = InternalStorage.cachePrefix + name;
+			name = InternalStorage.playlistCachePrefix + name;
 
 		const response = await cache.match(name);
 
@@ -45,16 +53,16 @@ class InternalStorage {
 		const cache = await caches.open(cacheName);
 
 		if (!name)
-			name = InternalStorage.cachePrefix;
+			name = InternalStorage.playlistCachePrefix;
 		else
-			name = InternalStorage.cachePrefix + name;
+			name = InternalStorage.playlistCachePrefix + name;
 
 		return cache.put(name, response);
 	}
 
 	public static loadAppSettings(): AppSettings {
 		try {
-			const s = localStorage.getItem("appSettings");
+			const s = localStorage.getItem(InternalStorage.appSettingsName);
 			if (s) {
 				const appSettings = JSON.parse(s);
 				if (appSettings)
@@ -73,15 +81,21 @@ class InternalStorage {
 	}
 
 	public static saveAppSettings(appSettings: AppSettings | null): void {
-		if (appSettings)
-			localStorage.setItem("appSettings", JSON.stringify(appSettings));
-		else
-			localStorage.removeItem("appSettings");
+		const oldSettings = localStorage.getItem(InternalStorage.appSettingsName);
+
+		if (appSettings) {
+			const newSettings = JSON.stringify(appSettings);
+
+			if (oldSettings !== newSettings)
+				localStorage.setItem(InternalStorage.appSettingsName, newSettings);
+		} else if (oldSettings) {
+			localStorage.removeItem(InternalStorage.appSettingsName);
+		}
 	}
 
 	public static loadGraphicalFilterEditorSettings(): GraphicalFilterEditorSettings {
 		try {
-			const s = localStorage.getItem("graphicalFilterEditorSettings");
+			const s = localStorage.getItem(InternalStorage.graphicalFilterEditorSettingsName);
 			if (s) {
 				const graphicalFilterEditorSettings = JSON.parse(s);
 				if (graphicalFilterEditorSettings)
@@ -101,22 +115,32 @@ class InternalStorage {
 	}
 
 	public static saveGraphicalFilterEditorSettings(graphicalFilterEditorSettings: GraphicalFilterEditorSettings | null): void {
-		if (graphicalFilterEditorSettings)
-			localStorage.setItem("graphicalFilterEditorSettings", JSON.stringify(graphicalFilterEditorSettings));
-		else
-			localStorage.removeItem("graphicalFilterEditorSettings");
+		const oldSettings = localStorage.getItem(InternalStorage.graphicalFilterEditorSettingsName);
+
+		if (graphicalFilterEditorSettings) {
+			const newSettings = JSON.stringify(graphicalFilterEditorSettings);
+
+			if (oldSettings !== newSettings)
+				localStorage.setItem(InternalStorage.graphicalFilterEditorSettingsName, newSettings);
+		} else if (oldSettings) {
+			localStorage.removeItem(InternalStorage.graphicalFilterEditorSettingsName);
+		}
 	}
 
 	public static loadStereoPannerSettings(): number {
-		return Math.max(-StereoPannerControl.maxAbsoluteValue, Math.min(StereoPannerControl.maxAbsoluteValue, parseInt(localStorage.getItem("stereoPannerSettings") as string) | 0));
+		return Math.max(-StereoPannerControl.maxAbsoluteValue, Math.min(StereoPannerControl.maxAbsoluteValue, parseInt(localStorage.getItem(InternalStorage.stereoPannerSettingsName) as string) | 0));
 	}
 
 	public static saveStereoPannerSettings(pan: number): void {
-		localStorage.setItem("stereoPannerSettings", (pan | 0).toString());
+		const oldSettings = localStorage.getItem(InternalStorage.stereoPannerSettingsName),
+			newSettings = (pan | 0).toString();
+
+		if (oldSettings !== newSettings)
+			localStorage.setItem(InternalStorage.stereoPannerSettingsName, newSettings);
 	}
 
 	public static async loadPlaylist(name?: string | null): Promise<Playlist | null> {
-		const arrayBuffer = await InternalStorage.cacheGet(InternalStorage.cacheNamePlaylists, name);
+		const arrayBuffer = await InternalStorage.cacheGet(InternalStorage.playlistCacheName, name);
 
 		if (!arrayBuffer)
 			return null;
@@ -129,16 +153,30 @@ class InternalStorage {
 	}
 
 	public static loadPlaylistWeb(name?: string | null): Playlist | null {
-		const json = localStorage.getItem(name || "defaultPlaylist");
+		const json = localStorage.getItem(name || InternalStorage.defaultPlaylistName);
 
 		return (json ? Playlist.deserializeWeb(json) : null);
 	}
 
 	public static savePlaylist(playlist: Playlist, name?: string | null): Promise<void> {
-		return InternalStorage.cachePut(InternalStorage.cacheNamePlaylists, name, new Response(playlist.serialize().trimmedArrayBuffer));
+		// Treat the default playlist differently
+		if (!name) {
+			if (!playlist.modified)
+				return Promise.resolve();
+			playlist.modified = false;
+		}
+
+		return InternalStorage.cachePut(InternalStorage.playlistCacheName, name, new Response(playlist.serialize().trimmedArrayBuffer));
 	}
 
 	public static savePlaylistWeb(playlist: Playlist, name?: string | null): void {
-		return localStorage.setItem(name || "defaultPlaylist", JSON.stringify(playlist.serializeWeb()));
+		// Treat the default playlist differently
+		if (!name) {
+			if (!playlist.modified)
+				return;
+			playlist.modified = false;
+		}
+
+		return localStorage.setItem(name || InternalStorage.defaultPlaylistName, JSON.stringify(playlist.serializeWeb()));
 	}
 }

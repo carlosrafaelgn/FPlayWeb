@@ -79,7 +79,6 @@ class App {
 	private static readonly closeHandlers: AppCloseHandler[] = [];
 	public static readonly frameless = !!(window as any)["electronIpcRenderer"];
 	public static readonly hostInterface: HostInterface | null = ((window as any)["hostInterface"] as HostInterface || null);
-	public static readonly insideNativeHost = App.frameless || !!App.hostInterface;
 	public static readonly hostType = ((App.hostInterface && App.hostInterface.getHostType()) || null);
 
 	private static readonly iconLoading = document.getElementById("icon-loading") as HTMLElement;
@@ -151,14 +150,11 @@ class App {
 				}
 			}
 
-			if (!App.insideNativeHost) {
-				if (playlist)
-					InternalStorage.savePlaylistWeb(playlist);
-				return;
-			}
-
 			if (playlist)
-				promises.push(InternalStorage.savePlaylist(playlist));
+				InternalStorage.savePlaylistWeb(playlist);
+
+			if (!App.ipcRenderer)
+				return;
 
 			if (promises.length)
 				Promise.all(promises).then(App.destroy, App.destroy);
@@ -181,7 +177,7 @@ class App {
 			ipcRenderer.invoke("mainWindowFinalClose");
 	}
 
-	public static updateLoadingIcon() {
+	public static updateLoadingIcon(): void {
 		if (App.iconLoading)
 			App.iconLoading.style.display = (App.loading ? "" : "none");
 	}
@@ -363,7 +359,7 @@ class App {
 		AppUI.preInit(webFrame, appSettings);
 	}
 
-	public static async init(): Promise<void> {
+	public static init(): void {
 		if (App.player)
 			return;
 
@@ -395,20 +391,10 @@ class App {
 			}
 		);
 
-		try {
-			const playlist = (!App.insideNativeHost ? InternalStorage.loadPlaylistWeb() : await InternalStorage.loadPlaylist());
+		const playlist = InternalStorage.loadPlaylistWeb();
 
-			if (!App.player || !App.player.alive)
-				return;
-
-			if (playlist)
-				App.player.playlist = playlist;
-		} catch (ex) {
-			// Just ignore, for now...
-		}
-
-		if (!App.player || !App.player.alive)
-			return;
+		if (playlist)
+			App.player.playlist = playlist;
 
 		AppUI.init(appSettings);
 
