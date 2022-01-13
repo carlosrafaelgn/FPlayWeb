@@ -403,11 +403,15 @@ class App {
 			cover.classList.remove("in");
 
 		setTimeout(function () {
-			window.removeEventListener("resize", App.adjustCover);
-			const cover = document.getElementById("cover");
-			if (cover)
-				document.body.removeChild(cover);
-		}, 320);
+			AppUI.centerCurrentSongIntoView();
+
+			setTimeout(function () {
+				window.removeEventListener("resize", App.adjustCover);
+				const cover = document.getElementById("cover");
+				if (cover)
+					document.body.removeChild(cover);
+			}, 310);
+		}, 10);
 
 		App.loading = false;
 	}

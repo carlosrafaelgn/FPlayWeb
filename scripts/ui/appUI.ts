@@ -384,6 +384,11 @@ class AppUI {
 		}
 	}
 
+	public static centerCurrentSongIntoView(): void {
+		if (App.player && App.player.playlist && App.player.playlist.currentIndex >= 0)
+			AppUI.playlistControl.centerItemIntoView(App.player.playlist.currentIndex);
+	}
+
 	public static destroy(): void {
 		zeroObject(AppUI);
 	}

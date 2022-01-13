@@ -283,7 +283,9 @@ class ListControl<T extends ListItem> {
 
 		this.firstIndex = firstIndex;
 
-		const visibleCount = this.visibleCount + ((firstIndex === 0) ? 2 : ((firstIndex === 1) ? 3 : 4));
+		let visibleCount = this.visibleCount + ((firstIndex === 0) ? 2 : ((firstIndex === 1) ? 3 : 4));
+		if (visibleCount > items.length)
+			visibleCount = items.length;
 
 		if ((firstIndex = firstIndex - 2) < 0)
 			firstIndex = 0;
@@ -402,7 +404,9 @@ class ListControl<T extends ListItem> {
 		// items, in order to try to prevent the the appearance of blank spaces
 		// at the top and at the bottom of the list when the user scrolls it
 		// faster than the browser can process the script.
-		const visibleCount = this.visibleCount + ((firstIndex === 0) ? 2 : ((firstIndex === 1) ? 3 : 4));
+		let visibleCount = this.visibleCount + ((firstIndex === 0) ? 2 : ((firstIndex === 1) ? 3 : 4));
+		if (visibleCount > items.length)
+			visibleCount = items.length;
 
 		if ((firstIndex = firstIndex - 2) < 0)
 			firstIndex = 0;
