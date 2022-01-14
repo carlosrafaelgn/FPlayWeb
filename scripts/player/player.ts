@@ -300,7 +300,7 @@ class Player {
 
 		if (this.onerror)
 			this.onerror(error ?
-				(error.message ? error.message : (((typeof event) === "string") ? (event as string) : error.toString())) :
+				(error.message ? error.message : (((typeof error) === "string") ? (error as any) : error.toString())) :
 				(((typeof event) === "string") ? (event as string) : Strings.UnknownError)
 			);
 	}
