@@ -291,10 +291,10 @@ abstract class List<T extends ListItem> {
 		if (!this.items || firstIndex < 0 || firstIndex >= this.items.length)
 			return 0;
 
-		if (lastIndex === undefined || lastIndex < firstIndex)
-			lastIndex = firstIndex;
-		else if (lastIndex >= this.items.length)
+		if (lastIndex === undefined || lastIndex >= this.items.length)
 			lastIndex = this.items.length - 1;
+		else if (lastIndex < firstIndex)
+			lastIndex = firstIndex;
 
 		const count = lastIndex - firstIndex + 1;
 

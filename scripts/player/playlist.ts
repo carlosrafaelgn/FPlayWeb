@@ -37,15 +37,14 @@ class PlaylistAdapter extends ListAdapter<Song> {
 		const div = document.createElement("div");
 		div.className = baseClass + " playlist-item";
 
-		div.appendChild(Icon.create("icon-artist", "orange margin"));
+		div.appendChild(Icon.create("icon-title", "pink margin"));
+		div.appendChild(document.createTextNode(Formatter.none));
+		div.appendChild(document.createElement("br"));
 
+		div.appendChild(Icon.create("icon-artist", "orange margin"));
 		let span = document.createElement("span");
 		Strings.changeText(span, Formatter.none);
 		div.appendChild(span);
-
-		div.appendChild(document.createElement("br"));
-		div.appendChild(Icon.create("icon-title", "pink margin"));
-		div.appendChild(document.createTextNode(Formatter.none));
 		div.appendChild(document.createElement("br"));
 
 		span = document.createElement("span");
@@ -62,10 +61,11 @@ class PlaylistAdapter extends ListAdapter<Song> {
 	}
 
 	public prepareElement(item: Song, index: number, length: number, element: HTMLElement): void {
-		(element.childNodes[1].firstChild as Text).nodeValue = item.artist;
-		(element.childNodes[4] as Text).nodeValue = item.title;
-		(element.childNodes[6].firstChild as Text).nodeValue = item.length;
-		(element.childNodes[7].firstChild as Text).nodeValue = ((item.url || item.file) ? `${(index + 1)} / ${length}` : `(${Strings.Missing}) ${(index + 1)} / ${length}`);
+		const childNodes = element.childNodes;
+		(childNodes[1] as Text).nodeValue = item.title;
+		(childNodes[4].firstChild as Text).nodeValue = item.artist;
+		(childNodes[6].firstChild as Text).nodeValue = item.length;
+		(childNodes[7].firstChild as Text).nodeValue = ((item.url || item.file) ? `${(index + 1)} / ${length}` : `(${Strings.Missing}) ${(index + 1)} / ${length}`);
 	}
 
 	public prepareElementIndexOrLengthChanged(item: Song, index: number, length: number, element: HTMLElement): void {

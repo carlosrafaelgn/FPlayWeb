@@ -36,6 +36,8 @@ class Strings {
 	public static About = "About";
 	public static Edit = "Edit";
 	public static Delete = "Delete";
+	public static DeleteSongs = "Delete songs";
+	public static DeleteAllSongs = "Delete all";
 	public static Enable = "Enable";
 	public static Disable = "Disable";
 	public static Enabled = "Enabled";
@@ -51,6 +53,7 @@ class Strings {
 	public static Close = "Close";
 	public static Refresh = "Refresh";
 	public static Exit = "Exit";
+	public static Done = "Done";
 	public static Previous = "Previous";
 	public static Play = "Play";
 	public static Pause = "Pause";
@@ -74,6 +77,8 @@ class Strings {
 For more information about the project, its source code and dependencies, check out its repository at <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb">github.com/carlosrafaelgn/FPlayWeb</a>.<br />
 <br />
 This project is licensed under the <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb/blob/master/LICENSE">MIT License</a>.`;
+	// Click, press, tap, push, hit.... Which one to use for BOTH touch and non-touch devices!!! Ahhhhhhhhhhh!!!!!!!!!!
+	public static DeleteModeHTML = `Click songs to delete them.`;
 
 	public static toFixed(x: number, fractionDigits: number): string { return x.toFixed(fractionDigits); }
 
@@ -90,6 +95,8 @@ This project is licensed under the <a target="_blank" href="https://github.com/c
 			Strings.About = "Sobre";
 			Strings.Edit = "Edit";
 			Strings.Delete = "Excluir";
+			Strings.DeleteSongs = "Excluir músicas";
+			Strings.DeleteAllSongs = "Excluir todas";
 			Strings.Enable = "Ativar";
 			Strings.Disable = "Desativar";
 			Strings.Enabled = "Ativado";
@@ -105,6 +112,7 @@ This project is licensed under the <a target="_blank" href="https://github.com/c
 			Strings.Close = "Fechar";
 			Strings.Refresh = "Recarregar";
 			Strings.Exit = "Sair";
+			Strings.Done = "Concluído";
 			Strings.Previous = "Anterior";
 			Strings.Play = "Tocar";
 			Strings.Pause = "Pausar";
@@ -128,6 +136,7 @@ This project is licensed under the <a target="_blank" href="https://github.com/c
 Para mais informações sobre o projeto, seu código-fonte e dependências, confira seu repositório em <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb">github.com/carlosrafaelgn/FPlayWeb</a>.<br />
 <br />
 Este projeto é licenciado sob a <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb/blob/master/LICENSE">MIT License</a>.`;
+			Strings.DeleteModeHTML = `Clique as músicas para excluí-las.`;
 		}
 
 		Strings.translateChildren(document.body);

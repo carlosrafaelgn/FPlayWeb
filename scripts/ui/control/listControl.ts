@@ -87,6 +87,7 @@ class ListControl<T extends ListItem> {
 	private readonly boundRefreshVisibleItemsInternal: any;
 	private readonly boundNotifyCurrentItemChangedInternal: any;
 
+	public deleteMode: boolean;
 	public onitemclicked: ((item: T, index: number, button: number) => void) | null;
 	public onitemcontextmenu: ((item: T, index: number) => void) | null;
 
@@ -130,6 +131,7 @@ class ListControl<T extends ListItem> {
 		this.refreshVisibleItemsEnqueued = false;
 		this.notifyCurrentItemChangedEnqueued = false;
 
+		this.deleteMode = false;
 		this.onitemclicked = null;
 		this.onitemcontextmenu = null;
 
@@ -490,8 +492,12 @@ class ListControl<T extends ListItem> {
 
 		if (index >= 0) {
 			const item = this.adapter.list.item(index);
-			if (item)
-				this.onitemclicked(item, index, e.button);
+			if (item) {
+				if (this.deleteMode)
+					this.adapter.list.removeItems(index, index);
+				else
+					this.onitemclicked(item, index, e.button);
+			}
 		}
 	}
 

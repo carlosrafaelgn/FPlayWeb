@@ -76,8 +76,8 @@
 			--optional-panel-container-height: 388px;
 		}
 	</style>
-	<link rel="stylesheet" type="text/css" href="assets/css/graphicalFilterEditor.css?20220114" />
-	<link rel="stylesheet" type="text/css" href="assets/css/style.css?20220114" />
+	<link rel="stylesheet" type="text/css" href="assets/css/graphicalFilterEditor.css?20220116" />
+	<link rel="stylesheet" type="text/css" href="assets/css/style.css?20220116" />
 </head>
 <body>
 	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" style="display: none;">
@@ -89,6 +89,7 @@
 		<symbol viewBox="0 0 12 12" id="icon-checkbox-0"><path d="M 9,3 V 9 H 3 V 3 H 9 M 10,2 H 2 v 8 h 8 z" /></symbol>
 		<symbol viewBox="0 0 12 12" id="icon-checkbox-1"><path d="M 10,2 H 2 v 8 h 8 z M 5,8.5 2.5,6 3.205,5.295 5,7.085 8.795,3.29 9.5,4 Z" /></symbol>
 		<symbol viewBox="0 0 12 12" id="icon-clear"><path d="M 9.5,3.205 8.795,2.5 6,5.295 3.205,2.5 2.5,3.205 5.295,6 2.5,8.795 3.205,9.5 6,6.705 8.795,9.5 9.5,8.795 6.705,6 Z" /></symbol>
+		<symbol viewBox="0 0 12 12" id="icon-delete-all"><path d="M 7,5 H 1.5 V 6 H 7 Z M 7,3 H 1.5 V 4 H 7 Z M 1.5,8 H 5 V 7 H 1.5 Z M 7.205,11 8.5,9.705 9.795,11 10.5,10.295 9.205,9 10.5,7.705 9.795,7 8.5,8.295 7.205,7 6.5,7.705 7.795,9 6.5,10.295 Z" /></symbol>
 		<symbol viewBox="0 0 12 12" id="icon-close"><path d="M 1.7070312 1 L 1 1.7070312 L 5.2929688 6 L 1 10.292969 L 1.7070312 11 L 6 6.7070312 L 10.292969 11 L 11 10.292969 L 6.7070312 6 L 11 1.7070312 L 10.292969 1 L 6 5.2929688 L 1.7070312 1 z" /></symbol>
 		<symbol viewBox="0 0 12 12" id="icon-expand-less"><path d="M 6,4 3,7 3.705,7.705 6,5.415 8.295,7.705 9,7 Z" /></symbol>
 		<symbol viewBox="0 0 12 12" id="icon-expand-more"><path d="M 8.295,4.295 6,6.585 3.705,4.295 3,5 6,8 9,5 Z" /></symbol>
@@ -120,8 +121,9 @@
 	<div id="panel-container">
 		<div id="fixed-panel">
 			<div id="top-panel" class="toolbar border-bottom">
-				<div id="artist-label"><i class="large margin icon-artist orange"></i>-</div>
 				<div id="title-label"><i class="large margin icon-title pink"></i>-</div>
+				<div id="artist-label"><i class="large margin icon-artist orange"></i>-</div>
+				<div id="top-message" class="fade"></div>
 			</div>
 
 			<div id="playlist-control" tabindex="-1"></div>
@@ -134,7 +136,7 @@
 					<i class="large icon-add-title green"></i>
 				</button><button id="add-folder-button" type="button" class="btn square orange transparent" onclick="AppUI.addDirectories()" title="AddFolders" data-string="aria-label|AddFolders">
 					<i class="large icon-add-folder orange"></i>
-				</button><button type="button" class="btn square red transparent" onclick="App.player && App.player.playlist && App.player.playlist.clear()" title="Clear" data-string="aria-label|Clear">
+				</button><button type="button" class="btn square red transparent" onclick="AppUI.toggleDeleteMode(true)" title="DeleteSongs" data-string="aria-label|DeleteSongs">
 					<i class="large icon-clear red"></i>
 				</button><button type="button" class="btn square transparent toolbar-right" onclick="AppUI.showAbout()" title="Menu" data-string="aria-label|Menu">
 					<i class="large icon-menu"></i>
@@ -176,7 +178,7 @@
 		//<![CDATA[
 		"use strict";
 
-		var CACHE_VERSION = "20220114";
+		var CACHE_VERSION = "20220116";
 
 		(function () {
 			if (location.href.startsWith("file://")) {

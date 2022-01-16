@@ -86,7 +86,8 @@
 }
 
 html,
-.modal {
+.modal,
+#top-message {
 	background-color: var(--color-background);
 }
 
@@ -623,31 +624,34 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 	}
 
 	.btn.transparent.green:hover:not(:active):not(:focus),
+	.btn.transparent.yellow:hover:not(:active):not(:focus),
+	.btn.transparent.orange:hover:not(:active):not(:focus),
+	.btn.transparent.red:hover:not(:active):not(:focus),
+	.btn.transparent.pink:hover:not(:active):not(:focus),
+	.btn.transparent.white:hover:not(:active):not(:focus) {
+		color: var(--color-text);
+	}
+
 	.btn.transparent:hover:not(:active):not(:focus) > span > .icon.green {
 		color: var(--color-green);
 	}
 
-	.btn.transparent.yellow:hover:not(:active):not(:focus),
 	.btn.transparent:hover:not(:active):not(:focus) > span > .icon.yellow {
 		color: var(--color-yellow);
 	}
 
-	.btn.transparent.orange:hover:not(:active):not(:focus),
 	.btn.transparent:hover:not(:active):not(:focus) > span > .icon.orange {
 		color: var(--color-orange);
 	}
 
-	.btn.transparent.red:hover:not(:active):not(:focus),
 	.btn.transparent:hover:not(:active):not(:focus) > span > .icon.red {
 		color: var(--color-red);
 	}
 
-	.btn.transparent.pink:hover:not(:active):not(:focus),
 	.btn.transparent:hover:not(:active):not(:focus) > span > .icon.pink {
 		color: var(--color-pink);
 	}
 
-	.btn.transparent.white:hover:not(:active):not(:focus),
 	.btn.transparent:hover:not(:active):not(:focus) > span > .icon.white {
 		color: var(--color-white);
 	}
@@ -980,15 +984,39 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 }
 
 #title-label,
-#artist-label {
+#artist-label,
+#top-message {
 	padding: 1rem 0;
 	line-height: 6rem;
+}
+
+#title-label,
+#artist-label {
+	position: absolute;
+	left: 0;
+	width: 100%;
 	height: 8rem;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	-webkit-user-select: text;
 	user-select: text;
+}
+
+#title-label {
+	top: 1rem;
+}
+
+#artist-label {
+	top: 11rem;
+}
+
+#top-message {
+	min-height: 20rem;
+	visibility: hidden;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-evenly;
 }
 
 .simple-filter {
@@ -1229,6 +1257,10 @@ https://drafts.csswg.org/mediaqueries-4/#hover
 
 .modal-container.background.in {
     background-color: var(--color-fade);
+}
+
+.behind {
+	z-index: -1;
 }
 
 .hidden {

@@ -59,6 +59,7 @@ class AppUI {
 	private static readonly iconPause = document.getElementById("i-pause") as HTMLElement;
 	private static readonly artistLabel = document.getElementById("artist-label") as HTMLDivElement;
 	private static readonly titleLabel = document.getElementById("title-label") as HTMLDivElement;
+	private static readonly topMessage = document.getElementById("top-message") as HTMLDivElement;
 
 	private static webFrame: WebFrame | null;
 
@@ -86,6 +87,9 @@ class AppUI {
 	private static _thickBorderPX = AppUI.baseThickBorderPX;
 
 	private static directoryCancelled = false;
+
+	private static topMessageFading = 0;
+	private static topMessageTimeout = 0;
 
 	private static preparePlaylist(): void {
 		if (!App.player || !AppUI.playlistControl)
@@ -289,6 +293,15 @@ class AppUI {
 		}
 	}
 
+	private static historyStatePopped(): boolean | null {
+		if (!AppUI.playlistControl || !AppUI.playlistControl.deleteMode)
+			return null;
+
+		AppUI.toggleDeleteMode(false);
+
+		return true;
+	}
+
 	public static preInit(webFrame: WebFrame | null, appSettings: AppSettings): void {
 		AppUI.webFrame = webFrame;
 
@@ -377,10 +390,9 @@ class AppUI {
 
 			AppUI.playerSongChanged(App.player.currentSong);
 
-			if (App.player.playlist && App.player.playlist.currentIndex >= 0)
-				AppUI.playlistControl.centerItemIntoView(App.player.playlist.currentIndex);
+			AppUI.centerCurrentSongIntoView();
 
-			HistoryHandler.init(Menu.historyStatePopped, Modal.historyStatePopped);
+			HistoryHandler.init(Menu.historyStatePopped, Modal.historyStatePopped, AppUI.historyStatePopped);
 		}
 	}
 
@@ -442,11 +454,11 @@ class AppUI {
 		if (!App.player || !AppUI.playlistControl)
 			return;
 
-		Strings.changeText(AppUI.artistLabel, (song && song.artist) || Formatter.none);
-
 		Strings.changeText(AppUI.titleLabel, (song && song.title) || Formatter.none);
 
-		if (App.player.playlist && App.player.playlist.currentIndex >= 0)
+		Strings.changeText(AppUI.artistLabel, (song && song.artist) || Formatter.none);
+
+		if (App.player.playlist && App.player.playlist.currentIndex >= 0 && !AppUI.playlistControl.deleteMode)
 			AppUI.playlistControl.bringItemIntoView(App.player.playlist.currentIndex);
 
 		AppUI.currentTimeS = 0;
@@ -608,6 +620,76 @@ class AppUI {
 		App.monoDownMixerControl.enabled = AppUI.monoDownMixerControlEnabled.checked;
 	}
 
+	public static hideTopMessage(): void {
+		if (AppUI.topMessageFading < 0 || !AppUI.topMessage)
+			return;
+
+		if (AppUI.topMessageTimeout)
+			clearTimeout(AppUI.topMessageTimeout);
+
+		AppUI.topMessageFading = -1;
+
+		AppUI.topMessage.classList.remove("in");
+
+		AppUI.topMessageTimeout = setTimeout(function () {
+			if (AppUI.topMessageFading >= 0)
+				return;
+
+			AppUI.topMessageFading = 0;
+			AppUI.topMessageTimeout = 0;
+
+			AppUI.topMessage.style.visibility = "";
+
+			AppUI.topMessage.innerHTML = "";
+
+			if (AppUI.titleLabel)
+				AppUI.titleLabel.classList.remove("behind");
+
+			if (AppUI.artistLabel)
+				AppUI.artistLabel.classList.remove("behind");
+		}, 320);
+	}
+
+	public static showTopMessage(html: string, createHandler?: (parent: HTMLDivElement) => void): void {
+		if (!AppUI.topMessage)
+			return;
+
+		if (AppUI.topMessageTimeout)
+			clearTimeout(AppUI.topMessageTimeout);
+
+		AppUI.topMessageFading = 1;
+
+		if (AppUI.titleLabel)
+			AppUI.titleLabel.classList.add("behind");
+
+		if (AppUI.artistLabel)
+			AppUI.artistLabel.classList.add("behind");
+
+		AppUI.topMessage.innerHTML = html;
+
+		if (createHandler)
+			createHandler(AppUI.topMessage);
+
+		AppUI.topMessage.style.visibility = "visible";
+
+		AppUI.topMessageTimeout = setTimeout(function () {
+			if (AppUI.topMessageFading <= 0 || AppUI.topMessageFading !== 1)
+				return;
+
+			AppUI.topMessageFading = 2;
+
+			AppUI.topMessage.classList.add("in");
+
+			AppUI.topMessageTimeout = setTimeout(function () {
+				if (AppUI.topMessageFading !== 2)
+					return;
+
+				AppUI.topMessageFading = 0;
+				AppUI.topMessageTimeout = 0;
+			}, 320);
+		}, 20);
+	}
+
 	public static async addFiles(webDirectory?: boolean): Promise<void> {
 		if (!App.player || AppUI._loading)
 			return;
@@ -710,6 +792,55 @@ class AppUI {
 			AppUI._loading = false;
 			AppUI.directoryCancelled = false;
 			App.updateLoadingIcon();
+		}
+	}
+
+	public static toggleDeleteMode(popStateIfLeaving: boolean): void {
+		if (!AppUI.playlistControl)
+			return;
+
+		if (AppUI.playlistControl.deleteMode) {
+			AppUI.playlistControl.deleteMode = false;
+
+			AppUI.hideTopMessage();
+
+			if (popStateIfLeaving)
+				HistoryHandler.popState();
+		} else {
+			AppUI.playlistControl.deleteMode = true;
+
+			AppUI.showTopMessage(Strings.DeleteModeHTML, function (parent) {
+				const div = document.createElement("div");
+
+				ButtonControl.create({
+					color: "red",
+					icon: "icon-delete-all",
+					stringKey: "DeleteAllSongs",
+					parent: div,
+					onclick: function () {
+						if (App.player && App.player.playlist)
+							App.player.playlist.clear();
+
+						if (AppUI.playlistControl && AppUI.playlistControl.deleteMode)
+							AppUI.toggleDeleteMode(true);
+					}
+				} as ButtonControlOptions);
+
+				ButtonControl.create({
+					color: "green",
+					icon: "icon-check",
+					stringKey: "Done",
+					parent: div,
+					onclick: function () {
+						if (AppUI.playlistControl && AppUI.playlistControl.deleteMode)
+							AppUI.toggleDeleteMode(true);
+					}
+				} as ButtonControlOptions);
+
+				parent.appendChild(div);
+			});
+
+			HistoryHandler.pushState();
 		}
 	}
 
