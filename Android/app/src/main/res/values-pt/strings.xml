@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="app_description">FPlay Web é um player de áudio experimental.</string>
+    <string name="browser_language">pt</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancelar</string>
+    <string name="confirm_quit">Você deseja mesmo sair dessa página? Você perderá as informações que ainda não foram salvas.</string>
+
+    <string name="unknownArtist">(Artista Desconhecido)</string>
+
+    <string name="all">Tudo</string>
+    <string name="up">Acima</string>
+    <string name="folder">Pasta</string>
+    <string name="storage">Armazenamento</string>
+    <string name="empty_list">Lista vazia! 😅</string>
+    <string name="nothing_selected">Nada foi selecionado! 😅</string>
+
+    <string name="artists">Artistas</string>
+    <string name="albums">Álbuns</string>
+    <string name="music">Música</string>
+    <string name="downloads">Downloads</string>
+    <string name="internal_storage">Armazenamento interno</string>
+    <string name="external_storage">Armazenamento externo</string>
+    <string name="usb_storage">Armazenamento USB</string>
+</resources>

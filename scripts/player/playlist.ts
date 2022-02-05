@@ -74,28 +74,6 @@ class PlaylistAdapter extends ListAdapter<Song> {
 }
 
 class Playlist extends List<Song> {
-	private static readonly supportedExtensions: { [extension: string]: boolean } = {
-		".aac": true,
-		".mp3": true,
-		".wav": true
-	};
-
-	public static readonly concatenatedSupportedExtensions = (() => {
-		let c = "";
-		for (let ext in Playlist.supportedExtensions)
-			c = (c ? (c + "," + ext) : ext)
-		return c;
-	})();
-
-	public static isTypeSupported(urlOrAbsolutePath: string): boolean {
-		const i = urlOrAbsolutePath.lastIndexOf(".");
-		if (i < 0)
-			return false;
-
-		const ext = urlOrAbsolutePath.substring(i);
-		return (Playlist.supportedExtensions[ext] || Playlist.supportedExtensions[ext.toLowerCase()] || false);
-	}
-
 	public static deserialize(reader: DataReader): Playlist {
 		reader.readUint8(); // version
 
@@ -117,36 +95,31 @@ class Playlist extends List<Song> {
 
 			const items: any[] = tmp.items,
 				count = items.length,
-				songs: Song[] = new Array(count);
+				songs: Song[] = new Array(count),
+				missingSongs: Map<string, Song> = new Map();
 
-			for (let i = 0; i < count; i++)
-				songs[i] = new Song(items[i] as Metadata);
+			for (let i = 0; i < count; i++) {
+				const song = new Song(items[i] as Metadata);
+				songs[i] = song;
+				if (!song.url && song.fileName)
+					missingSongs.set(song.fileName + song.fileSize, song);
+			}
 
-			return new Playlist(songs, tmp.currentIndex || 0, songs.slice());
+			return new Playlist(songs, tmp.currentIndex || 0, missingSongs.size ? missingSongs : null);
 		} catch (ex: any) {
 			return null;
 		}
 	}
 
-	private missingSongs: Song[] | null;
+	private missingSongs: Map<string, Song> | null;
 
 	public onsonglengthchanged: ((song: Song) => void) | null;
 
-	public constructor(songs?: Song[] | null, currentIndex?: number, missingSongs?: Song[] | null) {
+	public constructor(songs?: Song[] | null, currentIndex?: number, missingSongs?: Map<string, Song> | null) {
 		super(songs, currentIndex);
 
 		this.missingSongs = missingSongs || null;
 		this.onsonglengthchanged = null;
-	}
-
-	public estimateSerializedLength(): number {
-		const songs = this.items;
-		let total = 0;
-
-		for (let i = songs.length - 1; i >= 0; i--)
-			total += songs[i].estimateSerializedLength();
-
-		return total + 128;
 	}
 
 	public songLengthChanged(song: Song, lengthS: number): void {
@@ -170,6 +143,50 @@ class Playlist extends List<Song> {
 			this.onsonglengthchanged(song);
 	}
 
+	public clear(): void {
+		if (this.missingSongs) {
+			this.missingSongs.clear();
+			this.missingSongs = null;
+		}
+
+		super.clear();
+	}
+
+	public changeItems(items: Song[] | null): void {
+		if (this.missingSongs) {
+			this.missingSongs.clear();
+			this.missingSongs = null;
+		}
+
+		super.changeItems(items);
+	}
+
+	public removeItems(firstIndex: number, lastIndex?: number): number {
+		if (this.missingSongs && this.items && firstIndex >= 0 && firstIndex < this.items.length) {
+			const missingSongs = this.missingSongs,
+				items = this.items;
+
+			if (lastIndex === undefined || lastIndex >= items.length)
+				lastIndex = items.length - 1;
+			else if (lastIndex < firstIndex)
+				lastIndex = firstIndex;
+
+			for (let i = firstIndex; i <= lastIndex; i++) {
+				const song = items[i];
+				if (!song.url && !song.file && song.fileName) {
+					missingSongs.delete(song.fileName + song.fileSize);
+
+					if (!missingSongs.size) {
+						this.missingSongs = null;
+						break;
+					}
+				}
+			}
+		}
+
+		return super.removeItems(firstIndex, lastIndex);
+	}
+
 	public async addSong(urlOrAbsolutePathOrFile: string | AppFile, position?: number): Promise<boolean> {
 		let urlOrAbsolutePath: string,
 			fileSize = 0;
@@ -181,7 +198,7 @@ class Playlist extends List<Song> {
 			urlOrAbsolutePath = urlOrAbsolutePathOrFile as string;
 		}
 
-		if (!Playlist.isTypeSupported(urlOrAbsolutePath))
+		if (!FileUtils.isTypeSupported(urlOrAbsolutePath))
 			return false;
 
 		const metadata = await App.extractMetadata(urlOrAbsolutePath, fileSize);
@@ -195,21 +212,21 @@ class Playlist extends List<Song> {
 	}
 
 	public async addSongWeb(file: File, buffer?: Uint8Array | null, tempArray?: Uint8Array[] | null, position?: number): Promise<boolean> {
-		if (!Playlist.isTypeSupported(file.name))
+		if (!FileUtils.isTypeSupported(file.name))
 			return false;
 
 		if (this.missingSongs) {
-			const missingSongs = this.missingSongs,
-				count = missingSongs.length;
-			for (let i = 0; i < count; i++) {
-				const missingSong = missingSongs[i];
-				if (missingSong.fileName === file.name && missingSong.fileSize === file.size) {
-					missingSong.file = file;
-					missingSongs.splice(i, 1);
-					if (!missingSongs.length)
-						this.missingSongs = null;
-					return true;
-				}
+			const key = file.name + file.size,
+				song = this.missingSongs.get(key);
+
+			if (song) {
+				song.file = file;
+				this.missingSongs.delete(key);
+
+				if (!this.missingSongs.size)
+					this.missingSongs = null;
+
+				return true;
 			}
 		}
 

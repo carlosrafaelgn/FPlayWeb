@@ -27,10 +27,12 @@
 class Strings {
 	public static language = "en";
 
-	public static DecimalSeparator = ".";
-	public static OppositeDecimalSeparator = ",";
-	public static Oops = "Oops\u2026";
+	public static comparer: (a: string, b: string) => number;
 
+	public static decimalSeparator = ".";
+	public static oppositeDecimalSeparator = ",";
+
+	public static Oops = "Oops\u2026";
 	public static AppName = "FPlay";
 	public static Menu = "Menu";
 	public static About = "About";
@@ -42,10 +44,13 @@ class Strings {
 	public static Disable = "Disable";
 	public static Enabled = "Enabled";
 	public static Disabled = "Disabled";
+	public static Selected = "Selected";
 	public static AdvancedFilter = "Advanced filter";
 	public static TraditionalFilter = "Traditional filter";
 	public static Missing = "Missing";
 	public static MissingSongError = "The song is missing! 😢 Please, just add it again before playing it. When you add a missing song, it keeps its position in the playlist! 😊";
+	public static FileNotFoundOrNoPermissionError = "The song's file could not be found or the permission to access it was not granted! 😢";
+	public static NothingSelected = "Nothing selected! 😅";
 	public static OK = "OK";
 	public static Cancel = "Cancel";
 	public static Clear = "Clear";
@@ -54,6 +59,9 @@ class Strings {
 	public static Refresh = "Refresh";
 	public static Exit = "Exit";
 	public static Done = "Done";
+	public static Up = "Up";
+	public static All = "All";
+	public static Storage = "Storage";
 	public static Previous = "Previous";
 	public static Play = "Play";
 	public static Pause = "Pause";
@@ -67,12 +75,14 @@ class Strings {
 	public static DownMixToMono = "Down-mix to mono";
 	public static UnknownError = "Something went wrong during playback. 😢";
 	public static AddFiles = "Add files";
+	public static AddSongs = "Add songs";
 	public static AddFolders = "Add folders";
+	public static AddMoreFolders = "Add more folders\u2026";
 	public static ShowEffects = "Show effects";
 	public static ShowPlaylist = "Show playlist";
 	public static UpdateAvailable = "Update available!";
 	public static PleaseRefresh = "Please, refresh the page to update the app. 😊";
-	public static AboutHTML = `FPlay for web is an experimental audio player. 😊<br />
+	public static AboutHTML = `FPlay Web is an experimental audio player. 😊<br />
 <br />
 For more information about the project, its source code and dependencies, check out its repository at <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb">github.com/carlosrafaelgn/FPlayWeb</a>.<br />
 <br />
@@ -83,14 +93,18 @@ This project is licensed under the <a target="_blank" href="https://github.com/c
 	public static toFixed(x: number, fractionDigits: number): string { return x.toFixed(fractionDigits); }
 
 	public static init(): void {
+		Strings.comparer = ((("Intl" in window) && (Intl.Collator)) ?
+			(new Intl.Collator(undefined, { usage: "sort", sensitivity: "variant", numeric: true })).compare :
+			function (a: string, b: string): number { return a.localeCompare(b); });
+
 		const language = ((App.hostInterface && App.hostInterface.getBrowserLanguage()) || (navigator as any)["userLanguage"] as string || navigator.language);
 		if (language && language.toLowerCase().indexOf("pt") === 0) {
 			Strings.language = "pt-br";
 
 			document.documentElement.setAttribute("lang", "pt-br");
 
-			Strings.DecimalSeparator = ",";
-			Strings.OppositeDecimalSeparator = ".";
+			Strings.decimalSeparator = ",";
+			Strings.oppositeDecimalSeparator = ".";
 			//Strings.Menu = "Menu";
 			Strings.About = "Sobre";
 			Strings.Edit = "Edit";
@@ -101,10 +115,13 @@ This project is licensed under the <a target="_blank" href="https://github.com/c
 			Strings.Disable = "Desativar";
 			Strings.Enabled = "Ativado";
 			Strings.Disabled = "Desativado";
+			Strings.Selected = "Selecionado";
 			Strings.AdvancedFilter = "Filtro avançado";
 			Strings.TraditionalFilter = "Filtro tradicional";
 			Strings.Missing = "Faltando";
 			Strings.MissingSongError = "A música está faltando! 😢 Por favor, apenas adicione novamente a música antes de tocar. Quando você adiciona uma música que está faltando, ela fica na mesma posição dentro da playlist! 😊";
+			Strings.FileNotFoundOrNoPermissionError = "O arquivo da música não foi encontrado ou não foi dada permissão de acesso a ele! 😢";
+			Strings.NothingSelected = "Nada foi selecionado! 😅";
 			//Strings.OK = "OK";
 			Strings.Cancel = "Cancelar";
 			Strings.Clear = "Limpar";
@@ -113,6 +130,9 @@ This project is licensed under the <a target="_blank" href="https://github.com/c
 			Strings.Refresh = "Recarregar";
 			Strings.Exit = "Sair";
 			Strings.Done = "Concluído";
+			Strings.Up = "Acima";
+			Strings.All = "Tudo";
+			Strings.Storage = "Armazenamento";
 			Strings.Previous = "Anterior";
 			Strings.Play = "Tocar";
 			Strings.Pause = "Pausar";
@@ -126,12 +146,14 @@ This project is licensed under the <a target="_blank" href="https://github.com/c
 			Strings.DownMixToMono = "Fazer down-mix para mono";
 			Strings.UnknownError = "Algo saiu errado durante a reprodução. 😢";
 			Strings.AddFiles = "Adicionar arquivos";
+			Strings.AddSongs = "Adicionar músicas";
 			Strings.AddFolders = "Adicionar pastas";
+			Strings.AddMoreFolders = "Adicionar mais pastas\u2026";
 			Strings.ShowEffects = "Exibir efeitos";
 			Strings.ShowPlaylist = "Exibir playlist";
 			Strings.UpdateAvailable = "Atualização disponível!";
 			Strings.PleaseRefresh = "Por favor, recarregue a página para atualizar a aplicação. 😊";
-			Strings.AboutHTML = `FPlay para web é um player de áudio experimental. 😊<br />
+			Strings.AboutHTML = `FPlay Web é um player de áudio experimental. 😊<br />
 <br />
 Para mais informações sobre o projeto, seu código-fonte e dependências, confira seu repositório em <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb">github.com/carlosrafaelgn/FPlayWeb</a>.<br />
 <br />

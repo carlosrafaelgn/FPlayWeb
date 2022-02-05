@@ -1,0 +1,102 @@
+.GE, .GECV, .GELBL, .GEBTN, .GEMNU, .GEMNUIT, .GEMNUSEP, .GEMNULBL {
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	/* Let's prevent the creation of extra render layers by removing these */
+	/*-moz-backface-visibility: hidden;
+	-webkit-backface-visibility: hidden;
+	backface-visibility: hidden;*/
+	-webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
+.GE, .GECV {
+	touch-action: none;
+}
+
+.GE {
+	vertical-align: top;
+	font-style: normal;
+	font-family: inherit;
+	display: inline-block;
+	background-color: #1c1c1c;
+	color: #fff;
+	position: relative;
+	cursor: default;
+	text-align: left;
+}
+
+.GECV {
+	display: block;
+	margin: 0;
+	cursor: crosshair;
+}
+
+.GELBL {
+	display: inline-block;
+	padding: 0.33333333333333333333333333333333em;
+}
+
+.GEBTN {
+	padding: 0.33333333333333333333333333333333em;
+	float: right;
+	width: 1.5em;
+	text-align: center;
+	box-sizing: content-box;
+}
+
+.GEMNU {
+	background-color: #1c1c1c;
+	color: #fff;
+	position: absolute;
+	right: 0;
+	padding: 0.33333333333333333333333333333333em;
+}
+
+.GEMNUH {
+	display: inline-block;
+	vertical-align: top;
+	min-width: 15em;
+	box-sizing: content-box;
+}
+
+.GEMNUIT, .GEMNULBL {
+	padding: 0 0.33333333333333333333333333333333em;
+	line-height: 2em;
+}
+
+.GEMNUSEP {
+	margin: 0.33333333333333333333333333333333em 0;
+	border-top: 0.08333333333333333333333333333333em solid #fff;
+	height: 0;
+	box-sizing: content-box;
+}
+
+.GEMNUSEPH {
+	margin-left: 0.33333333333333333333333333333333em;
+	padding-left: 0.33333333333333333333333333333333em;
+	border-left: 0.08333333333333333333333333333333em solid #fff;
+}
+
+.GEMNULBL {
+	color: #0f2;
+}
+
+.GECLK {
+	cursor: pointer;
+}
+
+.GECLK:hover {
+	color: #1c1c1c;
+	background-color: #fff;
+}
+
+.GEMNU.GEEQ .GEFILTER {
+	display: none;
+}
+
+.GEMNU.GEEQ > .GEMNUSEPH {
+	margin-left: 0;
+    padding-left: 0;
+    border-left: 0 none transparent;
+}

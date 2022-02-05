@@ -738,13 +738,15 @@ class MetadataExtractor {
 
 	private static async extractID3v2Andv1(file: File, f: BufferedFileHandle, tmpPtr: Uint8Array[]): Promise<Metadata | null> {
 		const metadata: Metadata = {
-			url: Formatter.pathToURL((file as any)["data-path"]) || Formatter.empty
+			url: FileUtils.pathToURL((file as any)["data-path"]) || ""
 		};
 
 		if (!metadata.url) {
 			metadata.file = file;
 			metadata.fileSize = file.size;
 			metadata.fileName = file.name;
+		} else if (metadata.url.startsWith(FileUtils.localURLPrefix)) {
+			metadata.file = file;
 		}
 
 		//struct _ID3v2TagHdr {

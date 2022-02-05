@@ -23,19 +23,10 @@
 //
 // https://github.com/carlosrafaelgn/FPlayWeb
 //
+package br.com.carlosrafaelgn.fplayweb;
 
-abstract class ListItem {
-	private static Id = 0;
+import android.app.Application;
 
-	public readonly id: number;
-
-	public constructor() {
-		this.id = ++ListItem.Id;
-	}
-
-	public abstract estimateSerializedLength(): number;
-
-	public abstract serialize(writer: DataWriter): DataWriter;
-
-	public abstract serializeWeb(): any;
+public class MainApplication extends Application {
+	public WebViewHost webViewHost;
 }

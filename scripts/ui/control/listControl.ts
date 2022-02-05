@@ -24,7 +24,7 @@
 // https://github.com/carlosrafaelgn/FPlayWeb
 //
 
-class ListControlItem<T extends ListItem> {
+class ListControlItem<T> {
 	// index is only used when useVirtualItems is false
 	public index: number;
 	public selected: boolean;
@@ -59,7 +59,7 @@ class ListControlItem<T extends ListItem> {
 	}
 }
 
-class ListControl<T extends ListItem> {
+class ListControl<T> {
 	public readonly element: HTMLElement;
 
 	private readonly container: HTMLDivElement;
@@ -78,6 +78,8 @@ class ListControl<T extends ListItem> {
 	private currentItem: ListControlItem<T> | null;
 	private clientHeight: number;
 	private containerHeight: number;
+	private scrollbarPadding: boolean;
+	private scrollbarPaddingScheduled: boolean;
 	private visibleCount: number;
 	private items: ListControlItem<T>[];
 	private refreshVisibleItemsEnqueued: boolean;
@@ -86,14 +88,17 @@ class ListControl<T extends ListItem> {
 	private readonly boundZoomChanged: any;
 	private readonly boundRefreshVisibleItemsInternal: any;
 	private readonly boundNotifyCurrentItemChangedInternal: any;
+	private readonly boundAdjustScrollbarPaddingFromResize: any;
 
 	public deleteMode: boolean;
 	public onitemclicked: ((item: T, index: number, button: number) => void) | null;
+	public onitemcontrolclicked: ((item: T, index: number, button: number, target: HTMLElement) => void) | null;
 	public onitemcontextmenu: ((item: T, index: number) => void) | null;
 
 	public constructor(element: string | HTMLElement, useVirtualItems: boolean) {
 		this.element = (((typeof element) === "string") ? document.getElementById(element as string) : element) as HTMLElement;
 		this.element.classList.add("list", "scrollable");
+		this.element.style.padding = "0";
 		if (!this.element.getAttribute("tabindex"))
 			this.element.setAttribute("tabindex", "0");
 
@@ -108,6 +113,7 @@ class ListControl<T extends ListItem> {
 
 		this.boundZoomChanged = this.zoomChanged.bind(this);
 		this.boundRefreshVisibleItemsInternal = this.refreshVisibleItemsInternal.bind(this);
+		this.boundAdjustScrollbarPaddingFromResize = this.adjustScrollbarPaddingFromResize.bind(this);
 
 		if (useVirtualItems)
 			this.element.addEventListener("scroll", this.scroll.bind(this), { passive: true });
@@ -115,7 +121,7 @@ class ListControl<T extends ListItem> {
 			this.boundNotifyCurrentItemChangedInternal = this.notifyCurrentItemChangedInternal.bind(this);
 
 		this.resizeObserver = new ResizeObserver(this.resize.bind(this));
-		this.resizeObserver.observe(this.element);
+		this.resizeObserver.observe(this.element, { box: "border-box" });
 
 		this.itemHeight = 1;
 		this.itemMargin = 1;
@@ -126,6 +132,8 @@ class ListControl<T extends ListItem> {
 		this.currentItem = null;
 		this.clientHeight = 1;
 		this.containerHeight = 0;
+		this.scrollbarPadding = false;
+		this.scrollbarPaddingScheduled = false;
 		this.visibleCount = 1;
 		this.items = [];
 		this.refreshVisibleItemsEnqueued = false;
@@ -133,6 +141,7 @@ class ListControl<T extends ListItem> {
 
 		this.deleteMode = false;
 		this.onitemclicked = null;
+		this.onitemcontrolclicked = null;
 		this.onitemcontextmenu = null;
 
 		container.onclick = this.containerClick.bind(this);
@@ -222,6 +231,20 @@ class ListControl<T extends ListItem> {
 			items[i].element.style.top = top + "px";*/
 	}
 
+	private adjustScrollbarPadding(): void {
+		const scrollbarPadding = ((this.containerHeight | 0) > this.clientHeight);
+
+		if (this.scrollbarPadding !== scrollbarPadding) {
+			this.scrollbarPadding = scrollbarPadding;
+			this.element.style.padding = (this.scrollbarPadding ? "" : "0");
+		}
+	}
+
+	private adjustScrollbarPaddingFromResize(): void {
+		this.scrollbarPaddingScheduled = false;
+		this.adjustScrollbarPadding();
+	}
+
 	private adjustContainerHeight(): void {
 		const adapter = this._adapter,
 			container = this.container;
@@ -234,6 +257,8 @@ class ListControl<T extends ListItem> {
 		if (this.containerHeight !== containerHeight) {
 			this.containerHeight = containerHeight;
 			container.style.height = containerHeight + "px";
+
+			this.adjustScrollbarPadding();
 		}
 	}
 
@@ -262,6 +287,8 @@ class ListControl<T extends ListItem> {
 		this.element.scrollTop = 0;
 		this.containerHeight = 0;
 		this.container.style.height = "0";
+
+		this.adjustScrollbarPadding();
 	}
 
 	private scroll(): void {
@@ -480,11 +507,18 @@ class ListControl<T extends ListItem> {
 
 			if (this.useVirtualItems)
 				this.scroll();
+
+			// Changing the padding in response to the resize event of a ResizeObserver
+			// could cause a "ResizeObserver - loop limit exceeded" error
+			if (!this.scrollbarPaddingScheduled) {
+				this.scrollbarPaddingScheduled = true;
+				requestAnimationFrame(this.boundAdjustScrollbarPaddingFromResize);
+			}
 		}
 	}
 
 	private containerClick(e: MouseEvent): void {
-		if (!this.element || !this.adapter || !this.onitemclicked) // || !e.target || !(e.target as HTMLElement).classList.contains("list-item"))
+		if (!this.element || !this.adapter || !e.target) // || !(e.target as HTMLElement).classList.contains("list-item"))
 			return;
 
 		const rect = this.element.getBoundingClientRect(),
@@ -493,16 +527,20 @@ class ListControl<T extends ListItem> {
 		if (index >= 0) {
 			const item = this.adapter.list.item(index);
 			if (item) {
-				if (this.deleteMode)
-					this.adapter.list.removeItems(index, index);
-				else
-					this.onitemclicked(item, index, e.button);
+				if ((e.target as HTMLElement).classList.contains("list-item")) {
+					if (this.deleteMode)
+						this.adapter.list.removeItems(index, index);
+					else if (this.onitemclicked)
+						this.onitemclicked(item, index, e.button);
+				} else if (this.onitemcontrolclicked) {
+					this.onitemcontrolclicked(item, index, e.button, e.target as HTMLElement);
+				}
 			}
 		}
 	}
 
 	private containerContextMenu(e: MouseEvent): boolean {
-		if (!this.element || !this.adapter || !this.onitemcontextmenu) // || !e.target || !(e.target as HTMLElement).classList.contains("list-item"))
+		if (!this.element || !this.adapter || !this.onitemcontextmenu || !e.target) // || !(e.target as HTMLElement).classList.contains("list-item"))
 			return cancelEvent(e);
 
 		const rect = this.element.getBoundingClientRect(),

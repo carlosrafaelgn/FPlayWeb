@@ -122,18 +122,18 @@ class GraphicalFilterEditorControl {
 
 		this.filter = new GraphicalFilterEditor(filterLength, audioContext, filterChangedCallback);
 
-		const createMenuSep = () => {
+		const createMenuSep = function () {
 				const s = document.createElement("div");
 				s.className = "GEMNUSEP";
 				return s;
 			},
-			createMenuLabel = (text: string) => {
+			createMenuLabel = function (text: string) {
 				const l = document.createElement("div");
 				l.className = "GEMNULBL";
 				l.appendChild(document.createTextNode(text));
 				return l;
 			},
-			createMenuItem = (text: string, checkable: boolean, checked: boolean, radio: boolean, clickHandler: (ev: MouseEvent) => any, className?: string | null) => {
+			createMenuItem = function (text: string, checkable: boolean, checked: boolean, radio: boolean, clickHandler: (ev: MouseEvent) => any, className?: string | null) {
 				const i = document.createElement("div");
 				i.className = (className ? ("GEMNUIT GECLK " + className) : "GEMNUIT GECLK");
 				if (checkable) {
@@ -290,10 +290,10 @@ class GraphicalFilterEditorControl {
 		mnuh.appendChild(this.mnuEditSmoothNarrow = createMenuItem(GraphicalFilterEditorStrings.SmoothNarrow, true, false, true, this.mnuEditSmoothNarrow_Click.bind(this)));
 		mnuh.appendChild(this.mnuEditSmoothWide = createMenuItem(GraphicalFilterEditorStrings.SmoothWide, true, false, true, this.mnuEditSmoothWide_Click.bind(this)));
 		mnuh.appendChild(this.mnuEditPeakingEq = createMenuItem(GraphicalFilterEditorStrings.PeakingEq, true, false, true, this.mnuEditPeakingEq_Click.bind(this)));
-		if (uiSettings && uiSettings.hideEditModePeakingEq)
+		if ((uiSettings && uiSettings.hideEditModePeakingEq) || !this.filter.iirSupported)
 			this.mnuEditPeakingEq.style.display = "none";
 		mnuh.appendChild(this.mnuEditShelfEq = createMenuItem(GraphicalFilterEditorStrings.ShelfEq, true, false, true, this.mnuEditShelfEq_Click.bind(this)));
-		if (uiSettings && uiSettings.hideEditModeShelfEq)
+		if ((uiSettings && uiSettings.hideEditModeShelfEq) || !this.filter.iirSupported)
 			this.mnuEditShelfEq.style.display = "none";
 		mnuh.appendChild(createMenuSep());
 		mnuh.appendChild(this.mnuNormalizeCurves = createMenuItem(GraphicalFilterEditorStrings.NormalizeCurves, true, false, false, this.mnuNormalizeCurves_Click.bind(this), "GEFILTER"));
@@ -331,7 +331,10 @@ class GraphicalFilterEditorControl {
 		if (settings.showZones === false || settings.showZones === true)
 			this._showZones = settings.showZones;
 
-		if (settings.editMode && settings.editMode >= GraphicalFilterEditorControl.editModeFirst && settings.editMode <= GraphicalFilterEditorControl.editModeLast)
+		if (settings.editMode &&
+			settings.editMode >= GraphicalFilterEditorControl.editModeFirst &&
+			settings.editMode <= GraphicalFilterEditorControl.editModeLast &&
+			(filter.iirSupported || (settings.editMode !== GraphicalFilterEditorControl.editModePeakingEq && settings.editMode !== GraphicalFilterEditorControl.editModeShelfEq)))
 			this._editMode = settings.editMode;
 
 		if (settings.isActualChannelCurveNeeded === false || settings.isActualChannelCurveNeeded === true)
@@ -439,7 +442,9 @@ class GraphicalFilterEditorControl {
 	}
 
 	public set editMode(editMode: number) {
-		if (editMode < GraphicalFilterEditorControl.editModeFirst || editMode > GraphicalFilterEditorControl.editModeLast)
+		if (editMode < GraphicalFilterEditorControl.editModeFirst ||
+			editMode > GraphicalFilterEditorControl.editModeLast ||
+			(!this.filter.iirSupported && (editMode === GraphicalFilterEditorControl.editModePeakingEq || editMode === GraphicalFilterEditorControl.editModeShelfEq)))
 			return;
 
 		this._editMode = editMode;

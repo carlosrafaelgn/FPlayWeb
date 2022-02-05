@@ -91,7 +91,7 @@ class MonoDownMixerControl extends ConnectableNode {
 	}
 
 	private showError(step: string, reason: any): void {
-		alert("Error while " + step + ": " + (reason ? (reason.message || reason.toString()) : "Unknown error"));
+		Alert.show("Error while " + step + ": " + (reason ? (reason.message || reason.toString()) : "Unknown error"), true);
 	}
 
 	private load(): void {

@@ -518,13 +518,43 @@ class Player {
 				this.audio.removeChild(this.audio.firstChild);
 
 			const source = document.createElement("source");
-			if (currentSong.url) {
+			if (currentSong.url && !currentSong.url.startsWith(FileUtils.localURLPrefix)) {
 				source.src = currentSong.url;
 			} else if (currentSong.file) {
 				if (this.lastObjectURL)
 					URL.revokeObjectURL(this.lastObjectURL);
 				this.lastObjectURL = URL.createObjectURL(currentSong.file);
 				source.src = this.lastObjectURL;
+			} else if (currentSong.url) {
+				this.pause();
+
+				const lastCurrentIndex = this._playlist.currentIndex,
+					lastCurrentSong = this._playlist.currentItem;
+
+				FileSystemAPI.getFile(currentSong.url.substring(FileUtils.localURLPrefix.length)).then((file) => {
+					if (lastCurrentSong && !lastCurrentSong.file && file)
+						lastCurrentSong.file = file;
+
+					if (!this._playlist || lastCurrentIndex !== this._playlist.currentIndex || lastCurrentSong !== this._playlist.currentItem)
+						return;
+
+					if (!file) {
+						this.stop();
+						if (this.onerror)
+							this.onerror(Strings.FileNotFoundOrNoPermissionError);
+					} else {
+						this.play(lastCurrentIndex);
+					}
+				}, () => {
+					if (!this._playlist || lastCurrentIndex !== this._playlist.currentIndex || lastCurrentSong !== this._playlist.currentItem)
+						return;
+
+					this.stop();
+					if (this.onerror)
+						this.onerror(Strings.FileNotFoundOrNoPermissionError);
+				});
+
+				return;
 			} else {
 				this.stop();
 				if (this.onerror)

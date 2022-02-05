@@ -32,6 +32,7 @@ interface CommonButtonControlOptions {
 	color?: string | null;
 	square?: boolean | null;
 	opaque?: boolean | null;
+	keyboardFocusable?: boolean | null;
 	className?: string | null;
 }
 
@@ -49,12 +50,15 @@ class ButtonControl {
 		}
 	}
 
-	public static create(options: CommonButtonControlOptions, skipClickAndAppend?: boolean): HTMLButtonElement {
+	public static create(options: CommonButtonControlOptions | ButtonControlOptions, skipClickAndAppend?: boolean): HTMLButtonElement {
 		const button = document.createElement("button");
 		button.setAttribute("type", "button");
 
 		if (options.id)
 			button.setAttribute("id", options.id);
+
+		if (options.keyboardFocusable === false)
+			button.setAttribute("tabindex", "-1");
 
 		let className = "btn";
 

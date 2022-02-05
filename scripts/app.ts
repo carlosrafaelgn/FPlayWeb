@@ -61,14 +61,19 @@ interface AppSettings {
 	graphicalFilterControlSimpleMode?: boolean;
 	stereoPannerControlEnabled?: boolean;
 	monoDownMixerControlEnabled?: boolean;
+	filePickerLastPath?: string | null;
+	filePickerRootLength?: number;
 }
 
 interface HostInterface {
 	getHostType(): string;
-	getFileURLsJSON(): string | null;
+	getBrowserLanguage(): string;
 	setPaused(paused: boolean): void;
-	getBrowserLanguage(): String;
-	exit(): void;
+	checkFilePermission(): number;
+	requestFilePermission(): void;
+	setFileURLs(fileURLs: string[]): void;
+	enumerateFiles(enumerationVersion: number, path: string | null): void;
+	cancelFileEnumeration(enumerationVersion: number): void;
 }
 
 class App {
@@ -90,10 +95,10 @@ class App {
 	private static installPrompt: any | null = null;
 	private static fileInput: HTMLInputElement;
 	private static fileInputVersion = 0;
+	private static fileInputSkipSortResults = true;
 	private static fileInputPromiseResolve: ((value: File[] | PromiseLike<File[] | null> | null) => void) | null;
 
 	private static _loading = true;
-	private static _showingDialog = false;
 	private static isMinimized = false;
 	private static isMaximized = false;
 
@@ -129,7 +134,9 @@ class App {
 				graphicalFilterControlEnabled: (App.graphicalFilterControl ? App.graphicalFilterControl.enabled : false),
 				graphicalFilterControlSimpleMode: (App.graphicalFilterControl ? App.graphicalFilterControl.simpleMode : true),
 				stereoPannerControlEnabled: (App.stereoPannerControl ? App.stereoPannerControl.enabled : false),
-				monoDownMixerControlEnabled: (App.monoDownMixerControl ? App.monoDownMixerControl.enabled : false)
+				monoDownMixerControlEnabled: (App.monoDownMixerControl ? App.monoDownMixerControl.enabled : false),
+				filePickerLastPath: FilePicker.lastPath,
+				filePickerRootLength: FilePicker.lastRootLength
 			});
 
 			App.player.destroy(true);
@@ -227,22 +234,31 @@ class App {
 
 	private static sortFiles(files: File[]): File[] {
 		if (files.length) {
+			const comparer = Strings.comparer;
+
 			if ((files[0] as any)["data-path"])
-				files.sort(function (a, b) { return (a as any)["data-path"].localeCompare((b as any)["data-path"]); });
+				files.sort(function (a, b) { return comparer((a as any)["data-path"], (b as any)["data-path"]); });
 			else if ((files[0] as any).webkitRelativePath)
-				files.sort(function (a, b) { return (a as any).webkitRelativePath.localeCompare((b as any).webkitRelativePath); });
+				files.sort(function (a, b) { return comparer((a as any).webkitRelativePath, (b as any).webkitRelativePath); });
 			else
-				files.sort(function (a, b) { return a.name.localeCompare(b.name); });
+				files.sort(function (a, b) { return comparer(a.name, b.name); });
 		}
 
 		return files;
 	}
 
-	public static preInit(): void {
+	public static async preInit(): Promise<void> {
 		Strings.init();
 		Icon.init();
 		GraphicalFilterEditorStrings.init(Strings.language);
 		Strings.toFixed = GraphicalFilterEditorStrings.toFixed;
+		if (!App.hostInterface && FileSystemAPI.isSupported()) {
+			try {
+				await FileSystemAPI.init();
+			} catch (ex: any) {
+				Alert.show(ex.message || ex.toString());
+			}
+		}
 
 		const appSettings = InternalStorage.loadAppSettings(),
 			webFrame = (window as any)["electronWebFrame"] as WebFrame;
@@ -263,8 +279,8 @@ class App {
 							Modal.show({
 								html: Strings.PleaseRefresh,
 								title: Strings.UpdateAvailable,
-								oktext: Strings.Refresh,
-								okcancel: true,
+								okText: Strings.Refresh,
+								okCancel: true,
 								onok: function () {
 									window.location.reload();
 								}
@@ -306,13 +322,13 @@ class App {
 			App.titleBar.insertBefore(App.iconLoading, (document.getElementById("icon-main") as HTMLElement).nextSibling);
 		}
 
-		if (App.hostType !== App.hostTypeElectron) {
+		if (App.hostType === App.hostTypeAndroid || !FilePicker.isSupported()) {
 			const div = document.createElement("div");
 			div.style.display = "none";
 			App.fileInput = document.createElement("input");
 			App.fileInput.setAttribute("type", "file");
 			App.fileInput.setAttribute("multiple", "multiple");
-			App.fileInput.setAttribute("aria-label", Strings.AddFiles);
+			App.fileInput.setAttribute("aria-label", Strings.AddSongs);
 			App.fileInput.onchange = function () {
 				if (!App.fileInput || !App.fileInputPromiseResolve || parseInt(App.fileInput.getAttribute("data-version") as string) !== App.fileInputVersion)
 					return;
@@ -322,48 +338,32 @@ class App {
 				const resolve = App.fileInputPromiseResolve;
 				App.fileInputPromiseResolve = null;
 
-				if (!App.fileInput.files || !App.fileInput.files.length) {
+				if (!App.fileInput.files || !App.fileInput.files.length || (App.fileInput.files.length === 1 && !FileUtils.isTypeSupported(App.fileInput.files[0].name))) {
 					resolve(null);
 					return;
 				}
 
 				const files = new Array(App.fileInput.files.length) as File[];
 
-				let fileURLs: string[] | null = null;
-				try {
-					const fileURLsJSON = ((App.hostInterface && App.hostInterface.getFileURLsJSON()) || null);
-					if (fileURLsJSON)
-						fileURLs = JSON.parse(fileURLsJSON);
-				} catch (ex: any) {
-					// Just ignore...
-				}
-
-				if (fileURLs && fileURLs.length === files.length) {
-					for (let i = files.length - 1; i >= 0; i--) {
-						files[i] = App.fileInput.files[i];
-						(files[i] as any)["data-path"] = fileURLs[i];
-					}
-				} else {
-					for (let i = files.length - 1; i >= 0; i--)
-						files[i] = App.fileInput.files[i];
-				}
+				for (let i = files.length - 1; i >= 0; i--)
+					files[i] = App.fileInput.files[i];
 
 				App.fileInput.value = "";
 
-				resolve(App.sortFiles(files));
+				resolve(App.fileInputSkipSortResults ? files : App.sortFiles(files));
 			};
 			div.appendChild(App.fileInput);
 			(document.getElementById("top-panel") as HTMLDivElement).appendChild(div);
 		}
 
 		AppUI.preInit(webFrame, appSettings);
+
+		App.init(appSettings);
 	}
 
-	public static init(): void {
+	private static init(appSettings: AppSettings): void {
 		if (App.player)
 			return;
-
-		const appSettings = InternalStorage.loadAppSettings();
 
 		App.player = new Player(
 			appSettings.playerVolume,
@@ -402,16 +402,16 @@ class App {
 		if (cover)
 			cover.classList.remove("in");
 
-		setTimeout(function () {
+		DelayControl.delayShortCB(function () {
 			AppUI.centerCurrentSongIntoView();
 
-			setTimeout(function () {
+			DelayControl.delayUICB(function () {
 				window.removeEventListener("resize", App.adjustCover);
 				const cover = document.getElementById("cover");
 				if (cover)
 					document.body.removeChild(cover);
-			}, 310);
-		}, 10);
+			});
+		});
 
 		App.loading = false;
 	}
@@ -436,112 +436,20 @@ class App {
 			App.ipcRenderer.invoke("mainWindowClose");
 	}
 
-	public static async showOpenFileDialog(): Promise<string[] | null> {
-		if (App.fileInput || App._showingDialog)
-			return null;
-
-		try {
-			App._showingDialog = true;
-			return await App.ipcRenderer.invoke("showOpenFileDialog");
-		} finally {
-			App._showingDialog = false;
-		}
-	}
-
-	public static convertFilePathsToAppFiles(filePaths: string[]): Promise<AppFile[] | null> {
-		return App.ipcRenderer.invoke("convertFilePathsToAppFiles", filePaths);
-	}
-
-	public static async showOpenDirectoryDialog(): Promise<string[] | null> {
-		if (App._showingDialog)
-			return null;
-
-		try {
-			App._showingDialog = true;
-			return await App.ipcRenderer.invoke("showOpenDirectoryDialog");
-		} finally {
-			App._showingDialog = false;
-		}
-	}
-
-	public static listDirectory(urlOrAbsolutePath: string): Promise<AppFile[] | null> {
-		return App.ipcRenderer.invoke("listDirectory", urlOrAbsolutePath);
-	}
-
 	public static extractMetadata(urlOrAbsolutePath: string, fileSize?: number): Promise<Metadata | null> {
 		return App.ipcRenderer.invoke("extractMetadata", urlOrAbsolutePath, fileSize);
 	}
 
-	/*
-	private static async showOpenFilePicker(): Promise<File[] | null> {
-		if (App._showingDialog)
-			return null;
-
-		try {
-			App._showingDialog = true;
-
-			const handles = (await (window as any).showOpenFilePicker({ multiple: true })) as any[];
-
-			if (!handles || !handles.length)
-				return null;
-
-			const promises = new Array(handles.length) as Promise<File>[];
-
-			for (let i = handles.length - 1; i >= 0; i--)
-				promises[i] = handles[i].getFile();
-
-			return App.sortFiles(await Promise.all(promises));
-		} catch (ex) {
-			// The user must have cancelled the request
-			return null;
-		} finally {
-			App._showingDialog = false;
-		}
-	}
-
-	private static async showDirectoryPicker(): Promise<File[] | null> {
-		if (App._showingDialog)
-			return null;
-
-		try {
-			App._showingDialog = true;
-
-			const handles = (await (window as any).showDirectoryPicker({ multiple: true })) as any[];
-
-			//if (!handles || !handles.length)
-				return null;
-
-			const promises = new Array(handles.length) as Promise<File>[];
-
-			for (let i = handles.length - 1; i >= 0; i--)
-				promises[i] = handles[i].getFile();
-
-			return App.sortFiles(await Promise.all(promises));
-		} catch (ex) {
-			// The user must have cancelled the request
-			return null;
-		} finally {
-			App._showingDialog = false;
-		}
-	}
-	*/
-
-	public static showOpenDialogWeb(directory?: boolean): Promise<File[] | null> {
+	public static showOpenDialogWeb(directory?: boolean, skipSort?: boolean): Promise<File[] | null> {
 		if (!App.fileInput)
 			return Promise.resolve(null);
-
-		//if (directory) {
-		//	if ("showDirectoryPicker" in window)
-		//		return App.showDirectoryPicker();
-		//} else {
-		//	if ("showOpenFilePicker" in window)
-		//		return App.showOpenFilePicker();
-		//}
 
 		if (App.fileInputPromiseResolve) {
 			App.fileInputPromiseResolve(null);
 			App.fileInputPromiseResolve = null;
 		}
+
+		App.fileInputSkipSortResults = !!skipSort;
 
 		App.fileInput.setAttribute("data-version", (++App.fileInputVersion).toString());
 
@@ -552,18 +460,19 @@ class App {
 		} else {
 			App.fileInput.removeAttribute("webkitdirectory");
 			App.fileInput.removeAttribute("directory");
-			App.fileInput.setAttribute("accept", Playlist.concatenatedSupportedExtensions);
+			App.fileInput.setAttribute("accept", FileUtils.concatenatedSupportedExtensions);
 		}
 
-		return new Promise((resolve) => {
+		const promise = new Promise<File[] | null>(function (resolve) {
 			App.fileInputPromiseResolve = resolve;
-			App.fileInput.click();
 		});
+
+		App.fileInput.click();
+
+		return promise;
 	}
 }
 
 function main() {
-	App.init();
+	App.preInit().catch(console.error);
 }
-
-App.preInit();

@@ -46,6 +46,7 @@ class AppUI {
 	private static readonly minWidthPX = AppUI.remToPX(AppUI.minWidthREM);
 	private static readonly baseThinBorderPX = 1;
 	private static readonly baseThickBorderPX = 2;
+	private static readonly _simpleListItemPX = AppUI.remToPX(AppUI.buttonSizeREM + 2);
 
 	private static readonly zoomHandlers: AppUIZoomHandler[] = [];
 
@@ -197,6 +198,7 @@ class AppUI {
 				--thick-border: ${_thickBorderPX}px;
 				--scrollbar-size: ${AppUI.scrollbarSizeREM}rem;
 				--optional-panel-container-height: ${(356 + AppUI.buttonSizePX)}px;
+				--simple-list-item-size: ${AppUI._simpleListItemPX}px;
 			}`;
 
 			//if (App.player)
@@ -303,6 +305,21 @@ class AppUI {
 	}
 
 	public static preInit(webFrame: WebFrame | null, appSettings: AppSettings): void {
+		// A few mobile devices wrongly report they support mouse and simply ignore the
+		// (hover: none) media query. There are mobile devices with an even stranger
+		// behavior: they ignore the (hover: none) media query, reporting mouse support,
+		// during regular usage, but they *do* consider the (hover: none) media query
+		// while the tab is being remotely inspected by a desktop DevTools session
+		// (using chrome://inspect). Therefore, I decided to replace all (hover: none)
+		// media queries with a (pointer: coarse) media query, which is the criteria
+		// used by AppUI.primaryInputIsTouch to determine whether the device's primary
+		// input device is mouse or touch. If that media query fails, another possible
+		// solution is to uncomment these two lines below, comment out all (pointer: coarse)
+		// media queries from the CSS, and prepend "body.hover-none " to all the rules
+		// inside the (pointer: coarse) media queries.
+		//if (AppUI.primaryInputIsTouch)
+		//	document.body.classList.add("hover-none");
+
 		AppUI.webFrame = webFrame;
 
 		window.addEventListener("keydown", AppUI.globalKeyHandler, true);
@@ -310,7 +327,10 @@ class AppUI {
 		if (webFrame && appSettings.devicePixelRatio && appSettings.devicePixelRatio !== devicePixelRatio)
 			webFrame.setZoomFactor(appSettings.devicePixelRatio);
 
-		if (App.hostType === App.hostTypeAndroid) {
+		if (FilePicker.isSupported()) {
+			FilePicker.lastPath = appSettings.filePickerLastPath || null;
+			FilePicker.lastRootLength = appSettings.filePickerRootLength || 0;
+
 			const addFolderButton = document.getElementById("add-folder-button") as HTMLElement;
 			(addFolderButton.parentNode as HTMLElement).removeChild(addFolderButton);
 		}
@@ -415,6 +435,10 @@ class AppUI {
 
 	public static get thickBorderPX(): number {
 		return AppUI._thickBorderPX;
+	}
+
+	public static get simpleListItemPX(): number {
+		return AppUI._simpleListItemPX;
 	}
 
 	public static addZoomHandler(zoomHandler: AppUIZoomHandler | null): void {
@@ -631,7 +655,7 @@ class AppUI {
 
 		AppUI.topMessage.classList.remove("in");
 
-		AppUI.topMessageTimeout = setTimeout(function () {
+		AppUI.topMessageTimeout = DelayControl.delayUICB(function () {
 			if (AppUI.topMessageFading >= 0)
 				return;
 
@@ -647,7 +671,7 @@ class AppUI {
 
 			if (AppUI.artistLabel)
 				AppUI.artistLabel.classList.remove("behind");
-		}, 320);
+		});
 	}
 
 	public static showTopMessage(html: string, createHandler?: (parent: HTMLDivElement) => void): void {
@@ -672,7 +696,7 @@ class AppUI {
 
 		AppUI.topMessage.style.visibility = "visible";
 
-		AppUI.topMessageTimeout = setTimeout(function () {
+		AppUI.topMessageTimeout = DelayControl.delayShortCB(function () {
 			if (AppUI.topMessageFading <= 0 || AppUI.topMessageFading !== 1)
 				return;
 
@@ -680,22 +704,22 @@ class AppUI {
 
 			AppUI.topMessage.classList.add("in");
 
-			AppUI.topMessageTimeout = setTimeout(function () {
+			AppUI.topMessageTimeout = DelayControl.delayUICB(function () {
 				if (AppUI.topMessageFading !== 2)
 					return;
 
 				AppUI.topMessageFading = 0;
 				AppUI.topMessageTimeout = 0;
-			}, 320);
-		}, 20);
+			});
+		});
 	}
 
 	public static async addFiles(webDirectory?: boolean): Promise<void> {
-		if (!App.player || AppUI._loading)
+		if (!App.player || AppUI._loading || Modal.visible || FilePicker.visible)
 			return;
 
 		const electron = (App.hostType === App.hostTypeElectron),
-			filePaths = (electron ? await App.showOpenFileDialog() : await App.showOpenDialogWeb(webDirectory));
+			filePaths = (FilePicker.isSupported() ? await FilePicker.show() : await App.showOpenDialogWeb(webDirectory));
 
 		if (!filePaths || !App.player)
 			return;
@@ -735,66 +759,6 @@ class AppUI {
 		}
 	}
 
-	private static async addDirectory(urlOrAbsolutePath: string): Promise<boolean> {
-		const appFiles = await App.listDirectory(urlOrAbsolutePath);
-
-		if (!App.player || !App.player.playlist || AppUI.directoryCancelled)
-			return false;
-
-		if (!appFiles)
-			return true;
-
-		for (let i = 0; i < appFiles.length; i++) {
-			if (appFiles[i].isDirectory) {
-				if (!await AppUI.addDirectory(appFiles[i].fileURL))
-					return false;
-
-				continue;
-			}
-
-			if (!App.player || !App.player.playlist || AppUI.directoryCancelled)
-				return false;
-
-			await App.player.playlist.addSong(appFiles[i]);
-		}
-
-		return true;
-	}
-
-	public static async addDirectories(): Promise<void> {
-		if (!App.player || AppUI._loading)
-			return;
-
-		if (App.hostType !== App.hostTypeElectron)
-			return AppUI.addFiles(true);
-
-		const directoryPaths = await App.showOpenDirectoryDialog();
-		if (!directoryPaths || !App.player)
-			return;
-
-		try {
-			AppUI._loading = true;
-			AppUI.directoryCancelled = false;
-			App.updateLoadingIcon();
-
-			if (!App.player.playlist) {
-				App.player.playlist = new Playlist();
-				AppUI.preparePlaylist();
-			}
-
-			for (let i = 0; i < directoryPaths.length; i++) {
-				if (!await AppUI.addDirectory(directoryPaths[i]))
-					break;
-			}
-		} catch (ex: any) {
-			Modal.show({ text: "addDirectories error: " + (ex.message || ex.toString()) });
-		} finally {
-			AppUI._loading = false;
-			AppUI.directoryCancelled = false;
-			App.updateLoadingIcon();
-		}
-	}
-
 	public static toggleDeleteMode(popStateIfLeaving: boolean): void {
 		if (!AppUI.playlistControl)
 			return;
@@ -815,7 +779,7 @@ class AppUI {
 				ButtonControl.create({
 					color: "red",
 					icon: "icon-delete-all",
-					stringKey: "DeleteAllSongs",
+					text: Strings.DeleteAllSongs,
 					parent: div,
 					onclick: function () {
 						if (App.player && App.player.playlist)
@@ -824,18 +788,18 @@ class AppUI {
 						if (AppUI.playlistControl && AppUI.playlistControl.deleteMode)
 							AppUI.toggleDeleteMode(true);
 					}
-				} as ButtonControlOptions);
+				});
 
 				ButtonControl.create({
 					color: "green",
 					icon: "icon-check",
-					stringKey: "Done",
+					text: Strings.Done,
 					parent: div,
 					onclick: function () {
 						if (AppUI.playlistControl && AppUI.playlistControl.deleteMode)
 							AppUI.toggleDeleteMode(true);
 					}
-				} as ButtonControlOptions);
+				});
 
 				parent.appendChild(div);
 			});

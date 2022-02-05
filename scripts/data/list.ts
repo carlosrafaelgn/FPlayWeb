@@ -24,7 +24,13 @@
 // https://github.com/carlosrafaelgn/FPlayWeb
 //
 
-abstract class ListAdapter<T extends ListItem> {
+interface SerializableListItem {
+	estimateSerializedLength(): number;
+	serialize(writer: DataWriter): DataWriter;
+	serializeWeb(): any;
+}
+
+abstract class ListAdapter<T> {
 	public readonly list: List<T>;
 
 	public control: ListControl<T> | null;
@@ -57,6 +63,13 @@ abstract class ListAdapter<T extends ListItem> {
 			this.control.notifyCleared();
 	}
 
+	public itemsChanged(newLength: number): void {
+		if (this.control) {
+			this.control.notifyCleared();
+			this.control.notifyItemsAdded(0, newLength - 1);
+		}
+	}
+
 	public itemsAdded(firstIndex: number, lastIndex: number): void {
 		if (this.control)
 			this.control.notifyItemsAdded(firstIndex, lastIndex);
@@ -81,7 +94,7 @@ abstract class ListAdapter<T extends ListItem> {
 	public abstract prepareElementIndexOrLengthChanged(item: T, index: number, length: number, element: HTMLElement): void;
 }
 
-abstract class List<T extends ListItem> {
+class List<T> {
 	protected items: T[];
 
 	private _currentIndex: number;
@@ -179,7 +192,18 @@ abstract class List<T extends ListItem> {
 		return this.items[index];
 	}
 
-	public abstract estimateSerializedLength(): number;
+	public estimateSerializedLength(): number {
+		const items = this.items;
+
+		if (!items || !items[0] || !("estimateSerializedLength" in items[0]))
+			return 0;
+
+		let total = 0;
+		for (let i = items.length - 1; i >= 0; i--)
+			total += (items[i] as any).estimateSerializedLength();
+
+		return total + 128;
+	}
 
 	public serialize(writer?: DataWriter | null): DataWriter {
 		const items = this.items,
@@ -188,12 +212,15 @@ abstract class List<T extends ListItem> {
 		if (!writer)
 			writer = new DataWriter(this.estimateSerializedLength());
 
+		if (!items || !items[0] || !("serialize" in items[0]))
+			return writer;
+
 		writer.writeUint8(0) // version
 			.writeInt32(count)
 			.writeInt32(this._currentIndex);
 
 		for (let i = 0; i < count; i++)
-			items[i].serialize(writer);
+			(items[i] as any).serialize(writer);
 
 		return writer;
 	}
@@ -203,8 +230,10 @@ abstract class List<T extends ListItem> {
 			count = items.length,
 			tmp = new Array(count);
 
-		for (let i = 0; i < count; i++)
-			tmp[i] = items[i].serializeWeb();
+		if (items && items[0] && ("serializeWeb" in items[0])) {
+			for (let i = 0; i < count; i++)
+				tmp[i] = (items[i] as any).serializeWeb();
+		}
 
 		return {
 			currentIndex: this._currentIndex,
@@ -241,6 +270,25 @@ abstract class List<T extends ListItem> {
 			if (oldCurrentItem)
 				this._adapter.currentItemChanged(oldCurrentIndex, -1);
 		}
+	}
+
+	public changeItems(items: T[] | null): void {
+		if (!items || !items.length) {
+			this.clear();
+			return;
+		}
+
+		if (this.items)
+			(this.items as Array<any>).fill(null);
+
+		this.modified = true;
+
+		this.items = items.slice();
+		this._currentIndex = -1;
+		this._currentItem = null;
+
+		if (this._adapter)
+			this._adapter.itemsChanged(items.length);
 	}
 
 	public addItem(item: T, index?: number): number {

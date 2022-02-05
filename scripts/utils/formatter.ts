@@ -28,13 +28,6 @@ class Formatter {
 	public static readonly zero = "0:00";
 	public static readonly none = "-";
 	public static readonly noneInt = -1;
-	public static readonly empty = "";
-
-	public static readonly httpURLPrefix = "http";
-	public static readonly fileURLPrefix = "file://";
-	public static readonly contentURLPrefix = "content";
-	private static readonly fileURLPrefixWindows = "file:///";
-	private static readonly regExpSepWindows = /\\/g;
 
 	public static formatTimeMS(timeMS: number): string {
 		if (timeMS < 0)
@@ -59,11 +52,5 @@ class Formatter {
 
 	public static formatDB(dB: number): string {
 		return ((dB < 0) ? Strings.toFixed(dB, 1) : ((dB === 0) ? "-" + Strings.toFixed(dB, 1) : "+" + Strings.toFixed(dB, 1)));
-	}
-
-	public static pathToURL(urlOrAbsolutePath: string): string {
-		return ((!urlOrAbsolutePath || urlOrAbsolutePath.startsWith(Formatter.httpURLPrefix) || urlOrAbsolutePath.startsWith(Formatter.fileURLPrefix) || urlOrAbsolutePath.startsWith(Formatter.contentURLPrefix)) ? urlOrAbsolutePath :
-			encodeURI(!urlOrAbsolutePath.startsWith("/") ? (Formatter.fileURLPrefixWindows + urlOrAbsolutePath.replace(Formatter.regExpSepWindows, "/")) : (Formatter.fileURLPrefix + urlOrAbsolutePath))
-		);
 	}
 }

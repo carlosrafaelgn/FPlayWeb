@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest package="br.com.carlosrafaelgn.fplayweb"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:installLocation="auto">
+
+    <!-- http://developer.android.com/guide/topics/manifest/supports-screens-element.html -->
+    <supports-screens
+        android:anyDensity="true"
+        android:largeScreens="true"
+        android:normalScreens="true"
+        android:smallScreens="true"
+        android:xlargeScreens="true" />
+
+    <!-- For Google Drive -->
+    <!-- uses-permission android:name="android.permission.GET_ACCOUNTS" -->
+    <!-- For http playback -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- To check the connection state -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.BROADCAST_STICKY" />
+    <!-- http://developer.android.com/reference/android/Manifest.permission.html#READ_EXTERNAL_STORAGE -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!-- For Android 28 https://developer.android.com/about/versions/pie/android-9.0-migration#tya -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- For the floating window -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!--
+    Just to make Google Play show the App even to phones without Bluetooth,
+    despite the uses-permission above!
+    -->
+    <uses-feature
+        android:name="android.hardware.bluetooth"
+        android:required="false" />
+    <!--
+    Just to make Google Play show the App even to phones without a camera,
+    despite the uses-permission above!
+    -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <!--
+    Support for devices without touch, devices without microphone and TVs
+    as described in http://developer.android.com/guide/topics/manifest/uses-feature-element.html
+    -->
+    <uses-feature
+        android:name="android.hardware.microphone"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.faketouch"
+        android:required="false" />
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.wifi"
+        android:required="false" />
+
+    <!--
+    Support for Chromebook and other PC-like devices with mouse and keyboard
+    -->
+    <uses-feature
+        android:name="android.hardware.type.pc"
+        android:required="false" />
+
+    <!-- http://developer.android.com/intl/pt-br/reference/android/app/backup/BackupManager.html -->
+    <!-- https://developer.android.com/training/data-storage/compatibility -->
+    <application
+        android:name=".MainApplication"
+        android:allowBackup="true"
+        android:allowClearUserData="true"
+        android:usesCleartextTraffic="true"
+        android:description="@string/app_description"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:banner="@drawable/ic_banner"
+        android:supportsRtl="true"
+        android:requestLegacyExternalStorage="true"
+        android:theme="@style/AppTheme">
+
+        <!-- https://developer.android.com/guide/webapps/managing-webview -->
+        <meta-data android:name="android.webkit.WebView.EnableSafeBrowsing" android:value="false" />
+
+        <!-- http://stackoverflow.com/a/14185426/3569421 -->
+        <uses-library android:required="false" android:name="com.sec.android.app.multiwindow" />
+        <meta-data android:name="com.sec.android.support.multiwindow" android:value="true" />
+        <meta-data android:name="com.sec.android.multiwindow.DEFAULT_SIZE_W" android:value="320dp" />
+        <meta-data android:name="com.sec.android.multiwindow.DEFAULT_SIZE_H" android:value="320dp" />
+        <meta-data android:name="com.sec.android.multiwindow.MINIMUM_SIZE_W" android:value="320dp" />
+        <meta-data android:name="com.sec.android.multiwindow.MINIMUM_SIZE_H" android:value="320dp" />
+        <!-- https://developer.android.com/guide/practices/screens_support.html#MaxAspectRatio -->
+        <meta-data android:name="android.max_aspect" android:value="100.0" />
+
+        <activity android:name=".MainActivity"
+            android:clearTaskOnLaunch="true"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode"
+            android:label="@string/app_name"
+            android:launchMode="singleTask"
+            android:multiprocess="false"
+            android:screenOrientation="unspecified"
+            android:resizeableActivity="true"
+            android:stateNotNeeded="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
+            </intent-filter>
+
+            <!-- TV support! -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+
+        </activity>
+
+    </application>
+
+</manifest>

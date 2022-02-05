@@ -26,11 +26,17 @@
 
 interface CheckboxControlOptions {
 	stringKey: string;
-	parent?: HTMLElement | null;
 	id?: string | null;
-	className?: string | null;
 	icon?: string | null;
 	iconColor?: string | null;
+	checkbox0Color?: string | null;
+	checkbox1Color?: string | null;
+	color?: string | null;
+	square?: boolean | null;
+	opaque?: boolean | null;
+	keyboardFocusable?: boolean | null;
+	className?: string | null;
+	parent?: HTMLElement | null;
 }
 
 class CheckboxControl {
@@ -42,19 +48,47 @@ class CheckboxControl {
 		}
 	}
 
+	public static isChecked(checkboxButton: HTMLButtonElement): boolean {
+		const input: HTMLInputElement = (checkboxButton as any).childInput;
+		return (input ? input.checked : false);
+	}
+
+	public static setChecked(checkboxButton: HTMLButtonElement, checked?: boolean | null): void {
+		const input: HTMLInputElement = (checkboxButton as any).childInput;
+		if (input) {
+			if (!!input.checked !== !!checked)
+				input.click();
+		}
+	}
+
 	public static create(options: CheckboxControlOptions): HTMLButtonElement {
 		const input = document.createElement("input");
 
 		input.setAttribute("type", "checkbox");
 		input.setAttribute("value", options.stringKey);
+		if (options.square)
+			input.setAttribute("data-square", "1");
 
 		if (options.id)
 			input.setAttribute("id", options.id);
 
-		if (options.className)
-			input.className = options.className;
+		let className = "btn";
 
-		const button = CheckboxControl.prepare(input, options.icon, options.iconColor);
+		if (options.color)
+			className += " " + options.color;
+		if (options.square)
+			className += " square";
+		if (!options.opaque)
+			className += " transparent";
+		if (options.className)
+			className += " " + options.className;
+
+		input.className = className;
+
+		const button = CheckboxControl.prepare(input, options.icon, options.iconColor, options.checkbox0Color, options.checkbox1Color);
+
+		if (options.keyboardFocusable === false)
+			button.setAttribute("tabindex", "-1");
 
 		if (options.parent)
 			options.parent.appendChild(button);
@@ -62,11 +96,12 @@ class CheckboxControl {
 		return button;
 	}
 
-	private static prepare(input: HTMLInputElement, icon?: string | null, iconColor?: string | null): HTMLButtonElement {
+	private static prepare(input: HTMLInputElement, icon?: string | null, iconColor?: string | null, checkbox0Color?: string | null, checkbox1Color?: string | null): HTMLButtonElement {
 		const button = document.createElement("button"),
 			span = document.createElement("span"),
 			parent = input.parentNode as HTMLElement | null,
-			label = input.getAttribute("title") || Strings.translate(input.value);
+			square = icon ? null : input.getAttribute("data-square"),
+			label = Strings.translate(input.getAttribute("title") || input.value);
 
 		button.setAttribute("type", "button");
 		button.setAttribute("role", "checkbox");
@@ -84,6 +119,15 @@ class CheckboxControl {
 		if (icon && !iconColor)
 			iconColor = input.getAttribute("data-icon-color");
 
+		if (!checkbox0Color)
+			checkbox0Color = input.getAttribute("data-checkbox0-color");
+
+		if (!checkbox1Color) {
+			checkbox1Color = input.getAttribute("data-checkbox1-color");
+			if (!checkbox1Color)
+				checkbox1Color = "orange";
+		}
+
 		if (parent) {
 			parent.insertBefore(button, input);
 			parent.removeChild(input);
@@ -91,24 +135,25 @@ class CheckboxControl {
 
 		button.appendChild(span);
 		span.appendChild(input);
-		span.appendChild(Icon.createLarge("icon-checkbox-0", "margin"));
-		span.appendChild(Icon.createLarge("icon-checkbox-1", "margin orange"));
+		span.appendChild(Icon.createLarge("icon-checkbox-0", (square ? "" : "margin") + (checkbox0Color ? (" " + checkbox0Color) : "")));
+		span.appendChild(Icon.createLarge("icon-checkbox-1", square ? checkbox1Color : ("margin " + checkbox1Color)));
 		if (icon)
 			span.appendChild(Icon.createLarge(icon, iconColor ? ("margin " + iconColor) : "margin"));
-		span.appendChild(document.createTextNode(label));
+		if (!square)
+			span.appendChild(document.createTextNode(label));
 		input.removeAttribute("value");
 		input.removeAttribute("title");
 
 		button.onclick = CheckboxControl.click;
 
+		(button as any).childInput = input;
+
 		return button;
 	}
 
 	private static click(e: Event): void {
-		const label = (e.target || this) as HTMLLabelElement,
-			inputs = label.getElementsByTagName("input");
-
-		if (inputs && inputs[0])
-			inputs[0].click();
+		const input: HTMLInputElement = (this as any).childInput;
+		if (input)
+			input.click();
 	}
 }

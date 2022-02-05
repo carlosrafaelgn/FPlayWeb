@@ -37,7 +37,7 @@ interface SongInfo {
 	fileSize: number;
 }
 
-class Song extends ListItem implements SongInfo {
+class Song implements SerializableListItem, SongInfo {
 	public static isPathHttp(path: string): boolean {
 		return (path.startsWith("http:") || path.startsWith("https:") || path.startsWith("icy:"));
 	}
@@ -65,8 +65,6 @@ class Song extends ListItem implements SongInfo {
 	public readonly fileSize: number;
 
 	public constructor(urlOrMetadata: string | Metadata, title?: string | null, artist?: string | null, album?: string | null, track?: number, lengthMS?: number, year?: number, fileName?: string | null, fileSize?: number) {
-		super();
-
 		if ((typeof urlOrMetadata) !== "string") {
 			const metadata = urlOrMetadata as Metadata;
 			urlOrMetadata = metadata.url;
@@ -77,7 +75,7 @@ class Song extends ListItem implements SongInfo {
 			lengthMS = metadata.lengthMS;
 			year = metadata.year;
 			if (metadata.file) {
-				if (!urlOrMetadata)
+				if (!urlOrMetadata || urlOrMetadata.startsWith(FileUtils.localURLPrefix))
 					this.file = metadata.file;
 				if (!title) {
 					const i = metadata.file.name.lastIndexOf(".");
