@@ -166,6 +166,8 @@ h1 > span > span.close:active {
 	background-origin: content-box;
 	background-position: center;
 	pointer-events: none;
+	min-width: $contents-size;
+	min-height: $contents-size;
 }
 
 #icon-loading {

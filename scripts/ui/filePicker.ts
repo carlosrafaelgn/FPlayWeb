@@ -57,7 +57,7 @@ class FilePickerListAdapter extends ListAdapter<FilePickerListItem> {
 		}).setAttribute("data-delete", "1");
 
 		div.appendChild(Icon.createLarge("icon-folder", "orange button-top-margin margin"));
-		div.appendChild(Icon.createLarge("icon-add-folder", "green button-top-margin margin small-left-margin"));
+		div.appendChild(Icon.createLarge("icon-add-folder", "green button-top-margin margin left-margin"));
 		div.appendChild(document.createTextNode(Formatter.none));
 
 		return div;
@@ -92,9 +92,9 @@ class FilePickerListAdapter extends ListAdapter<FilePickerListItem> {
 			const folderIcon = (childNodes[2] as HTMLElement);
 			folderIcon.classList.remove("hidden");
 			if (item.root && !item.deletable)
-				folderIcon.classList.add("small-left-margin");
+				folderIcon.classList.add("left-margin");
 			else
-				folderIcon.classList.remove("small-left-margin");
+				folderIcon.classList.remove("left-margin");
 		} else {
 			(childNodes[2] as HTMLElement).classList.add("hidden");
 		}
