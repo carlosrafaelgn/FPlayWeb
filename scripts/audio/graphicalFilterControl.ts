@@ -72,12 +72,12 @@ class GraphicalFilterControl extends ConnectableNode { //extends HTMLElement {
 
 		this.editor = new GraphicalFilterEditorControl(element, 2048, audioContext, this.filterChanged.bind(this), graphicalFilterEditorSettings, {
 			svgRenderer: true,
+			fontSize: AppUI.smallFontSizeREM + "rem",
+			lineHeight: AppUI.smallContentsSizeREM + "rem",
 
 			radioHTML: Icon.createHTML("icon-radio", false, "menu-icon"),
 			checkHTML: Icon.createHTML("icon-check", false, "menu-icon"),
 
-			menuWidth: Icon.outerSizeREM + "rem",
-			menuPadding: "0",
 			openMenuHTML: '<span>' + Icon.createHTML("icon-expand-less", true) + '</span>',
 			closeMenuHTML: '<span>' + Icon.createHTML("icon-expand-more", true) + '</span>'
 		});
@@ -94,8 +94,9 @@ class GraphicalFilterControl extends ConnectableNode { //extends HTMLElement {
 		for (let i = labels.length - 1; i >= 0; i--) {
 			const label = labels[i] as HTMLDivElement;
 			label.style.height = "var(--button-size)";
-			label.style.lineHeight = "6rem";
-			label.style.paddingTop = "var(--button-padding-top)";
+			label.style.fontSize = AppUI.smallFontSizeREM + "rem";
+			label.style.lineHeight = AppUI.contentsSizeREM + "rem";
+			label.style.paddingTop = "var(--button-padding)";
 			label.style.paddingBottom = "0";
 		}
 

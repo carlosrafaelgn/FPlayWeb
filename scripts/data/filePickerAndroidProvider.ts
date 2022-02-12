@@ -27,6 +27,7 @@
 class FilePickerAndroidProvider implements FilePickerProvider {
 	public static callback: ((enumerationVersion: number, filePaths: string[] | null) => void) | null = null;
 	private static callbackPermissionResolve: ((permissionGranted: boolean) => void) | null = null;
+	private static callbackClickDoneResolve: (() => void) | null = null;
 	private static permissionGranted = false;
 
 	public static callbackPermission(permissionGranted: number): void {
@@ -35,6 +36,13 @@ class FilePickerAndroidProvider implements FilePickerProvider {
 		if (FilePickerAndroidProvider.callbackPermissionResolve) {
 			FilePickerAndroidProvider.callbackPermissionResolve(FilePickerAndroidProvider.permissionGranted);
 			FilePickerAndroidProvider.callbackPermissionResolve = null;
+		}
+	}
+
+	public static callbackClickDone(): void {
+		if (FilePickerAndroidProvider.callbackClickDoneResolve) {
+			FilePickerAndroidProvider.callbackClickDoneResolve();
+			FilePickerAndroidProvider.callbackClickDoneResolve = null;
 		}
 	}
 
@@ -139,11 +147,18 @@ class FilePickerAndroidProvider implements FilePickerProvider {
 
 		const filePaths: string[] = [],
 			version = this.version,
+			// The Promise's executor function runs before the constructor returns, so this is safe!
+			promiseClickReady = new Promise<void>(function (resolve) { FilePickerAndroidProvider.callbackClickDoneResolve = resolve; }),
 			// We must call this as soon as possible, to try to prevent the error
 			// "File chooser dialog can only be shown with a user activation".
 			// This error occurs if the call to input.click() happens a few seconds
 			// after the actual click, or if it happens outside its call stack.
 			promise = App.showOpenDialogWeb(false, true);
+
+		await promiseClickReady;
+
+		if (!App.hostInterface || version !== this.version)
+			return null;
 
 		if (directories)
 			for (let i = 0; i < directories.length && version === this.version; i++)
@@ -158,7 +173,7 @@ class FilePickerAndroidProvider implements FilePickerProvider {
 			return null;
 
 		for (let i = filePaths.length - 1; i >= 0; i--)
-			filePaths[i] = FileUtils.fileURLPrefix + encodeURI(filePaths[i]);
+			filePaths[i] = FileUtils.pathToURL(filePaths[i]);
 
 		App.hostInterface.setFileURLs(filePaths);
 
@@ -225,12 +240,14 @@ class FilePickerAndroidProvider implements FilePickerProvider {
 	public cancel(): void {
 		this.version++;
 		this.enumerationVersion++;
+
+		FilePickerAndroidProvider.callbackClickDone();
 	}
 
 	public destroy(): void {
+		this.cancel();
+
 		if (App.hostInterface)
 			App.hostInterface.cancelFileEnumeration(this.enumerationVersion);
-
-		this.cancel();
 	}
 }

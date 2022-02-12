@@ -144,6 +144,7 @@ public class WebViewHost {
 	private final class LibWebViewJavaScriptInterface {
 		private final Object lock = new Object();
 		private final String browserLanguage;
+		private final double fontScale;
 		private final Handler handler;
 
 		private final IntentReceiver intentReceiver;
@@ -154,10 +155,11 @@ public class WebViewHost {
 
 		public volatile boolean paused;
 
-		LibWebViewJavaScriptInterface(String browserLanguage) {
+		LibWebViewJavaScriptInterface(String browserLanguage, double fontScale) {
 			alive = true;
 			paused = true;
 			this.browserLanguage = browserLanguage;
+			this.fontScale = fontScale;
 			handler = new Handler(Looper.getMainLooper());
 			intentReceiver = new IntentReceiver();
 		}
@@ -170,6 +172,11 @@ public class WebViewHost {
 		@JavascriptInterface
 		public String getBrowserLanguage() {
 			return browserLanguage;
+		}
+
+		@JavascriptInterface
+		public double getFontScale() {
+			return fontScale;
 		}
 
 		@JavascriptInterface
@@ -292,6 +299,8 @@ public class WebViewHost {
 							fileFetcher = null;
 						}
 
+						final WebView webView = WebViewHost.this.webView;
+
 						if (webView != null)
 							webView.evaluateJavascript(jsonBuilder.toString(), null);
 					});
@@ -308,6 +317,8 @@ public class WebViewHost {
 				fileFetcher = null;
 
 				handler.post(() -> {
+					final WebView webView = WebViewHost.this.webView;
+
 					if (webView != null)
 						webView.evaluateJavascript("FilePickerAndroidProvider.callback && FilePickerAndroidProvider.callback(" + enumerationVersion + ", null);", null);
 				});
@@ -354,6 +365,18 @@ public class WebViewHost {
 				cancelFilePathCallback();
 
 				this.filePathCallback = filePathCallback;
+
+				handler.post(() -> {
+					synchronized (lock) {
+						if (!alive || this.filePathCallback != filePathCallback)
+							return;
+					}
+
+					final WebView webView = WebViewHost.this.webView;
+
+					if (webView != null)
+						webView.evaluateJavascript("FilePickerAndroidProvider.callbackClickDone && FilePickerAndroidProvider.callbackClickDone()", null);
+				});
 
 				return true;
 			}
@@ -642,12 +665,12 @@ public class WebViewHost {
 			settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
 			settings.setSupportMultipleWindows(false);
 			settings.setSupportZoom(false);
-			settings.setUseWideViewPort(true);
+			settings.setUseWideViewPort(false);
 			settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.NORMAL);
 			settings.setLoadWithOverviewMode(true);
 			settings.setDisplayZoomControls(false);
 			settings.setBuiltInZoomControls(false);
-			settings.setMediaPlaybackRequiresUserGesture(true);
+			settings.setMediaPlaybackRequiresUserGesture(false);
 			settings.setJavaScriptEnabled(true);
 			settings.setJavaScriptCanOpenWindowsAutomatically(false);
 			settings.setLoadsImagesAutomatically(true);
@@ -657,7 +680,25 @@ public class WebViewHost {
 			settings.setAllowFileAccessFromFileURLs(true);
 			settings.setAllowUniversalAccessFromFileURLs(true);
 
-			webView.addJavascriptInterface(webViewJavaScriptInterface = new LibWebViewJavaScriptInterface(application.getString(R.string.browser_language)), "hostInterface");
+			final Resources resources = application.getResources();
+			final Configuration configuration;
+			final double fontScale;
+			if (resources != null &&
+				(configuration = resources.getConfiguration()) != null &&
+				configuration.fontScale > 0) {
+				// webView.setInitialScale() changes the entire view (devicePixelRatio)
+				fontScale = configuration.fontScale;
+			} else {
+				fontScale = 1.0;
+			}
+			// Calling settings.setTextZoom((int)(100 * configuration.fontScale)) does not
+			// produce nice results throughout the entire UI, so we set it to 100%, and change
+			// the font scale inside the app. We are calling settings.setTextZoom(100) because
+			// either Android or the WebView already calls settings.setTextZoom((int)(100 *
+			// configuration.fontScale)). Therefore, we must override that value!
+			settings.setTextZoom(100);
+
+			webView.addJavascriptInterface(webViewJavaScriptInterface = new LibWebViewJavaScriptInterface(application.getString(R.string.browser_language), fontScale), "hostInterface");
 
 			webView.setBackgroundColor(application.getColor(R.color.colorControlNormal));
 
@@ -819,16 +860,17 @@ public class WebViewHost {
 
 		activity = null;
 
+		final WebView webView = this.webView;
+
 		if (webView != null) {
-			final WebView tmp = webView;
-			webView = null;
+			this.webView = null;
 
 			// We cannot pause webView before actually executing the function below
-			tmp.evaluateJavascript("App.mainWindowClosing()", value -> {
-				// Try to make sure we have not returned
+			webView.evaluateJavascript("App.mainWindowClosing()", value -> {
+				// Try to make sure we have not returned in the meantime
 				if (!hostAlive) {
-					tmp.onPause();
-					tmp.pauseTimers();
+					webView.onPause();
+					webView.pauseTimers();
 				}
 			});
 		}
@@ -841,6 +883,9 @@ public class WebViewHost {
 
 	private void postCallbackPermissionResult(int permissionGranted) {
 		pendingPermissionRequestResult = false;
+
+		final WebView webView = this.webView;
+
 		if (webView != null)
 			webView.evaluateJavascript("FilePickerAndroidProvider.callbackPermission(" + permissionGranted + ")", null);
 	}

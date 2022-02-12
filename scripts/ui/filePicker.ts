@@ -30,7 +30,7 @@ class FilePickerListAdapter extends ListAdapter<FilePickerListItem> {
 	}
 
 	public get itemHeight(): number {
-		return AppUI.simpleListItemPX;
+		return AppUI.buttonSizePX;
 	}
 
 	public createEmptyElement(baseClass: string): HTMLElement {
@@ -43,7 +43,6 @@ class FilePickerListAdapter extends ListAdapter<FilePickerListItem> {
 			checkbox1Color: "green",
 			square: true,
 			keyboardFocusable: false,
-			className: "right-margin",
 			parent: div
 		}).setAttribute("data-check", "1");
 
@@ -53,12 +52,12 @@ class FilePickerListAdapter extends ListAdapter<FilePickerListItem> {
 			color: "red",
 			square: true,
 			keyboardFocusable: false,
-			className: "no-left-margin right-margin",
+			className: "no-left-margin",
 			parent: div
 		}).setAttribute("data-delete", "1");
 
 		div.appendChild(Icon.createLarge("icon-folder", "orange button-top-margin margin"));
-		div.appendChild(Icon.createLarge("icon-add-folder", "green button-top-margin margin"));
+		div.appendChild(Icon.createLarge("icon-add-folder", "green button-top-margin margin small-left-margin"));
 		div.appendChild(document.createTextNode(Formatter.none));
 
 		return div;
@@ -76,6 +75,10 @@ class FilePickerListAdapter extends ListAdapter<FilePickerListItem> {
 		} else {
 			const checkboxButton = (childNodes[0] as HTMLButtonElement);
 			checkboxButton.classList.remove("hidden");
+			if (item.dir)
+				checkboxButton.classList.remove("small-right-margin");
+			else
+				checkboxButton.classList.add("small-right-margin");
 			CheckboxControl.setChecked(checkboxButton, item.selected);
 			(childNodes[3] as HTMLElement).classList.add("hidden");
 		}
@@ -85,10 +88,16 @@ class FilePickerListAdapter extends ListAdapter<FilePickerListItem> {
 		else
 			(childNodes[1] as HTMLElement).classList.add("hidden");
 
-		if (item.dir)
-			(childNodes[2] as HTMLElement).classList.remove("hidden");
-		else
+		if (item.dir) {
+			const folderIcon = (childNodes[2] as HTMLElement);
+			folderIcon.classList.remove("hidden");
+			if (item.root && !item.deletable)
+				folderIcon.classList.add("small-left-margin");
+			else
+				folderIcon.classList.remove("small-left-margin");
+		} else {
 			(childNodes[2] as HTMLElement).classList.add("hidden");
+		}
 
 		(childNodes[4] as Text).nodeValue = item.name;
 	}

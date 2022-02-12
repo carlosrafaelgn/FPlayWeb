@@ -1,0 +1,96 @@
+$color-blue: #06f;
+$color-text-on-blue: #fff;
+$color-blue-hover: #17f;
+$color-blue-active: #28f;
+$color-blue-on-dark-50: #0e418e; // rgba(0, 102, 255, 0.5);
+$color-blue-hover-on-dark-50: #164a8e; // rgba(17, 121, 255, 0.5);
+$color-blue-active-on-dark-50: #1f538e; // rgba(34, 136, 255, 0.5);
+
+$color-green: #4f4;
+$color-text-on-green: #000;
+$color-green-hover: #7f7;
+$color-green-active: #afa;
+
+$color-yellow: #fe4;
+$color-text-on-yellow: #000;
+$color-yellow-hover: #ff7;
+$color-yellow-active: #ffa;
+
+$color-orange: #f90;
+$color-text-on-orange: #000;
+$color-orange-hover: #fa1;
+$color-orange-active: #fb2;
+
+$color-red: #f44;
+$color-text-on-red: #000;
+$color-red-hover: #f55;
+$color-red-active: #f66;
+
+$color-pink: #f4f;
+$color-text-on-pink: #000;
+$color-pink-hover: #f5f;
+$color-pink-active: #f6f;
+
+$color-white: #fff;
+$color-text-on-white: #000;
+$color-white-hover: #fff;
+$color-white-active: #fff;
+
+$color-background: #1c1c1c;
+
+$color-highlight: #303030;
+$color-highlight-hover: #484848;
+$color-highlight-active: #5a5a5a;
+
+$color-close-hover: #c00;
+$color-close-active: #d11;
+
+$color-shadow-modal: #000;
+
+$color-fade: rgba(0, 0, 0, 0.5);
+
+$color-text: #fff;
+$color-text-secodary: #999;
+
+$color-border: $color-blue;
+$color-border-secondary: $color-orange;
+
+$color-names: "blue",
+	"green",
+	"yellow",
+	"orange",
+	"red",
+	"pink",
+	"white";
+
+$colors: $color-blue,
+	$color-green,
+	$color-yellow,
+	$color-orange,
+	$color-red,
+	$color-pink,
+	$color-white;
+
+$colors-on-text: $color-text-on-blue,
+	$color-text-on-green,
+	$color-text-on-yellow,
+	$color-text-on-orange,
+	$color-text-on-red,
+	$color-text-on-pink,
+	$color-text-on-white;
+
+$colors-hover: $color-blue-hover,
+	$color-green-hover,
+	$color-yellow-hover,
+	$color-orange-hover,
+	$color-red-hover,
+	$color-pink-hover,
+	$color-white-hover;
+
+$colors-active: $color-blue-active,
+	$color-green-active,
+	$color-yellow-active,
+	$color-orange-active,
+	$color-red-active,
+	$color-pink-active,
+	$color-white-active;

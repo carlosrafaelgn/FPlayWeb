@@ -68,6 +68,7 @@ interface AppSettings {
 interface HostInterface {
 	getHostType(): string;
 	getBrowserLanguage(): string;
+	getFontScale(): number;
 	setPaused(paused: boolean): void;
 	checkFilePermission(): number;
 	requestFilePermission(): void;
@@ -93,10 +94,7 @@ class App {
 	private static iconMaximize: HTMLElement | null = null;
 
 	private static installPrompt: any | null = null;
-	private static fileInput: HTMLInputElement;
-	private static fileInputVersion = 0;
-	private static fileInputSkipSortResults = true;
-	private static fileInputPromiseResolve: ((value: File[] | PromiseLike<File[] | null> | null) => void) | null;
+	private static fileInputPromiseResolve: ((value: File[] | PromiseLike<File[] | null> | null) => void) | null = null;
 
 	private static _loading = true;
 	private static isMinimized = false;
@@ -310,50 +308,12 @@ class App {
 				<div></div>
 				<i id="icon-main"></i>
 				FPlay
-				<span><span role="button" onclick="App.mainWindowMinimize()">${Icon.createHTML("icon-minimize", false)}</span><span role="button" onclick="App.mainWindowRestoreOrMaximize()">${Icon.createHTML("icon-restore", false, "hidden", "icon-restore")}${Icon.createHTML("icon-maximize", false, null, "icon-maximize")}</span><span role="button" class="close" onclick="App.mainWindowClose()">${Icon.createHTML("icon-close", false)}</span></span>
+				<span><span role="button" onclick="App.mainWindowMinimize()">${Icon.createHTML("icon-minimize", false)}</span><span role="button" onclick="App.mainWindowRestoreOrMaximize()">${Icon.createHTML("icon-restore", false, "hidden", "icon-restore-i")}${Icon.createHTML("icon-maximize", false, null, "icon-maximize-i")}</span><span role="button" class="close" onclick="App.mainWindowClose()">${Icon.createHTML("icon-close", false)}</span></span>
 			`;
 			document.body.insertBefore(App.titleBar, document.body.firstChild);
 
-			App.iconRestore = document.getElementById("icon-restore") as HTMLElement;
-			App.iconMaximize = document.getElementById("icon-maximize") as HTMLElement;
-
-			document.body.removeChild(App.iconLoading);
-			App.iconLoading.className = "";
-			App.titleBar.insertBefore(App.iconLoading, (document.getElementById("icon-main") as HTMLElement).nextSibling);
-		}
-
-		if (App.hostType === App.hostTypeAndroid || !FilePicker.isSupported()) {
-			const div = document.createElement("div");
-			div.style.display = "none";
-			App.fileInput = document.createElement("input");
-			App.fileInput.setAttribute("type", "file");
-			App.fileInput.setAttribute("multiple", "multiple");
-			App.fileInput.setAttribute("aria-label", Strings.AddSongs);
-			App.fileInput.onchange = function () {
-				if (!App.fileInput || !App.fileInputPromiseResolve || parseInt(App.fileInput.getAttribute("data-version") as string) !== App.fileInputVersion)
-					return;
-
-				App.fileInputVersion++;
-
-				const resolve = App.fileInputPromiseResolve;
-				App.fileInputPromiseResolve = null;
-
-				if (!App.fileInput.files || !App.fileInput.files.length || (App.fileInput.files.length === 1 && !FileUtils.isTypeSupported(App.fileInput.files[0].name))) {
-					resolve(null);
-					return;
-				}
-
-				const files = new Array(App.fileInput.files.length) as File[];
-
-				for (let i = files.length - 1; i >= 0; i--)
-					files[i] = App.fileInput.files[i];
-
-				App.fileInput.value = "";
-
-				resolve(App.fileInputSkipSortResults ? files : App.sortFiles(files));
-			};
-			div.appendChild(App.fileInput);
-			(document.getElementById("top-panel") as HTMLDivElement).appendChild(div);
+			App.iconRestore = document.getElementById("icon-restore-i") as HTMLElement;
+			App.iconMaximize = document.getElementById("icon-maximize-i") as HTMLElement;
 		}
 
 		AppUI.preInit(webFrame, appSettings);
@@ -441,33 +401,51 @@ class App {
 	}
 
 	public static showOpenDialogWeb(directory?: boolean, skipSort?: boolean): Promise<File[] | null> {
-		if (!App.fileInput)
-			return Promise.resolve(null);
-
-		if (App.fileInputPromiseResolve) {
-			App.fileInputPromiseResolve(null);
-			App.fileInputPromiseResolve = null;
-		}
-
-		App.fileInputSkipSortResults = !!skipSort;
-
-		App.fileInput.setAttribute("data-version", (++App.fileInputVersion).toString());
+		const fileInput = document.createElement("input");
+		fileInput.setAttribute("type", "file");
+		fileInput.setAttribute("multiple", "multiple");
+		fileInput.setAttribute("aria-label", Strings.AddSongs);
 
 		if (directory) {
-			App.fileInput.setAttribute("webkitdirectory", "webkitdirectory");
-			App.fileInput.setAttribute("directory", "directory");
-			App.fileInput.removeAttribute("accept");
+			fileInput.setAttribute("webkitdirectory", "webkitdirectory");
+			fileInput.setAttribute("directory", "directory");
 		} else {
-			App.fileInput.removeAttribute("webkitdirectory");
-			App.fileInput.removeAttribute("directory");
-			App.fileInput.setAttribute("accept", FileUtils.concatenatedSupportedExtensions);
+			fileInput.setAttribute("accept", FileUtils.concatenatedSupportedExtensions);
 		}
+
+		fileInput.onchange = function () {
+			if (!App.fileInputPromiseResolve)
+				return;
+
+			const resolve = App.fileInputPromiseResolve;
+			App.fileInputPromiseResolve = null;
+
+			if (!fileInput.files || !fileInput.files.length || (fileInput.files.length === 1 && !FileUtils.isTypeSupported(fileInput.files[0].name))) {
+				resolve(null);
+				return;
+			}
+
+			const files = new Array(fileInput.files.length) as File[];
+
+			for (let i = files.length - 1; i >= 0; i--)
+				files[i] = fileInput.files[i];
+
+			fileInput.value = "";
+
+			resolve(skipSort ? files : App.sortFiles(files));
+		};
+
+		const resolve = App.fileInputPromiseResolve;
+		App.fileInputPromiseResolve = null;
 
 		const promise = new Promise<File[] | null>(function (resolve) {
 			App.fileInputPromiseResolve = resolve;
 		});
 
-		App.fileInput.click();
+		fileInput.click();
+
+		if (resolve)
+			resolve(null);
 
 		return promise;
 	}

@@ -738,7 +738,7 @@ class MetadataExtractor {
 
 	private static async extractID3v2Andv1(file: File, f: BufferedFileHandle, tmpPtr: Uint8Array[]): Promise<Metadata | null> {
 		const metadata: Metadata = {
-			url: FileUtils.pathToURL((file as any)["data-path"]) || ""
+			url: FileUtils.urlOrPathToURL((file as any)["data-path"]) || ""
 		};
 
 		if (!metadata.url) {

@@ -25,7 +25,6 @@
 //
 
 class Icon {
-	public static readonly outerSizeREM = 6;
 	public static readonly baseSizePX = 12;
 
 	public static init(): void {

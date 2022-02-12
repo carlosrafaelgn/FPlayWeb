@@ -32,7 +32,7 @@
 // whenever it detects a change in the source code of the
 // service worker).
 const CACHE_PREFIX = "fplay-static-cache-";
-const CACHE_VERSION = "20220205";
+const CACHE_VERSION = "20220212";
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
 
 self.addEventListener("install", (event) => {
@@ -83,7 +83,7 @@ self.addEventListener("install", (event) => {
 			"assets/images/favicons/favicon.ico",
 			"assets/images/favicons/favicon.png",
 			"assets/images/favicons/manifest.webmanifest",
-			"assets/images/loading.gif",
+			"assets/images/spinner.gif",
 			"assets/js/monodownmixerprocessor.js?" + CACHE_VERSION,
 			"assets/js/scripts.min.js?" + CACHE_VERSION,
 			"assets/lib/graphicalFilterEditor/lib-nowasm.js?" + CACHE_VERSION,

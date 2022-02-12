@@ -84,7 +84,7 @@ class SimpleFilterEditorControl {
 			Strings.changeText(gain, SimpleFilterEditorControl.sliderToDB(sliderValue));
 			gain.className = "small-top-margin";
 
-			span.className = "simple-filter-slider";
+			span.className = "simple-filter-slider" + ((!i || AppUI.primaryInputIsTouch) ? "" : " left-margin");
 			element.appendChild(span);
 			sliders[i] = new SliderControl(span, true, true, -30, 30, sliderValue, gain, freq);
 			this.createHandler(sliders[i], i);

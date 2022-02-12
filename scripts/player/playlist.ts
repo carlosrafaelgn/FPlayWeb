@@ -30,7 +30,7 @@ class PlaylistAdapter extends ListAdapter<Song> {
 	}
 
 	public get itemHeight(): number {
-		return AppUI.remToPX(14);
+		return AppUI.playlistItemSizePX;
 	}
 
 	public createEmptyElement(baseClass: string): HTMLElement {

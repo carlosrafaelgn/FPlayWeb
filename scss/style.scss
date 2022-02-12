@@ -1,0 +1,1201 @@
+@use "sass:list";
+
+@import "colors";
+@import "fonts";
+@import "sizing";
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+.modal,
+#top-message {
+	background-color: $color-background;
+}
+
+html {
+	margin: 0;
+	padding: 0;
+	min-height: 100%;
+	height: 100%;
+	font-size: $base-size;
+	-webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
+body, .modal, .alert, .btn, input, textarea, select, h1, h2, h3, h4, h5, h6 {
+	font-weight: 400;
+	font-family: 'Open Sans', sans-serif;
+	line-height: $contents-size;
+}
+
+body, .modal, .alert, input, textarea, select, h1, h2, h3, h4, h5, h6 {
+	color: $color-text;
+}
+
+#fixed-panel, #optional-panel, .modal, .alert, .btn, input, textarea, select, h1, h2, h3, h4, h5, h6 {
+	font-size: $font-size;
+}
+
+body {
+	margin: 0;
+	padding: 0 $s2;
+	min-height: 100%;
+	height: 100%;
+	overflow: hidden;
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+.icon {
+	display: inline-block;
+	width: $contents-size;
+	height: $contents-size;
+	padding: var(--icon-padding);
+	vertical-align: top;
+}
+
+.icon.large {
+	padding: var(--large-icon-padding);
+}
+
+.icon > svg {
+	display: inline-block;
+	width: var(--icon-size);
+	height: var(--icon-size);
+	vertical-align: top;
+	stroke-width: 0;
+	stroke: transparent;
+	fill: currentColor;
+}
+
+.icon.large > svg {
+	width: var(--large-icon-size);
+	height: var(--large-icon-size);
+}
+
+.menu-icon {
+	width: auto;
+	padding-left: 0;
+}
+
+h1 {
+	position: relative;
+	margin: 0 -#{$s2};
+	padding: var(--button-padding);
+	height: var(--button-size);
+	text-align: center;
+}
+
+h1,
+.modal-header,
+.slider-control-ruler,
+.list-item {
+	background-color: $color-highlight;
+}
+
+h1 > div {
+	position: absolute;
+	z-index: -1;
+	-webkit-app-region: drag;
+	left: var(--button-padding);
+	top: var(--button-padding);
+	right: var(--button-padding);
+	bottom: 0;
+}
+
+h1.maximized > div {
+	left: 0;
+	top: 0;
+	right: 0;
+}
+
+h1 > span {
+	display: block;
+	position: absolute;
+	right: 0;
+	top: 0;
+	margin: 0;
+	padding: 0;
+	text-align: center;
+	-webkit-app-region: no-drag;
+}
+
+h1 > span > span {
+	display: inline-block;
+	width: var(--button-size);
+	height: var(--button-size);
+	padding: var(--button-padding);
+	text-align: center;
+	cursor: pointer;
+}
+
+h1 > span > span:hover {
+	background-color: $color-highlight-hover;
+}
+
+h1 > span > span:active,
+.list-item:active {
+	background-color: $color-highlight-active;
+}
+
+h1 > span > span.close:hover {
+	background-color: $color-close-hover;
+}
+
+h1 > span > span.close:active {
+	background-color: $color-close-active;
+}
+
+#icon-main {
+	position: absolute;
+	left: var(--button-padding);
+	top: var(--button-padding);
+	background-image: url('../images/favicons/favicon-96x96.png');
+	background-size: 100% 100%;
+	width: $contents-size;
+	height: $contents-size;
+	pointer-events: none;
+}
+
+.loading {
+	display: inline-block;
+	background-image: url('../images/spinner.gif');
+	background-size: 100% 100%;
+	background-repeat: no-repeat;
+	background-origin: content-box;
+	background-position: center;
+	pointer-events: none;
+}
+
+#icon-loading {
+	position: absolute;
+	left: $s2;
+	top: $s2;
+	width: $contents-size;
+	height: $contents-size;
+	z-index: 99997;
+}
+
+.btn, input, textarea, select, i, .slider-control, .toolbar-sep {
+	vertical-align: top;
+}
+
+.btn, .btn > span, input, textarea, select, a, a:focus {
+	margin: 0;
+	border-radius: 0;
+	border: 0 none transparent;
+	box-shadow: none;
+	outline: 0 none transparent;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    -ms-appearance: none;
+	appearance: none;
+	// transition: background-color ease-in-out 0.3s, color ease-in-out 0.3s;
+}
+
+a {
+	color: $color-orange;
+	font-weight: 700;
+	text-decoration: none;
+}
+
+a:focus,
+a:hover {
+	color: $color-orange-hover;
+}
+
+// Refer to the comments in AppUI.preInit() for an explanation about the (hover: none) media query
+@media (pointer: coarse) {
+	a:hover {
+		color: $color-orange;
+	}
+}
+
+a:active {
+	color: $color-orange-active;
+}
+
+.modal,
+.alert {
+	display: block;
+    outline: 0 none transparent;
+    border: 0 none transparent;
+    box-shadow: 0 var(--thin-border) $s2 $color-shadow-modal;
+}
+
+.modal {
+	margin: var(--button-size) auto;
+	width: 512px;
+	max-width: 90%;
+}
+
+.modal.full-height {
+	display: flex;
+	flex-direction: column;
+	flex-wrap: nowrap;
+	height: calc(100% - 32px);
+	max-height: calc(100% - 32px);
+	margin: 16px auto 0;
+}
+
+.modal-header, .modal-body {
+	text-align: center;
+}
+
+.modal-header {
+	font-weight: 700;
+    border-bottom: var(--thin-border) solid $color-border-secondary;
+}
+
+.modal-body {
+	padding: $s8 $s2;
+	word-break: break-word;
+}
+
+.modal.full-height > .modal-body {
+	flex: 1 1 auto;
+}
+
+.modal-footer {
+	padding-left: 0 !important;
+	padding-right: 0 !important;
+    border-top: var(--thin-border) solid $color-border;
+}
+
+.alert {
+	position: fixed;
+	z-index: 99998;
+	top: 0;
+	left: 25%;
+	right: 25%;
+	text-align: center;
+	padding: $s4;
+	white-space: pre-line;
+	background: $color-blue;
+	color: $color-text-on-blue;
+}
+
+.btn, .btn > span, .toolbar-sep {
+	display: inline-block;
+	height: var(--button-size);
+}
+
+.btn {
+	cursor: pointer;
+	text-align: center;
+	white-space: nowrap;
+	padding: 0;
+}
+
+select.btn {
+	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAAUCAAAAAA/s+ULAAAAAnRSTlMAAHaTzTgAAAA+SURBVHjarcyxDQAwCMAw//90UT9AItljb5l1tUftUXvUHrVH7VF71B61R+1Re9QetUftUXvUHrVH7X3xMA8B2qJs1mnhcwAAAABJRU5ErkJggg==);
+    background-repeat: no-repeat;
+    background-size: $s4 $s1;
+    background-position: right center;
+	text-align: left;
+	padding-left: $s2;
+	padding-right: $s6;
+}
+
+select.btn option {
+	color: $color-text;
+    background-color: $color-background;
+}
+
+.btn > span {
+	padding: var(--button-padding) $s2 0;
+}
+
+.btn > span > i {
+	pointer-events: none;
+}
+
+.btn + .btn {
+	margin-left: $s2;
+}
+
+.btn.square, .btn.square > span {
+	width: var(--button-size);
+}
+
+.btn.square > span {
+	padding-left: 0;
+	padding-right: 0;
+}
+
+input[type="checkbox"] {
+	color: inherit;
+	display: inline-block;
+	vertical-align: top;
+	width: 0;
+	height: 0;
+	pointer-events: none;
+}
+
+input[type="checkbox"] + .icon + .icon {
+	display: none;
+}
+
+input[type="checkbox"]:checked + .icon {
+	display: none;
+}
+
+input[type="checkbox"]:checked + .icon + .icon {
+	display: inline-block;
+}
+
+.btn,
+.slider-control-thumb {
+	color: $color-text-on-blue;
+	background-color: $color-blue;
+}
+
+// Adding this to the group above makes the entire group stop working in Firefox
+.scrollable::-webkit-scrollbar-thumb {
+	background-color: $color-blue;
+}
+
+@for $i from 1 through 7 {
+	.#{list.nth($color-names, $i)} {
+		color: list.nth($colors, $i);
+	}
+
+	.btn.#{list.nth($color-names, $i)} {
+		color: list.nth($colors-on-text, $i);
+		background-color: list.nth($colors, $i);
+	}
+}
+
+.btn.transparent {
+	color: $color-text;
+	background-color: transparent;
+}
+
+.btn:hover,
+.btn:focus,
+.slider-control-container:hover .slider-control-thumb {
+	background-color: $color-blue-hover;
+}
+
+// Adding this to the group above makes the entire group stop working in Firefox
+.scrollable::-webkit-scrollbar-thumb:hover {
+	background-color: $color-blue-hover;
+}
+
+.scrollable::-webkit-scrollbar-corner {
+	background-color: $color-background;
+}
+
+// Although it would be way simpler to just add a (hover: hover) query adding
+// the hover effect to the elements, it would sacrifice many desktop browsers that
+// do not support this query... Therefore, I thought it would be better to do the
+// opposite, and disable the hover effect when it is not desirable...
+//
+// https://drafts.csswg.org/mediaqueries-4/#hover
+@media (pointer: coarse) {
+	.btn:hover,
+	.slider-control-container:hover .slider-control-thumb {
+		background-color: $color-blue;
+	}
+
+	// Adding this to the group above makes the entire group stop working in Firefox
+	.scrollable::-webkit-scrollbar-thumb:hover {
+		background-color: $color-blue;
+	}
+}
+
+.btn:active,
+.slider-control-container.active:hover .slider-control-thumb,
+.slider-control-container.active .slider-control-thumb {
+	background-color: $color-blue-active;
+}
+
+// Adding this to the group above makes the entire group stop working in Firefox
+.scrollable::-webkit-scrollbar-thumb:active {
+	background-color: $color-blue-active;
+}
+
+@for $i from 1 through 7 {
+	.btn.#{list.nth($color-names, $i)}:focus,
+	.btn.#{list.nth($color-names, $i)}:hover {
+		color: list.nth($colors-on-text, $i);
+		background-color: list.nth($colors-hover, $i);
+	}
+	
+	@media (pointer: coarse) {
+		.btn.#{list.nth($color-names, $i)}:hover {
+			background-color: list.nth($colors, $i);
+		}
+	}
+	
+	.btn.#{list.nth($color-names, $i)}:active {
+		color: list.nth($colors-on-text, $i);
+		background-color: list.nth($colors-active, $i);
+	}
+}
+
+.btn.transparent:hover > span > .icon,
+.btn.transparent:focus > span > .icon,
+.btn.transparent:active > span > .icon {
+	color: inherit;
+}
+
+@media (pointer: coarse) {
+	.btn.transparent:hover:not(:active):not(:focus) {
+		background-color: transparent;
+	}
+
+	.btn.transparent:hover:not(:active):not(:focus) > span > .icon.blue {
+		color: $color-blue;
+	}
+
+	@for $i from 1 through 7 {
+		.btn.transparent.#{list.nth($color-names, $i)}:hover:not(:active):not(:focus) {
+			color: $color-text;
+		}
+
+		.btn.transparent:hover:not(:active):not(:focus) > span > .icon.#{list.nth($color-names, $i)} {
+			color: list.nth($colors, $i);
+		}
+	}
+}
+
+.slider-control {
+	display: inline-block;
+	touch-action: none;
+}
+
+.slider-control:not(.vertical) {
+	height: var(--button-size);
+}
+
+.slider-control.vertical {
+	width: var(--button-size);
+}
+
+.slider-control-focus-container {
+	display: inline-flex;
+    flex-wrap: nowrap;
+	align-items: center;
+	width: 100%;
+	height: 100%;
+}
+
+.slider-control-focus-container:not(.vertical) {
+	flex-direction: row;
+	padding: var(--button-padding) 0;
+}
+
+.slider-control-focus-container.vertical {
+	flex-direction: column-reverse;
+	padding: 0 var(--button-padding);
+}
+
+.slider-control,
+.slider-control:focus,
+.slider-control-focus-container,
+.slider-control-focus-container:focus {
+	outline: 0 none transparent;
+}
+
+.slider-control-focus-container > span {
+	display: inline-block;
+}
+
+.slider-control-container {
+	display: inline-block;
+	position: relative;
+	flex: 1 1 auto;
+}
+
+.slider-control-container:not(.vertical) {
+	height: $contents-size;
+	padding: 0 $slider-internal-unit 0 0;
+}
+
+.slider-control-container.vertical {
+	width: $contents-size;
+	// padding: $slider-internal-unit 0 0 0; // See comment below
+	padding: 0;
+}
+
+.slider-control-inner-container {
+	display: inline-block;
+	position: relative;
+	pointer-events: none;
+}
+
+.slider-control-inner-container:not(.vertical) {
+	height: $contents-size;
+	width: 100%;
+}
+
+.slider-control-inner-container.vertical {
+	width: $contents-size;
+	// height: 100%; // Safari 13 does not like this...
+	position: absolute;
+	top: $slider-internal-unit;
+	left: 0;
+	bottom: 0;
+}
+
+.slider-control-filled-ruler,
+.slider-control-ruler {
+	display: block;
+	position: absolute;
+	z-index: -1;
+}
+
+.slider-control-filled-ruler:not(.vertical),
+.slider-control-ruler:not(.vertical) {
+	top: $slider-internal-unit;
+	height: $slider-internal-unit;
+}
+
+.slider-control-filled-ruler.vertical,
+.slider-control-ruler.vertical {
+	left: $slider-internal-unit;
+	width: $slider-internal-unit;
+}
+
+.slider-control-filled-ruler:not(.vertical) {
+	left: 0;
+}
+
+.slider-control-filled-ruler.vertical {
+	bottom: 0;
+}
+
+.slider-control-ruler:not(.vertical) {
+	right: -$slider-internal-unit;
+}
+
+.slider-control-ruler.vertical {
+	top: -$slider-internal-unit;
+}
+
+.slider-control-thumb {
+	display: block;
+	position: absolute;
+	z-index: 1;
+}
+
+.slider-control-thumb:not(.vertical) {
+	top: 0;
+	height: $contents-size;
+	width: $slider-internal-unit;
+}
+
+.slider-control-thumb.vertical {
+	left: 0;
+	width: $contents-size;
+	height: $slider-internal-unit;
+}
+
+.slider-control-filled-ruler,
+.list-item.current {
+	background-color: $color-blue-on-dark-50;
+}
+
+.slider-control-container:hover .slider-control-filled-ruler {
+	background-color: $color-blue-hover-on-dark-50;
+}
+
+@media (pointer: coarse) {
+	.slider-control-container:hover .slider-control-filled-ruler {
+		background-color: $color-blue-on-dark-50;
+	}
+}
+
+.slider-control-container.active:hover .slider-control-filled-ruler,
+.slider-control-container.active .slider-control-filled-ruler,
+.list-item.current:active {
+	background-color: $color-blue-active-on-dark-50;
+}
+
+.list,
+.list:focus {
+	outline: 0 none transparent;
+}
+
+.list {
+	width: 100%;
+}
+
+.scrollable {
+	overflow: hidden auto;
+	padding: 0 var(--thick-border) 0 0;
+	scrollbar-color: $color-blue $color-background;
+}
+
+.scrollable::-webkit-scrollbar {
+	width: var(--scrollbar-size);
+	height: var(--scrollbar-size);
+}
+
+.list-container {
+	position: relative;
+	width: 100%;
+	padding: 0;
+	font-size: $small-font-size;
+	line-height: $small-contents-size;
+	overflow: hidden;
+}
+
+.list-item {
+	width: 100%;
+	height: var(--button-size);
+	line-height: var(--button-size);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.list-item > .icon,
+.list-item > span {
+	pointer-events: none;
+}
+
+.list-item.virtual {
+	position: absolute;
+	left: 0;
+	top: 0;
+}
+
+.list-item.real {
+	position: relative;
+	margin-bottom: var(--thick-border);
+}
+
+.playlist-item {
+	padding: $s1;
+	height: var(--playlist-item-size);
+	line-height: $small-contents-size;
+}
+
+.playlist-item > .icon,
+.playlist-item > .icon > svg {
+	width: $small-contents-size;
+	height: $small-contents-size;
+}
+
+.playlist-item > .icon {
+	padding: 0;
+}
+
+.playlist-item > span {
+	color: $color-text-secodary;
+}
+
+.playlist-item > .length {
+	margin-left: calc(#{$small-contents-size} + #{$s1});
+}
+
+#seek-slider {
+	width: 100%;
+}
+
+.seek-label {
+	width: 16rem;
+}
+
+#volume-slider {
+	width: 38rem;
+}
+
+#volume-label, .db-label {
+	font-size: $small-font-size;
+	width: 13rem;
+}
+
+.db-label.large {
+	width: 15rem;
+}
+
+#panel-container {
+	position: relative;
+	width: 100%;
+	height: calc(100% - var(--button-size));
+	max-width: 2000px;
+	margin: 0;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	align-items: stretch;
+}
+
+#panel-container.web {
+	margin-top: 0;
+	height: 100%;
+}
+
+#fixed-panel {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+    flex-wrap: nowrap;
+	flex: 1 1 auto;
+	padding: $s2 0;
+	min-width: 0; // https://css-tricks.com/flexbox-truncated-text/
+}
+
+#optional-panel {
+	position: relative;
+	margin: $s2 0 $s2 $s2;
+	width: 512px;
+	min-width: 512px;
+	text-align: center;
+	box-sizing: content-box;
+}
+
+#optional-panel-container {
+	display: flex;
+	min-height: 100%;
+	flex-direction: column;
+	justify-content: center;
+}
+
+#cover {
+	position: absolute;
+	z-index: 99999;
+	left: 0;
+	top: 0;
+	width: 2px;
+	height: 2px;
+	background-color: $color-background;
+	transform-origin: top left;
+	transform: scale(2048, 1200);
+}
+
+.toolbar {
+	position: relative;
+	text-align: center;
+}
+
+.toolbar-sep {
+	height: var(--button-size);
+	border-left: var(--thin-border) solid $color-border;
+	margin: 0 $s1;
+}
+
+.toolbar-left, .toolbar-right {
+	position: absolute;
+	top: 0;
+}
+
+.toolbar-left {
+	left: 0;
+}
+
+.toolbar-right {
+	right: 0;
+}
+
+#playlist-control {
+	flex: 1 1 auto;
+}
+
+#title-label,
+#artist-label,
+#top-message {
+	padding: $s1 0;
+	line-height: $contents-size;
+}
+
+#title-label,
+#artist-label {
+	position: absolute;
+	left: 0;
+	width: 100%;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	-webkit-user-select: text;
+	user-select: text;
+}
+
+#title-label {
+	top: $s1;
+}
+
+#artist-label {
+	top: calc(#{$contents-size} + #{$s5});
+}
+
+#top-message {
+	min-height: calc(#{$contents-size * 2} + #{$s8});
+	visibility: hidden;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-evenly;
+}
+
+.simple-filter {
+	width: 512px;
+	white-space: nowrap;
+}
+
+.simple-filter-freq {
+	height: $font-size * 2;
+}
+
+.simple-filter-slider {
+	height: 256px;
+	font-size: $small-font-size;
+	line-height: $small-font-size + 0.5rem;
+}
+
+#stereo-panner-slider {
+	width: 38rem;
+}
+
+.file-picker-path {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+}
+
+.file-picker-path-element {
+	font-size: $small-font-size;
+	direction: rtl; // To force ellipsis to the left rather than to the right
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	flex: 1 1 auto;
+}
+
+.file-picker-list {
+	flex: 1 1 auto;
+}
+
+.border-top {
+	margin-top: $s2;
+	padding-top: $s2;
+	border-top: var(--thin-border) solid $color-border;
+}
+
+.toolbar.border-top > .toolbar-left,
+.toolbar.border-top > .toolbar-right {
+	top: $s2;
+}
+
+.border-bottom {
+	margin-bottom: $s2;
+	padding-bottom: $s2;
+	border-bottom: var(--thin-border) solid $color-border;
+}
+
+.small-padding {
+	padding: $s1;
+}
+
+.padding {
+	padding: $s2;
+}
+
+.large-padding {
+	padding: $s4;
+}
+
+.small-left-padding {
+	padding-left: $s1;
+}
+
+.left-padding {
+	padding-left: $s2;
+}
+
+.large-left-padding {
+	padding-left: $s4;
+}
+
+.small-right-padding {
+	padding-right: $s1;
+}
+
+.right-padding {
+	padding-right: $s2;
+}
+
+.large-right-padding {
+	padding-right: $s4;
+}
+
+.small-left-margin {
+	margin-left: $s1;
+}
+
+.left-margin {
+	margin-left: $s2;
+}
+
+.large-left-margin {
+	margin-left: $s4;
+}
+
+.button-left-margin {
+	margin-left: var(--button-padding);
+}
+
+.small-top-margin {
+	margin-top: $s1;
+}
+
+.top-margin {
+	margin-top: $s2;
+}
+
+.large-top-margin {
+	margin-top: $s4;
+}
+
+.button-top-margin {
+	margin-top: var(--button-padding);
+}
+
+.small-right-margin,
+.icon.margin {
+	margin-right: $s1;
+}
+
+.right-margin {
+	margin-right: $s2;
+}
+
+.large-right-margin {
+	margin-right: $s4;
+}
+
+.button-right-margin {
+	margin-right: var(--button-padding);
+}
+
+.small-bottom-margin {
+	margin-bottom: $s1;
+}
+
+.bottom-margin {
+	margin-bottom: $s2;
+}
+
+.large-bottom-margin {
+	margin-bottom: $s4;
+}
+
+.button-bottom-margin {
+	margin-bottom: var(--button-padding);
+}
+
+@media (max-width: 511px) {
+	.btn + .btn {
+		margin-left: $s1;
+	}
+
+	#fixed-panel {
+		padding: $s1 0 $s2;
+	}
+
+	.padding {
+		padding: $s1;
+	}
+	
+	.large-padding {
+		padding: $s2;
+	}
+
+	.left-padding {
+		padding-left: $s1;
+	}
+
+	.large-left-padding {
+		padding-left: $s2;
+	}
+
+	.right-padding {
+		padding-right: $s1;
+	}
+
+	.large-right-padding {
+		padding-right: $s2;
+	}
+
+	.border-top {
+		margin-top: $s1;
+		padding-top: $s1;
+	}
+
+	.toolbar.border-top > .toolbar-left,
+	.toolbar.border-top > .toolbar-right {
+		top: $s1;
+	}
+
+	.border-bottom {
+		margin-bottom: $s1;
+		padding-bottom: $s1;
+	}
+
+	.left-margin {
+		margin-left: $s1;
+	}
+
+	.large-left-margin {
+		margin-left: $s2;
+	}
+
+	.top-margin {
+		margin-top: $s1;
+	}
+
+	.large-top-margin {
+		margin-top: $s2;
+	}
+
+	.right-margin {
+		margin-right: $s1;
+	}
+
+	.large-right-margin {
+		margin-right: $s2;
+	}
+
+	.bottom-margin {
+		margin-bottom: $s1;
+	}
+
+	.large-bottom-margin {
+		margin-bottom: $s2;
+	}
+}
+
+@media (max-width: 400px) {
+	#button-stop {
+		display: none;
+	}
+}
+
+@media (max-width: 339px) {
+	#volume-slider {
+		width: 24rem;
+	}
+
+	#volume-label {
+		display: none;
+	}
+}
+
+.left {
+	text-align: left;
+}
+
+.center {
+	text-align: center;
+}
+
+.right {
+	text-align: right;
+}
+
+.float-left {
+	float: left;
+}
+
+.float-right {
+	float: right;
+}
+
+.fade {
+	opacity: 0;
+	transition: opacity ease-in-out 0.3s;
+}
+
+.fade.in {
+	opacity: 1;
+}
+
+.slide {
+	transform: translate(0, -$s5);
+	opacity: 0;
+	transition: transform ease-in-out 0.3s, opacity ease-in-out 0.3s;
+}
+
+.slide.in {
+	transform: none;
+	opacity: 1;
+}
+
+.modal-container {
+	position: fixed;
+	z-index: 10000;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	overflow: auto;
+}
+
+.modal-container.background {
+    background-color: transparent;
+	transition: opacity ease-in-out 0.3s, background-color ease-in-out 0.3s;
+}
+
+.modal-container.background.in {
+    background-color: $color-fade;
+}
+
+.no-left-margin {
+	margin-left: 0 !important;
+}
+
+.no-top-margin {
+	margin-top: 0 !important;
+}
+
+.no-right-margin {
+	margin-right: 0 !important;
+}
+
+.no-bottom-margin {
+	margin-bottom: 0 !important;
+}
+
+.behind {
+	z-index: -1;
+}
+
+.hidden {
+	display: none;
+}
+
+@media (min-width: 876px) {
+	.hidden-normal {
+		display: none;
+	}
+}
+
+@media (max-width: 875px) {
+	.alert {
+		left: 5%;
+		right: 5%;
+	}
+
+	#optional-panel {
+		margin-left: 0;
+		margin-right: 0;
+		width: 100%;
+		min-width: 0;
+		overflow: auto;
+	}
+
+	#panel-container:not(.toggled) > #optional-panel {
+		display: none;
+	}
+
+	#panel-container.toggled > #fixed-panel {
+		display: none;
+	}
+
+	.simple-filter {
+		width: auto;
+	}
+}

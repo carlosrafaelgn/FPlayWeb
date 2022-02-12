@@ -64,22 +64,23 @@
 	<style type="text/css" id="root-variables">
 		:root {
 			--button-size: 32px;
-			--button-padding-top: 4px;
-			--extra-touch-padding-top: 0;
+			--button-padding: 4px;
+			--negative-button-padding: -4px;
 			--icon-size: 12px;
 			--icon-padding: 6px;
 			--large-icon-size: 24px;
 			--large-icon-padding: 0;
 			--thin-border: 1px;
 			--thick-border: 2px;
-			--scrollbar-size: 3rem;
-			--optional-panel-container-height: 388px;
+			--scrollbar-size: 12px;
+			--playlist-item-size: 56px;
 		}
 	</style>
-	<link rel="stylesheet" type="text/css" href="assets/css/graphicalFilterEditor.css?20220205" />
-	<link rel="stylesheet" type="text/css" href="assets/css/style.css?20220205" />
+	<link rel="stylesheet" type="text/css" href="assets/css/graphicalFilterEditor.css?20220212" />
+	<link rel="stylesheet" type="text/css" href="assets/css/style.css?20220212" />
 </head>
 <body>
+	<div id="ruler" style="position: absolute; z-index: -1; left: 0; top: 0; height: 8rem; visibility: hidden; pointer-events: none;"></div>
 	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" style="display: none;">
 		<symbol viewBox="0 0 12 12" id="icon-add-folder"><path d="M 11,3 H 6 L 5,2 H 1 v 8 H 11 Z M 9.5,7 H 8 V 8.5 H 7 V 7 H 5.5 V 6 H 7 V 4.5 H 8 V 6 h 1.5 z" /></symbol>
 		<symbol viewBox="0 0 12 12" id="icon-add-title"><path d="M 4.5 1.5 L 4.5 6.7753906 C 4.205 6.6053906 3.865 6.5 3.5 6.5 C 2.395 6.5 1.5 7.395 1.5 8.5 C 1.5 9.605 2.395 10.5 3.5 10.5 C 4.605 10.5 5.5 9.605 5.5 8.5 L 5.5 3.5 L 7.5 3.5 L 7.5 1.5 L 4.5 1.5 z M 8 6.5 L 8 8 L 6.5 8 L 6.5 9 L 8 9 L 8 10.5 L 9 10.5 L 9 9 L 10.5 9 L 10.5 8 L 9 8 L 9 6.5 L 8 6.5 z" /></symbol>
@@ -119,7 +120,7 @@
 
 	<noscript>Sorry! You need to enable JavaScript in order to run the player :(</noscript>
 
-	<div id="panel-container">
+	<div id="panel-container" class="web">
 		<div id="fixed-panel">
 			<div id="top-panel" class="toolbar border-bottom">
 				<div id="title-label"><i class="large margin icon-title pink"></i>-</div>
@@ -173,13 +174,13 @@
 
 	<div id="cover" class="fade in"></div>
 
-	<i class="loading web" id="icon-loading"></i>
+	<i class="loading" id="icon-loading"></i>
 
 	<script type="text/javascript">
 		//<![CDATA[
 		"use strict";
 
-		var CACHE_VERSION = "20220205";
+		var CACHE_VERSION = "20220212";
 
 		(function () {
 			if (location.href.startsWith("file://")) {

@@ -34,19 +34,24 @@ class AppUI {
 	// https://stackoverflow.com/a/4819886/3569421
 	public static readonly primaryInputIsTouch = (("matchMedia" in window) ? window.matchMedia("(pointer: coarse)").matches : (navigator.maxTouchPoints > 0 || (navigator as any).msMaxTouchPoints > 0));
 
-	private static readonly rem = 4;
-	private static readonly buttonRegularSizeREM = 8;
-	private static readonly buttonRegularSizePX = AppUI.remToPX(AppUI.buttonRegularSizeREM);
-	private static readonly buttonSizeREM = AppUI.buttonRegularSizeREM * (AppUI.primaryInputIsTouch ? 1.5 : 1);
-	private static readonly buttonSizePX = AppUI.remToPX(AppUI.buttonSizeREM);
-	private static readonly optionalPanelClientWidthREM = 128;
-	private static readonly optionalPanelClientWidthPX = AppUI.remToPX(AppUI.optionalPanelClientWidthREM);
-	private static readonly scrollbarSizeREM = (AppUI.primaryInputIsTouch ? 5 : 3);
-	private static readonly minWidthREM = 216;
-	private static readonly minWidthPX = AppUI.remToPX(AppUI.minWidthREM);
+	public static readonly baseSizePX = 4;
+	public static readonly s1PX = AppUI.baseSizePX;
+	public static readonly s2PX = AppUI.baseSizePX * 2;
+	public static readonly s3PX = AppUI.baseSizePX * 3;
+	public static readonly s4PX = AppUI.baseSizePX * 4;
+	public static readonly s5PX = AppUI.baseSizePX * 5;
+	public static readonly s6PX = AppUI.baseSizePX * 6;
+	public static readonly s7PX = AppUI.baseSizePX * 7;
+	public static readonly s8PX = AppUI.baseSizePX * 8;
+
+	public static readonly smallFontSizeREM = 3;
+	public static readonly smallContentsSizeREM = 4;
+
+	public static readonly fontSizeREM = 3.5;
+	public static readonly contentsSizeREM = 6;
+
 	private static readonly baseThinBorderPX = 1;
 	private static readonly baseThickBorderPX = 2;
-	private static readonly _simpleListItemPX = AppUI.remToPX(AppUI.buttonSizeREM + 2);
 
 	private static readonly zoomHandlers: AppUIZoomHandler[] = [];
 
@@ -58,8 +63,9 @@ class AppUI {
 
 	private static readonly iconPlay = document.getElementById("i-play") as HTMLElement;
 	private static readonly iconPause = document.getElementById("i-pause") as HTMLElement;
-	private static readonly artistLabel = document.getElementById("artist-label") as HTMLDivElement;
+	private static readonly ruler = document.getElementById("ruler") as HTMLDivElement;
 	private static readonly titleLabel = document.getElementById("title-label") as HTMLDivElement;
+	private static readonly artistLabel = document.getElementById("artist-label") as HTMLDivElement;
 	private static readonly topMessage = document.getElementById("top-message") as HTMLDivElement;
 
 	private static webFrame: WebFrame | null;
@@ -82,10 +88,15 @@ class AppUI {
 	private static _loading = false;
 
 	private static devicePixelRatio = -1;
+	private static _1remInPX = 1;
+	private static _fontScale = 1;
 	private static _smallIconSizePX = Icon.baseSizePX;
 	private static _largeIconSizePX = Icon.baseSizePX << 1;
 	private static _thinBorderPX = AppUI.baseThinBorderPX;
 	private static _thickBorderPX = AppUI.baseThickBorderPX;
+	private static _buttonSizePX = 1;
+	private static _contentsSizePX = 1;
+	private static _playlistItemSizePX = 1;
 
 	private static directoryCancelled = false;
 
@@ -159,46 +170,87 @@ class AppUI {
 	}
 
 	private static adjustWindow(): void {
-		if (AppUI.devicePixelRatio !== devicePixelRatio && AppUI.rootVariables) {
+		const _1remInPx = (App.hostInterface ? (AppUI.baseSizePX * (AppUI._fontScale = App.hostInterface.getFontScale())) : (AppUI.ruler.getBoundingClientRect().height * 0.125));
+
+		if (AppUI.devicePixelRatio !== devicePixelRatio || AppUI._1remInPX !== _1remInPx) {
 			AppUI.devicePixelRatio = devicePixelRatio;
+			AppUI._1remInPX = _1remInPx;
 
-			const zoom = AppUI.factorToZoom(devicePixelRatio),
-				factor = AppUI.zoomToFactor(zoom),
-				iconOuterSizePX = AppUI.remToPX(Icon.outerSizeREM);
+			if (App.hostInterface)
+				document.documentElement.style.fontSize = ((_1remInPx !== AppUI.baseSizePX) ? (_1remInPx + "px") : "");
+			else
+				AppUI._fontScale = AppUI._1remInPX / AppUI.baseSizePX;
 
-			// Divide by four and truncate the result at once :)
-			const _smallIconSizePX = AppUI.adjustDecimal((Icon.baseSizePX * (((zoom + 1) >> 2) + 1)) / devicePixelRatio);
-			AppUI._smallIconSizePX = parseFloat(_smallIconSizePX);
+			const contentsSizePXStr = AppUI.adjustDecimal(AppUI.remToPX(AppUI.contentsSizeREM));
+			AppUI._contentsSizePX = parseFloat(contentsSizePXStr);
 
-			// Truncate the factor and multiply by two at once :)
-			const _largeIconSizePX = AppUI.adjustDecimal((Icon.baseSizePX * (factor << 1)) / devicePixelRatio);
-			AppUI._largeIconSizePX = parseFloat(_largeIconSizePX);
+			AppUI._buttonSizePX = AppUI._contentsSizePX + (AppUI.primaryInputIsTouch ? AppUI.s6PX : AppUI.s2PX);
+
+			// New way to choose the size of the icons
+			const referenceLargeIconSizePX = Icon.baseSizePX / devicePixelRatio,
+				largeIconsInsideContents = (AppUI._contentsSizePX / referenceLargeIconSizePX) | 0;
+
+			let smallIconSizePXStr: string,
+				largeIconSizePXStr: string;
+
+			if (largeIconsInsideContents <= 0) {
+				// The user has probably zoomed out too much!
+				smallIconSizePXStr = contentsSizePXStr;
+				largeIconSizePXStr = contentsSizePXStr;
+				AppUI._smallIconSizePX = AppUI._contentsSizePX;
+				AppUI._largeIconSizePX = AppUI._contentsSizePX;
+			} else if (largeIconsInsideContents === 1) {
+				smallIconSizePXStr = AppUI.adjustDecimal(referenceLargeIconSizePX);
+				largeIconSizePXStr = smallIconSizePXStr;
+				AppUI._smallIconSizePX = parseFloat(smallIconSizePXStr);
+				AppUI._largeIconSizePX = AppUI._smallIconSizePX;
+			} else {
+				// Try to use an even multiplier for the small icons
+				smallIconSizePXStr = AppUI.adjustDecimal(Math.max((largeIconsInsideContents >> 1) & ~1, 1) * Icon.baseSizePX / devicePixelRatio);
+				// Always use an even multiplier for the large icons
+				largeIconSizePXStr = AppUI.adjustDecimal((largeIconsInsideContents & ~1) * Icon.baseSizePX / devicePixelRatio);
+				AppUI._smallIconSizePX = parseFloat(smallIconSizePXStr);
+				AppUI._largeIconSizePX = parseFloat(largeIconSizePXStr);
+			}
+
+			//const zoom = AppUI.factorToZoom(devicePixelRatio),
+			//	factor = AppUI.zoomToFactor(zoom);
+
+			//// Divide by four and truncate the result at once :)
+			//const smallIconSizePXStr = AppUI.adjustDecimal((Icon.baseSizePX * (((zoom + 1) >> 2) + 1)) / devicePixelRatio);
+			//AppUI._smallIconSizePX = parseFloat(smallIconSizePXStr);
+
+			//// Truncate the factor and multiply by two at once :)
+			//const largeIconSizePXStr = AppUI.adjustDecimal((Icon.baseSizePX * (factor << 1)) * (Math.max(1, AppUI._fontScale) | 0) / devicePixelRatio);
+			//AppUI._largeIconSizePX = parseFloat(largeIconSizePXStr);
 
 			let i = ((AppUI.baseThinBorderPX * devicePixelRatio) | 0) / devicePixelRatio;
 			if (!i)
 				i = 1;
-			const _thinBorderPX = AppUI.adjustDecimal(i);
-			AppUI._thinBorderPX = parseFloat(_thinBorderPX);
+			const thinBorderPXStr = AppUI.adjustDecimal(i);
+			AppUI._thinBorderPX = parseFloat(thinBorderPXStr);
 
 			i = ((AppUI.baseThickBorderPX * devicePixelRatio) | 0) / devicePixelRatio;
 			if (!i)
 				i = 1;
-			const _thickBorderPX = AppUI.adjustDecimal(i);
-			AppUI._thickBorderPX = parseFloat(_thickBorderPX);
+			const thickBorderPXStr = AppUI.adjustDecimal(i);
+			AppUI._thickBorderPX = parseFloat(thickBorderPXStr);
+
+			const playlistItemSizePXStr = AppUI.adjustDecimal((3 * AppUI.remToPX(AppUI.smallContentsSizeREM)) + AppUI.s2PX);
+			AppUI._playlistItemSizePX = parseFloat(playlistItemSizePXStr);
 
 			AppUI.rootVariables.textContent = `:root {
-				--button-size: ${AppUI.buttonSizePX}px;
-				--button-padding-top: ${AppUI.adjustDecimal(0.5 * (AppUI.buttonSizePX - iconOuterSizePX))}px;
-				--extra-touch-padding-top: ${AppUI.adjustDecimal(0.5 * (AppUI.buttonSizePX - AppUI.buttonRegularSizePX))}px;
-				--icon-size: ${_smallIconSizePX}px;
-				--icon-padding: ${AppUI.adjustDecimal(0.5 * (iconOuterSizePX - AppUI._smallIconSizePX))}px;
-				--large-icon-size: ${_largeIconSizePX}px;
-				--large-icon-padding: ${AppUI.adjustDecimal(0.5 * (iconOuterSizePX - AppUI._largeIconSizePX))}px;
-				--thin-border: ${_thinBorderPX}px;
-				--thick-border: ${_thickBorderPX}px;
-				--scrollbar-size: ${AppUI.scrollbarSizeREM}rem;
-				--optional-panel-container-height: ${(356 + AppUI.buttonSizePX)}px;
-				--simple-list-item-size: ${AppUI._simpleListItemPX}px;
+				--button-size: ${AppUI._buttonSizePX}px;
+				--button-padding: ${AppUI.adjustDecimal(0.5 * (AppUI._buttonSizePX - AppUI._contentsSizePX))}px;
+				--negative-button-padding: -${AppUI.adjustDecimal(0.5 * (AppUI._buttonSizePX - AppUI._contentsSizePX))}px;
+				--icon-size: ${smallIconSizePXStr}px;
+				--icon-padding: ${AppUI.adjustDecimal(0.5 * (AppUI._contentsSizePX - AppUI._smallIconSizePX))}px;
+				--large-icon-size: ${largeIconSizePXStr}px;
+				--large-icon-padding: ${AppUI.adjustDecimal(0.5 * (AppUI._contentsSizePX - AppUI._largeIconSizePX))}px;
+				--thin-border: ${thinBorderPXStr}px;
+				--thick-border: ${thickBorderPXStr}px;
+				--scrollbar-size: ${(AppUI.primaryInputIsTouch ? 20 : 12)}px;
+				--playlist-item-size: ${playlistItemSizePXStr}px;
 			}`;
 
 			//if (App.player)
@@ -388,8 +440,8 @@ class AppUI {
 			(monoDownMixerControlContainer.parentNode as HTMLDivElement).removeChild(monoDownMixerControlContainer);
 		}
 
-		if (!App.frameless)
-			AppUI.panelContainer.classList.add("web");
+		if (App.frameless)
+			AppUI.panelContainer.classList.remove("web");
 
 		window.addEventListener("resize", AppUI.adjustWindow, { passive: true });
 
@@ -429,6 +481,18 @@ class AppUI {
 		return AppUI._loading;
 	}
 
+	public static get fontScale(): number {
+		return AppUI._fontScale;
+	}
+
+	public static get smallIconSizePX(): number {
+		return AppUI._smallIconSizePX;
+	}
+
+	public static get largeIconSizePX(): number {
+		return AppUI._largeIconSizePX;
+	}
+
 	public static get thinBorderPX(): number {
 		return AppUI._thinBorderPX;
 	}
@@ -437,8 +501,16 @@ class AppUI {
 		return AppUI._thickBorderPX;
 	}
 
-	public static get simpleListItemPX(): number {
-		return AppUI._simpleListItemPX;
+	public static get buttonSizePX(): number {
+		return AppUI._buttonSizePX;
+	}
+
+	public static get contentsSizePX(): number {
+		return AppUI._contentsSizePX;
+	}
+
+	public static get playlistItemSizePX(): number {
+		return AppUI._playlistItemSizePX;
 	}
 
 	public static addZoomHandler(zoomHandler: AppUIZoomHandler | null): void {
@@ -467,11 +539,11 @@ class AppUI {
 	}
 
 	public static remToPX(rem: number): number {
-		return rem * AppUI.rem;
+		return rem * AppUI._1remInPX;
 	}
 
 	public static pxToREM(px: number): number {
-		return px / AppUI.rem;
+		return px / AppUI._1remInPX;
 	}
 
 	private static playerSongChanged(song: Song | null): void {
