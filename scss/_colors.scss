@@ -37,6 +37,7 @@ $color-white-hover: #fff;
 $color-white-active: #fff;
 
 $color-background: #1c1c1c;
+$color-background-translucent: rgba($color-background, 0.75);
 
 $color-highlight: #303030;
 $color-highlight-hover: #484848;
@@ -45,9 +46,8 @@ $color-highlight-active: #5a5a5a;
 $color-close-hover: #c00;
 $color-close-active: #d11;
 
-$color-shadow-modal: #000;
-
-$color-fade: rgba(0, 0, 0, 0.5);
+$color-modal-shadow: #000;
+$color-modal-background: rgba(0, 0, 0, 0.5);
 
 $color-text: #fff;
 $color-text-secodary: #999;

@@ -27,16 +27,22 @@
 class FocusBlocker {
 	private changedElements: { element: HTMLElement, tabindex: string | null }[] | null;
 	private oldBodyOverflow: string | null;
+	private parentContainer: HTMLElement | null;
+	private cover: HTMLDivElement | null;
+	private coverTimeout: number;
 
 	public constructor() {
 		this.changedElements = null;
 		this.oldBodyOverflow = null;
+		this.parentContainer = null;
+		this.cover = null;
+		this.coverTimeout = 0;
 	}
 
-	public block(): void {
+	public block(parentContainer?: HTMLElement | null): void {
 		this.unblock();
 
-		const elementsToDisable = document.querySelectorAll("button,input,select,textarea,.slider-control"),
+		const elementsToDisable = (parentContainer || document).querySelectorAll("button,input,select,textarea,.slider-control"),
 			changedElements: { element: HTMLElement, tabindex: string | null }[] = new Array();
 
 		for (let i = elementsToDisable.length - 1; i >= 0; i--) {
@@ -51,8 +57,19 @@ class FocusBlocker {
 
 		this.changedElements = changedElements;
 
-		this.oldBodyOverflow = document.body.style.overflow;
-		document.body.style.overflow = "hidden";
+		if (parentContainer) {
+			this.parentContainer = parentContainer;
+			this.cover = document.createElement("div");
+			this.cover.className = "blocker fade";
+			parentContainer.appendChild(this.cover);
+			this.coverTimeout = DelayControl.delayShortCB(() => {
+				if (this.coverTimeout && this.cover)
+					this.cover.classList.add("in");
+			});
+		} else {
+			this.oldBodyOverflow = document.body.style.overflow;
+			document.body.style.overflow = "hidden";
+		}
 	}
 
 	public unblock(): void {
@@ -74,6 +91,24 @@ class FocusBlocker {
 		if (this.oldBodyOverflow) {
 			document.body.style.overflow = this.oldBodyOverflow;
 			this.oldBodyOverflow = null;
+		}
+
+		if (this.coverTimeout) {
+			clearTimeout(this.coverTimeout);
+			this.coverTimeout = 0;
+		}
+
+		if (this.parentContainer) {
+			const parentContainer = this.parentContainer,
+				cover = this.cover;
+
+			this.parentContainer = null;
+			this.cover = null;
+
+			if (cover) {
+				cover.classList.remove("in");
+				DelayControl.delayFadeCB(function () { parentContainer.removeChild(cover); });
+			}
 		}
 	}
 }

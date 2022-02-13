@@ -24,23 +24,28 @@
 // https://github.com/carlosrafaelgn/FPlayWeb
 //
 
-class DelayControl {
-	public static readonly shortDelayMS = 20;
-	public static readonly fadeDelayMS = 320;
+function addAudioWorkletModule(audioContext: AudioContext, url: string): Promise<void> {
+	return new Promise(function (resolve, reject) {
+		try {
+			const addModule = function (url: string, revokeURL: boolean) {
+				try {
+					audioContext.audioWorklet.addModule(url).then(resolve, reject);
+				} catch (ex: any) {
+					reject(ex);
+				}
+			};
 
-	public static delayShortCB(callback: () => void): number {
-		return setTimeout(callback, DelayControl.shortDelayMS);
-	}
-
-	public static delayFadeCB(callback: () => void): number {
-		return setTimeout(callback, DelayControl.fadeDelayMS);
-	}
-
-	public static delayShort(): Promise<void> {
-		return new Promise(function (resolve) { setTimeout(resolve, DelayControl.shortDelayMS); });
-	}
-
-	public static delayFade(): Promise<void> {
-		return new Promise(function (resolve) { setTimeout(resolve, DelayControl.fadeDelayMS); });
-	}
+			if (location.href.startsWith("file://")) {
+				fetch(url).then((response) => {
+					response.arrayBuffer().then((arrayBuffer) => {
+						addModule(URL.createObjectURL(new Blob([arrayBuffer], { type: "text/javascript" })), true);
+					}, reject);
+				}, reject);
+			} else {
+				addModule(url, false);
+			}
+		} catch (ex: any) {
+			reject(ex);
+		}
+	});
 }

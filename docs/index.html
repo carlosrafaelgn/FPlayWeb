@@ -76,8 +76,8 @@
 			--playlist-item-size: 56px;
 		}
 	</style>
-	<link rel="stylesheet" type="text/css" href="assets/css/graphicalFilterEditor.css?20220212b" />
-	<link rel="stylesheet" type="text/css" href="assets/css/style.css?20220212b" />
+	<link rel="stylesheet" type="text/css" href="assets/css/graphicalFilterEditor.css?20220213" />
+	<link rel="stylesheet" type="text/css" href="assets/css/style.css?20220213" />
 </head>
 <body>
 	<div id="ruler" style="position: absolute; z-index: -1; left: 0; top: 0; height: 8rem; visibility: hidden; pointer-events: none;"></div>
@@ -131,7 +131,7 @@
 			<div id="playlist-control" tabindex="-1"></div>
 
 			<div id="middle-panel" class="toolbar border-top">
-				<button type="button" class="btn square transparent toolbar-left hidden-normal" onclick="AppUI.switchView()" title="ShowEffects" data-string="aria-label|ShowEffects">
+				<button type="button" class="btn square transparent toolbar-left hidden-normal" onclick="AppUI.toggleView(true)" title="ShowEffects" data-string="aria-label|ShowEffects">
 					<i class="large icon-filter"></i>
 				</button>
 				<button type="button" class="btn square green transparent" onclick="AppUI.addFiles()" title="AddSongs" data-string="aria-label|AddSongs">
@@ -156,7 +156,7 @@
 		<div id="optional-panel" class="scrollable">
 			<div id="optional-panel-container">
 				<div class="toolbar border-bottom hidden-normal">
-					<button type="button" class="btn transparent" onclick="AppUI.switchView()" title="ShowPlaylist" data-string="ShowPlaylist"><i class="large margin icon-playlist"></i></button>
+					<button type="button" class="btn transparent" onclick="AppUI.toggleView(true)" title="ShowPlaylist" data-string="ShowPlaylist"><i class="large margin icon-playlist"></i></button>
 				</div>
 
 				<div class="toolbar">
@@ -180,7 +180,7 @@
 		//<![CDATA[
 		"use strict";
 
-		var CACHE_VERSION = "20220212b";
+		var CACHE_VERSION = "20220213";
 
 		(function () {
 			if (location.href.startsWith("file://")) {
@@ -195,7 +195,9 @@
 							var arrayBuffer = xhr.response;
 							resolve({
 								arrayBuffer: function () {
-									return arrayBuffer;
+									// Instead of returning a value, return a Promise, because
+									// this is what the spec actually says arrayBuffer() returns!
+									return Promise.resolve(arrayBuffer);
 								}
 							});
 						};

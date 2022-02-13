@@ -67,7 +67,7 @@ class Alert {
 
 		Alert.element.classList.remove("in");
 
-		Alert.timeout = DelayControl.delayUICB(Alert.removeElement);
+		Alert.timeout = DelayControl.delayFadeCB(Alert.removeElement);
 
 		Alert.element.setAttribute("data-timeout", Alert.timeout.toString());
 	}
@@ -93,7 +93,7 @@ class Alert {
 
 		Alert.element.classList.add("in");
 
-		Alert.timeout = setTimeout(Alert.hideByTimeout, DelayControl.uiDelayMS + (important ? Alert.longDelayMS : Alert.shortDelayMS));
+		Alert.timeout = setTimeout(Alert.hideByTimeout, DelayControl.fadeDelayMS + (important ? Alert.longDelayMS : Alert.shortDelayMS));
 
 		Alert.element.setAttribute("data-timeout", Alert.timeout.toString());
 	}

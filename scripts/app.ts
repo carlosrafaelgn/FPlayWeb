@@ -365,7 +365,7 @@ class App {
 		DelayControl.delayShortCB(function () {
 			AppUI.centerCurrentSongIntoView();
 
-			DelayControl.delayUICB(function () {
+			DelayControl.delayFadeCB(function () {
 				window.removeEventListener("resize", App.adjustCover);
 				const cover = document.getElementById("cover");
 				if (cover)

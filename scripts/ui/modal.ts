@@ -285,7 +285,7 @@ class Modal {
 
 			this.containerElement.classList.add("in");
 
-			DelayControl.delayUICB(() => {
+			DelayControl.delayFadeCB(() => {
 				this.fading = false;
 
 				if (this.options.onshown)
@@ -306,7 +306,7 @@ class Modal {
 		this.fading = true;
 		this.containerElement.classList.remove("in");
 
-		DelayControl.delayUICB(() => {
+		DelayControl.delayFadeCB(() => {
 			Modal.modal = null;
 
 			if (this.options.onhidden)

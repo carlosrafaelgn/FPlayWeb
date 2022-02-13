@@ -39,6 +39,7 @@
 		"graphicalFilterEditor/scripts/analyzer/plainAnalyzer.ts",
 		"graphicalFilterEditor/scripts/analyzer/soundParticlesAnalyzer.ts",
 		"graphicalFilterEditor/scripts/analyzer/waveletAnalyzer.ts",
+		"audio/addAudioWorkletModule.ts",
 		"audio/connectableNode.ts",
 		"audio/destinationNode.ts",
 		"audio/intermediateNode.ts",

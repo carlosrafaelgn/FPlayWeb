@@ -653,6 +653,8 @@ public class WebViewHost {
 			if (webViewJavaScriptInterface != null)
 				webViewJavaScriptInterface.cancelFileEnumerationInternal();
 		} else if (webView == null) {
+			WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
+
 			webView = new WebView(application);
 			webView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 			webView.setWebViewClient(new LibWebViewClient());

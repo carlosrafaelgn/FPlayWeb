@@ -11,4 +11,4 @@ RMDIR /S /Q "Android\app\src\main\assets\assets\images\favicons"
 
 DEL /S /Q "Android\app\src\main\assets\assets\js\scripts.es6.min.js"
 
-COPY "docs\index.html" "Android\app\src\main\assets\index.html"
+FINDSTR /v "favicon" "docs\index.html" > "Android\app\src\main\assets\index.html"

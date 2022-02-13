@@ -17,7 +17,6 @@
 	<meta property="og:title" content="FPlay" />
 	<meta property="og:site_name" content="FPlay" />
 	<meta property="og:description" content="Experimental music player" />
-	<meta property="og:image" content="https://fplay.com.br/assets/images/favicons/favicon-512x512.png" />
 	<meta property="og:image:type" content="image/png" />
 	<meta property="og:image:width" content="512" />
 	<meta property="og:image:height" content="512" />
@@ -33,30 +32,8 @@
     <meta name="twitter:card" value="summary" />
     <meta name="twitter:title" value="FPlay" />
     <meta name="twitter:description" value="Experimental music player" />
-    <meta name="twitter:image" value="assets/images/favicons/favicon-512x512.png" />
     <meta itemprop="name" content="FPlay" />
     <meta itemprop="description" content="Experimental music player" />
-	<meta itemprop="image" content="assets/images/favicons/favicon-512x512.png" />
-	<link rel="fluid-icon" href="assets/images/favicons/favicon-512x512.png" title="FPlay" />
-	<link rel="apple-touch-icon" sizes="57x57" href="assets/images/favicons/apple-icon-57x57.png" />
-	<link rel="apple-touch-icon" sizes="60x60" href="assets/images/favicons/apple-icon-60x60.png" />
-	<link rel="apple-touch-icon" sizes="72x72" href="assets/images/favicons/apple-icon-72x72.png" />
-	<link rel="apple-touch-icon" sizes="76x76" href="assets/images/favicons/apple-icon-76x76.png" />
-	<link rel="apple-touch-icon" sizes="114x114" href="assets/images/favicons/apple-icon-114x114.png" />
-	<link rel="apple-touch-icon" sizes="120x120" href="assets/images/favicons/apple-icon-120x120.png" />
-	<link rel="apple-touch-icon" sizes="144x144" href="assets/images/favicons/apple-icon-144x144.png" />
-	<link rel="apple-touch-icon" sizes="152x152" href="assets/images/favicons/apple-icon-152x152.png" />
-	<link rel="apple-touch-icon" sizes="180x180" href="assets/images/favicons/apple-icon-180x180.png" />
-	<link rel="icon" type="image/png" sizes="512x512" href="assets/images/favicons/favicon-512x512.png" />
-	<link rel="icon" type="image/png" sizes="192x192" href="assets/images/favicons/favicon-192x192.png" />
-	<link rel="icon" type="image/png" sizes="96x96" href="assets/images/favicons/favicon-96x96.png" />
-	<link rel="icon" type="image/png" sizes="48x48" href="assets/images/favicons/favicon-48x48.png" />
-	<link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicons/favicon-32x32.png" />
-	<link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicons/favicon-16x16.png" />
-	<link rel="Shortcut Icon" href="favicon.ico" />
-	<link rel="Shortcut Icon" href="favicon.png" />
-	<link rel="manifest" href="assets/images/favicons/manifest.webmanifest" />
-	<meta name="msapplication-config" content="assets/images/favicons/browserconfig.xml" />
 	<meta name="theme-color" content="#303030" />
 
 	<title>FPlay</title>
@@ -76,8 +53,8 @@
 			--playlist-item-size: 56px;
 		}
 	</style>
-	<link rel="stylesheet" type="text/css" href="assets/css/graphicalFilterEditor.css?20220212b" />
-	<link rel="stylesheet" type="text/css" href="assets/css/style.css?20220212b" />
+	<link rel="stylesheet" type="text/css" href="assets/css/graphicalFilterEditor.css?20220213" />
+	<link rel="stylesheet" type="text/css" href="assets/css/style.css?20220213" />
 </head>
 <body>
 	<div id="ruler" style="position: absolute; z-index: -1; left: 0; top: 0; height: 8rem; visibility: hidden; pointer-events: none;"></div>
@@ -131,7 +108,7 @@
 			<div id="playlist-control" tabindex="-1"></div>
 
 			<div id="middle-panel" class="toolbar border-top">
-				<button type="button" class="btn square transparent toolbar-left hidden-normal" onclick="AppUI.switchView()" title="ShowEffects" data-string="aria-label|ShowEffects">
+				<button type="button" class="btn square transparent toolbar-left hidden-normal" onclick="AppUI.toggleView(true)" title="ShowEffects" data-string="aria-label|ShowEffects">
 					<i class="large icon-filter"></i>
 				</button>
 				<button type="button" class="btn square green transparent" onclick="AppUI.addFiles()" title="AddSongs" data-string="aria-label|AddSongs">
@@ -156,7 +133,7 @@
 		<div id="optional-panel" class="scrollable">
 			<div id="optional-panel-container">
 				<div class="toolbar border-bottom hidden-normal">
-					<button type="button" class="btn transparent" onclick="AppUI.switchView()" title="ShowPlaylist" data-string="ShowPlaylist"><i class="large margin icon-playlist"></i></button>
+					<button type="button" class="btn transparent" onclick="AppUI.toggleView(true)" title="ShowPlaylist" data-string="ShowPlaylist"><i class="large margin icon-playlist"></i></button>
 				</div>
 
 				<div class="toolbar">
@@ -180,7 +157,7 @@
 		//<![CDATA[
 		"use strict";
 
-		var CACHE_VERSION = "20220212b";
+		var CACHE_VERSION = "20220213";
 
 		(function () {
 			if (location.href.startsWith("file://")) {
@@ -195,7 +172,9 @@
 							var arrayBuffer = xhr.response;
 							resolve({
 								arrayBuffer: function () {
-									return arrayBuffer;
+									// Instead of returning a value, return a Promise, because
+									// this is what the spec actually says arrayBuffer() returns!
+									return Promise.resolve(arrayBuffer);
 								}
 							});
 						};

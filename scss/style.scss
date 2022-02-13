@@ -223,7 +223,7 @@ a:active {
 	display: block;
     outline: 0 none transparent;
     border: 0 none transparent;
-    box-shadow: 0 var(--thin-border) $s2 $color-shadow-modal;
+    box-shadow: 0 var(--thin-border) $s2 $color-modal-shadow;
 }
 
 .modal {
@@ -1106,6 +1106,16 @@ input[type="checkbox"]:checked + .icon + .icon {
 	float: right;
 }
 
+.blocker {
+	position: absolute;
+	z-index: 99996;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	background-color: $color-background-translucent;
+}
+
 .fade {
 	opacity: 0;
 	transition: opacity ease-in-out 0.3s;
@@ -1137,12 +1147,7 @@ input[type="checkbox"]:checked + .icon + .icon {
 }
 
 .modal-container.background {
-    background-color: transparent;
-	transition: opacity ease-in-out 0.3s, background-color ease-in-out 0.3s;
-}
-
-.modal-container.background.in {
-    background-color: $color-fade;
+    background-color: $color-modal-background;
 }
 
 .no-left-margin {
@@ -1169,7 +1174,7 @@ input[type="checkbox"]:checked + .icon + .icon {
 	display: none;
 }
 
-@media (min-width: 876px) {
+@media (min-width: 875.1px) {
 	.hidden-normal {
 		display: none;
 	}

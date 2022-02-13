@@ -326,7 +326,7 @@ class FilePicker {
 
 			this.listControl.element.classList.remove("in");
 
-			DelayControl.delayUICB(() => {
+			DelayControl.delayFadeCB(() => {
 				if (FilePicker.filePicker !== this || !this.provider || providerVersion !== this.providerVersion)
 					return;
 

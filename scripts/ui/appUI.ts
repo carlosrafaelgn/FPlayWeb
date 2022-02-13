@@ -59,6 +59,7 @@ class AppUI {
 
 	private static readonly panelContainer = document.getElementById("panel-container") as HTMLDivElement;
 	private static readonly fixedPanel = document.getElementById("fixed-panel") as HTMLDivElement;
+	private static readonly middlePanel = document.getElementById("middle-panel") as HTMLDivElement;
 	private static readonly optionalPanel = document.getElementById("optional-panel") as HTMLDivElement;
 
 	private static readonly iconPlay = document.getElementById("i-play") as HTMLElement;
@@ -102,6 +103,12 @@ class AppUI {
 
 	private static topMessageFading = 0;
 	private static topMessageTimeout = 0;
+
+	private static focusBlocker: FocusBlocker | null = null;
+
+	private static panelContainerToggled = false;
+	private static panelContainerToggling = false;
+	private static panelContainerToggleVersion = 0;
 
 	private static preparePlaylist(): void {
 		if (!App.player || !AppUI.playlistControl)
@@ -259,6 +266,8 @@ class AppUI {
 			for (let i = AppUI.zoomHandlers.length - 1; i >= 0; i--)
 				AppUI.zoomHandlers[i]();
 		}
+
+		AppUI.checkPanelContainerToggleState();
 	}
 
 	private static changeZoom(delta: number): void {
@@ -348,8 +357,14 @@ class AppUI {
 	}
 
 	private static historyStatePopped(): boolean | null {
-		if (!AppUI.playlistControl || !AppUI.playlistControl.deleteMode)
-			return null;
+		if (!AppUI.playlistControl || !AppUI.playlistControl.deleteMode) {
+			if (!AppUI.panelContainerToggled)
+				return null;
+
+			AppUI.toggleView(false);
+
+			return true;
+		}
 
 		AppUI.toggleDeleteMode(false);
 
@@ -727,7 +742,7 @@ class AppUI {
 
 		AppUI.topMessage.classList.remove("in");
 
-		AppUI.topMessageTimeout = DelayControl.delayUICB(function () {
+		AppUI.topMessageTimeout = DelayControl.delayFadeCB(function () {
 			if (AppUI.topMessageFading >= 0)
 				return;
 
@@ -776,7 +791,7 @@ class AppUI {
 
 			AppUI.topMessage.classList.add("in");
 
-			AppUI.topMessageTimeout = DelayControl.delayUICB(function () {
+			AppUI.topMessageTimeout = DelayControl.delayFadeCB(function () {
 				if (AppUI.topMessageFading !== 2)
 					return;
 
@@ -835,6 +850,11 @@ class AppUI {
 		if (!AppUI.playlistControl)
 			return;
 
+		if (AppUI.focusBlocker) {
+			AppUI.focusBlocker.unblock();
+			AppUI.focusBlocker = null;
+		}
+
 		if (AppUI.playlistControl.deleteMode) {
 			AppUI.playlistControl.deleteMode = false;
 
@@ -844,6 +864,9 @@ class AppUI {
 				HistoryHandler.popState();
 		} else {
 			AppUI.playlistControl.deleteMode = true;
+
+			AppUI.focusBlocker = new FocusBlocker();
+			AppUI.focusBlocker.block(AppUI.middlePanel);
 
 			AppUI.showTopMessage(Strings.DeleteModeHTML, function (parent) {
 				const div = document.createElement("div");
@@ -880,9 +903,96 @@ class AppUI {
 		}
 	}
 
-	public static switchView(): void {
-		if (AppUI.panelContainer)
-			AppUI.panelContainer.classList.toggle("toggled");
+	private static checkPanelContainerToggleState() {
+		if (window.innerWidth <= 875 || !AppUI.fixedPanel || !AppUI.optionalPanel)
+			return;
+
+		if (AppUI.panelContainerToggling) {
+			AppUI.panelContainerToggleVersion++;
+			AppUI.panelContainerToggling = false;
+
+			AppUI.fixedPanel.classList.remove("fade");
+			AppUI.fixedPanel.classList.remove("in");
+
+			AppUI.optionalPanel.classList.remove("fade");
+			AppUI.optionalPanel.classList.remove("in");
+		}
+
+		if (AppUI.panelContainerToggled) {
+			AppUI.panelContainerToggled = false;
+
+			AppUI.panelContainer.classList.remove("toggled");
+
+			HistoryHandler.popState();
+		}
+	}
+
+	public static toggleView(popStateIfLeaving: boolean): void {
+		if (AppUI.panelContainer) {
+			AppUI.panelContainerToggleVersion++;
+
+			const version = AppUI.panelContainerToggleVersion,
+				fadePanels = function (fadeOutPanel: HTMLDivElement, fadeInPanel: HTMLDivElement, addToggledClass: boolean) {
+					AppUI.panelContainerToggling = true;
+
+					fadeInPanel.classList.remove("in");
+					fadeInPanel.classList.add("fade");
+
+					fadeOutPanel.classList.add("in");
+					fadeOutPanel.classList.add("fade");
+
+					DelayControl.delayShortCB(async function () {
+						if (AppUI.panelContainerToggleVersion !== version)
+							return;
+
+						fadeOutPanel.classList.remove("in");
+
+						await DelayControl.delayFade();
+
+						if (AppUI.panelContainerToggleVersion !== version)
+							return;
+
+						if (addToggledClass)
+							AppUI.panelContainer.classList.add("toggled");
+						else
+							AppUI.panelContainer.classList.remove("toggled");
+
+						fadeOutPanel.classList.remove("fade");
+
+						await DelayControl.delayShort();
+
+						if (AppUI.panelContainerToggleVersion !== version)
+							return;
+
+						fadeInPanel.classList.add("in");
+
+						await DelayControl.delayFade();
+
+						if (AppUI.panelContainerToggleVersion !== version)
+							return;
+
+						fadeInPanel.classList.remove("fade");
+						fadeInPanel.classList.remove("in");
+
+						AppUI.panelContainerToggling = false;
+					});
+				};
+
+			if (AppUI.panelContainerToggled) {
+				AppUI.panelContainerToggled = false;
+
+				fadePanels(AppUI.optionalPanel, AppUI.fixedPanel, false);
+
+				if (popStateIfLeaving)
+					HistoryHandler.popState();
+			} else {
+				AppUI.panelContainerToggled = true;
+
+				fadePanels(AppUI.fixedPanel, AppUI.optionalPanel, true);
+
+				HistoryHandler.pushState();
+			}
+		}
 	}
 
 	public static showAbout(): void {
