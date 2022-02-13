@@ -158,7 +158,7 @@ class App {
 			if (playlist)
 				InternalStorage.savePlaylistWeb(playlist);
 
-			if (!App.ipcRenderer)
+			if (!App.hostInterface)
 				return;
 
 			if (promises.length)
