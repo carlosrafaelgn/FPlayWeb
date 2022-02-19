@@ -329,7 +329,9 @@ class AppUI {
 				case "Escape":
 					if (!e.repeat) {
 						if (!Modal.visible) {
-							if (App.player)
+							if (AppUI.playlistControl && AppUI.playlistControl.deleteMode)
+								AppUI.toggleDeleteMode(true);
+							else if (App.player)
 								App.player.playPause();
 						} else {
 							Modal.hide();
@@ -479,6 +481,12 @@ class AppUI {
 
 			AppUI.centerCurrentSongIntoView();
 
+			try {
+				AppUI.playlistControl.element.focus();
+			} catch (ex: any) {
+				// Just ignore...
+			}
+
 			HistoryHandler.init(Menu.historyStatePopped, Modal.historyStatePopped, AppUI.historyStatePopped);
 		}
 	}
@@ -569,7 +577,7 @@ class AppUI {
 
 		Strings.changeText(AppUI.artistLabel, (song && song.artist) || Formatter.none);
 
-		if (App.player.playlist && App.player.playlist.currentIndex >= 0 && !AppUI.playlistControl.deleteMode)
+		if (App.player.playlist && App.player.playlist.currentIndex >= 0 && !AppUI.playlistControl.deleteMode && song)
 			AppUI.playlistControl.bringItemIntoView(App.player.playlist.currentIndex);
 
 		AppUI.currentTimeS = 0;
@@ -900,6 +908,12 @@ class AppUI {
 			});
 
 			HistoryHandler.pushState();
+
+			try {
+				AppUI.playlistControl.element.focus();
+			} catch (ex: any) {
+				// Just ignore...
+			}
 		}
 	}
 

@@ -349,7 +349,7 @@ class SliderControl {
 	}
 
 	private keyDown(e: KeyboardEvent): any {
-		if (this.pointerHandler.captured)
+		if (this.pointerHandler.captured || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey)
 			return;
 
 		const oldValue = this._value;

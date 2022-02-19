@@ -56,8 +56,9 @@ class CheckboxControl {
 	public static setChecked(checkboxButton: HTMLButtonElement, checked?: boolean | null): void {
 		const input: HTMLInputElement = (checkboxButton as any).childInput;
 		if (input) {
-			if (!!input.checked !== !!checked)
-				input.click();
+			input.checked = !!checked;
+			//if (!!input.checked !== !!checked)
+			//	input.click();
 		}
 	}
 

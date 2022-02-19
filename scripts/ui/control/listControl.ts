@@ -29,6 +29,7 @@ class ListControlItem<T> {
 	public index: number;
 	public selected: boolean;
 	public current: boolean;
+	public keyboard: boolean;
 	// item is only used when useVirtualItems is false
 	public item: T | null;
 	public readonly element: HTMLElement;
@@ -37,6 +38,7 @@ class ListControlItem<T> {
 		this.index = -1;
 		this.selected = false;
 		this.current = false;
+		this.keyboard = false;
 		this.item = null;
 		this.element = element;
 	}
@@ -45,15 +47,17 @@ class ListControlItem<T> {
 		this.index = -1;
 		this.selected = false;
 		this.current = false;
+		this.keyboard = false;
 		this.item = null;
 		if (this.element)
-			this.element.classList.remove("current", "selected");
+			this.element.classList.remove("current", "selected", "keyboard");
 	}
 
 	public zero(): void {
 		this.index = -1;
 		this.selected = false;
 		this.current = false;
+		this.keyboard = false;
 		this.item = null;
 		(this as any).element = null;
 	}
@@ -85,6 +89,10 @@ class ListControl<T> {
 	private refreshVisibleItemsEnqueued: boolean;
 	private notifyCurrentItemChangedEnqueued: boolean;
 
+	private focused: boolean;
+	private keyboardIndex: number;
+	private lastKeyboardIndex: number;
+
 	private readonly boundZoomChanged: any;
 	private readonly boundRefreshVisibleItemsInternal: any;
 	private readonly boundNotifyCurrentItemChangedInternal: any;
@@ -115,8 +123,13 @@ class ListControl<T> {
 		this.boundRefreshVisibleItemsInternal = this.refreshVisibleItemsInternal.bind(this);
 		this.boundAdjustScrollbarPaddingFromResize = this.adjustScrollbarPaddingFromResize.bind(this);
 
+		this.element.addEventListener("focus", this.elementFocus.bind(this));
+		this.element.addEventListener("keydown", this.elementKeyDown.bind(this));
+		this.element.addEventListener("keyup", this.elementKeyUp.bind(this));
+		this.element.addEventListener("blur", this.elementBlur.bind(this));
+
 		if (useVirtualItems)
-			this.element.addEventListener("scroll", this.scroll.bind(this), { passive: true });
+			this.element.addEventListener("scroll", this.elementScroll.bind(this), { passive: true });
 		else
 			this.boundNotifyCurrentItemChangedInternal = this.notifyCurrentItemChangedInternal.bind(this);
 
@@ -138,6 +151,10 @@ class ListControl<T> {
 		this.items = [];
 		this.refreshVisibleItemsEnqueued = false;
 		this.notifyCurrentItemChangedEnqueued = false;
+
+		this.focused = false;
+		this.keyboardIndex = -1;
+		this.lastKeyboardIndex = -1;
 
 		this.deleteMode = false;
 		this.onitemclicked = null;
@@ -220,7 +237,7 @@ class ListControl<T> {
 		}
 
 		if (this.useVirtualItems)
-			this.scroll();
+			this.elementScroll();
 
 		/*const items = this.items,
 			length = adapter.list.length,
@@ -288,10 +305,17 @@ class ListControl<T> {
 		this.containerHeight = 0;
 		this.container.style.height = "0";
 
+		if (this.keyboardIndex > 0) {
+			this.keyboardIndex = 0;
+			this.lastKeyboardIndex = 0;
+		} else {
+			this.lastKeyboardIndex = -1;
+		}
+
 		this.adjustScrollbarPadding();
 	}
 
-	private scroll(): void {
+	private elementScroll(): void {
 		const adapter = this._adapter,
 			element = this.element;
 		if (!adapter || !element)
@@ -351,6 +375,7 @@ class ListControl<T> {
 		const list = adapter.list,
 			length = list.length,
 			currentListItem = adapter.list.currentItem,
+			keyboardIndex = this.keyboardIndex,
 			container = this.container;
 
 		let i = 0;
@@ -361,13 +386,22 @@ class ListControl<T> {
 				item = items[i];
 
 			if (item.item !== listItem) {
-				const current = (currentListItem === listItem);
-				if (item.current !== current) {
-					item.current = current;
-					if (current)
+				let tmp = (currentListItem === listItem);
+				if (item.current !== tmp) {
+					item.current = tmp;
+					if (tmp)
 						item.element.classList.add("current");
 					else
 						item.element.classList.remove("current");
+				}
+
+				tmp = (keyboardIndex === firstIndex);
+				if (item.keyboard !== tmp) {
+					item.keyboard = tmp;
+					if (tmp)
+						item.element.classList.add("keyboard");
+					else
+						item.element.classList.remove("keyboard");
 				}
 
 				adapter.prepareElement(listItem, firstIndex, length, item.element);
@@ -413,6 +447,7 @@ class ListControl<T> {
 			list = adapter.list,
 			length = list.length,
 			currentListItem = adapter.list.currentItem,
+			keyboardIndex = this.keyboardIndex,
 			container = this.container;
 
 		if (!this.useVirtualItems) {
@@ -444,13 +479,22 @@ class ListControl<T> {
 			const listItem = list.item(firstIndex),
 				item = items[i];
 
-			const current = (currentListItem === listItem);
-			if (item.current !== current) {
-				item.current = current;
-				if (current)
+			let tmp = (currentListItem === listItem);
+			if (item.current !== tmp) {
+				item.current = tmp;
+				if (tmp)
 					item.element.classList.add("current");
 				else
 					item.element.classList.remove("current");
+			}
+
+			tmp = (keyboardIndex === firstIndex);
+			if (item.keyboard !== tmp) {
+				item.keyboard = tmp;
+				if (tmp)
+					item.element.classList.add("keyboard");
+				else
+					item.element.classList.remove("keyboard");
 			}
 
 			adapter.prepareElement(listItem, firstIndex, length, item.element);
@@ -506,7 +550,7 @@ class ListControl<T> {
 			this.clientHeight = clientHeight;
 
 			if (this.useVirtualItems)
-				this.scroll();
+				this.elementScroll();
 
 			// Changing the padding in response to the resize event of a ResizeObserver
 			// could cause a "ResizeObserver - loop limit exceeded" error
@@ -524,7 +568,14 @@ class ListControl<T> {
 		const rect = this.element.getBoundingClientRect(),
 			index = this.indexFromY(e.clientY - rect.top);
 
+		if (this.keyboardIndex >= 0) {
+			this.keyboardIndex = -1;
+			this.refreshVisibleItems();
+		}
+
 		if (index >= 0) {
+			this.lastKeyboardIndex = index;
+
 			const item = this.adapter.list.item(index);
 			if (item) {
 				if ((e.target as HTMLElement).classList.contains("list-item")) {
@@ -546,13 +597,192 @@ class ListControl<T> {
 		const rect = this.element.getBoundingClientRect(),
 			index = this.indexFromY(e.clientY - rect.top);
 
+		if (this.keyboardIndex >= 0) {
+			this.keyboardIndex = -1;
+			this.refreshVisibleItems();
+		}
+
 		if (index >= 0) {
+			this.lastKeyboardIndex = index;
+
 			const item = this.adapter.list.item(index);
 			if (item)
 				this.onitemcontextmenu(item, index);
 		}
 
 		return cancelEvent(e);
+	}
+
+	// The order (even on mobile) is: mousedown, focus, click
+	// But... We cannot track focus that way, because if the user clicks
+	// the scrollbar, neither mousedown nor click are generated
+	//private containerMouseDown(): void {
+	//	if (this.keyboardIndex >= 0) {
+	//		this.keyboardIndex = -1;
+	//		this.refreshVisibleItems();
+	//	}
+	//}
+
+	private elementFocus(): void {
+		this.focused = true;
+	}
+
+	private elementKeyDown(e: KeyboardEvent): any {
+		if (!this.adapter || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey)
+			return;
+
+		let delta = 0, end = 0;
+
+		switch (e.key) {
+			case "ArrowDown":
+			case "ArrowRight":
+				delta = 1;
+				break;
+			case "ArrowUp":
+			case "ArrowLeft":
+				delta = -1;
+				break;
+			case "PageDown":
+				delta = ((this.clientHeight / this.itemHeightAndMargin) | 0);
+				break;
+			case "PageUp":
+				delta = -((this.clientHeight / this.itemHeightAndMargin) | 0);
+				break;
+			case "Home":
+				end = -1;
+				break;
+			case "End":
+				end = 1;
+				break;
+			case "Enter":
+				if (!e.repeat)
+					end = 2;
+				break;
+			case " ":
+				if (!e.repeat)
+					end = 3;
+				break;
+			default:
+				return;
+		}
+
+		const length = this.adapter.list.length;
+
+		if (length > 0) {
+			let keyboardIndex = this.keyboardIndex;
+
+			if (keyboardIndex < 0)
+				keyboardIndex = this.lastKeyboardIndex;
+
+			if (!this.isItemVisible(keyboardIndex)) {
+				keyboardIndex = (this.isItemVisible(this.adapter.list.currentIndex) ?
+					this.adapter.list.currentIndex :
+					this.indexFromY(this.clientHeight >> 1));
+			}
+
+			keyboardIndex = Math.min(length - 1, Math.max(0, keyboardIndex));
+
+			if (end === -1) {
+				keyboardIndex = 0;
+			} else if (end === 1) {
+				keyboardIndex = length - 1;
+			} else {
+				const oldKeyboardIndex = keyboardIndex;
+
+				keyboardIndex += delta;
+
+				if (keyboardIndex < 0)
+					keyboardIndex = (oldKeyboardIndex ? 0 : (length - 1));
+				else if (keyboardIndex >= length)
+					keyboardIndex = ((oldKeyboardIndex === (length - 1)) ? 0 : (length - 1));
+			}
+
+			this.keyboardIndex = keyboardIndex;
+
+			this.bringItemIntoView(keyboardIndex);
+
+			this.refreshVisibleItems();
+
+			if (end > 1) {
+				const item = this.adapter.list.item(keyboardIndex);
+				if (item) {
+					switch (end) {
+						case 2:
+							if (this.deleteMode)
+								this.adapter.list.removeItems(keyboardIndex, keyboardIndex);
+							else if (this.onitemclicked)
+								this.onitemclicked(item, keyboardIndex, 0);
+							break;
+						case 3:
+							if (this.deleteMode) {
+								this.adapter.list.removeItems(keyboardIndex, keyboardIndex);
+							} else if (this.onitemcontrolclicked) {
+								const listItem = this.listControlItemFromIndex(keyboardIndex);
+								if (listItem)
+									this.onitemcontrolclicked(item, keyboardIndex, 0, listItem.element);
+							}
+							break;
+					}
+				}
+			}
+		} else {
+			this.keyboardIndex = -1;
+		}
+
+		e.preventDefault();
+		return false;
+	}
+
+	private elementKeyUp(e: KeyboardEvent): any {
+		// Apparently, onkeyup is called after onfocus (when the
+		// user navigates to the control using Tab or Shift+Tab)
+		if (!this.adapter || e.ctrlKey || e.metaKey || e.altKey || e.key !== "Tab" || !this.focused)
+			return;
+
+		const length = this.adapter.list.length;
+
+		if (!length)
+			return;
+
+		let keyboardIndex = Math.min(length - 1, Math.max(0, this.lastKeyboardIndex));
+
+		if (!this.isItemVisible(keyboardIndex)) {
+			keyboardIndex = (this.isItemVisible(this.adapter.list.currentIndex) ?
+				this.adapter.list.currentIndex :
+				this.indexFromY(this.clientHeight >> 1));
+
+			this.keyboardIndex = keyboardIndex;
+			this.bringItemIntoView(keyboardIndex);
+		} else {
+			this.keyboardIndex = keyboardIndex;
+		}
+
+		this.refreshVisibleItems();
+	}
+
+	private elementBlur(): void {
+		this.focused = false;
+
+		this.lastKeyboardIndex = this.keyboardIndex;
+
+		if (this.keyboardIndex >= 0) {
+			this.keyboardIndex = -1;
+			this.refreshVisibleItems();
+		}
+	}
+
+	private listControlItemFromIndex(index: number): ListControlItem<T> | null {
+		if (!this.adapter || !this.items)
+			return null;
+
+		const items = this.items;
+
+		for (let i = items.length - 1; i >= 0; i--) {
+			if (items[i].index === index && items[i].item && items[i].element)
+				return items[i];
+		}
+
+		return null;
 	}
 
 	public yFromIndex(index: number): number {
@@ -568,7 +798,7 @@ class ListControl<T> {
 
 	public isItemVisible(index: number): boolean {
 		const y = this.yFromIndex(index);
-		return (y >= 0 && y <= (this.clientHeight - this.itemHeight));
+		return (y > -this.itemHeight && y < this.clientHeight);
 	}
 
 	public bringItemIntoView(index: number, center?: boolean): void {

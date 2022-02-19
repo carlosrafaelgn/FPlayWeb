@@ -42,7 +42,7 @@ class FocusBlocker {
 	public block(parentContainer?: HTMLElement | null): void {
 		this.unblock();
 
-		const elementsToDisable = (parentContainer || document).querySelectorAll("button,input,select,textarea,.slider-control"),
+		const elementsToDisable = (parentContainer || document).querySelectorAll("button,input,select,textarea,.slider-control,.list"),
 			changedElements: { element: HTMLElement, tabindex: string | null }[] = new Array();
 
 		for (let i = elementsToDisable.length - 1; i >= 0; i--) {

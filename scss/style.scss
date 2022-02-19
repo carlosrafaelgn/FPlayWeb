@@ -654,6 +654,10 @@ input[type="checkbox"]:checked + .icon + .icon {
 	text-overflow: ellipsis;
 }
 
+.list-item.keyboard {
+	box-shadow: $color-blue 0 0 0 var(--thick-border) inset;
+}
+
 .list-item > .icon,
 .list-item > span {
 	pointer-events: none;

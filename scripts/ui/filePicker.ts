@@ -187,6 +187,7 @@ class FilePicker {
 		this.list = new List();
 		this.listAdapter = new FilePickerListAdapter(this.list);
 		this.listControl = new ListControl(listElement, true);
+		this.listControl.element.addEventListener("keydown", this.listKeyDown.bind(this));
 		this.listControl.onitemclicked = this.itemClicked.bind(this);
 		this.listControl.onitemcontrolclicked = this.itemControlClicked.bind(this);
 		this.listControl.adapter = this.listAdapter;
@@ -243,6 +244,13 @@ class FilePicker {
 		}
 	}
 
+	private listKeyDown(e: KeyboardEvent): any {
+		if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.repeat || e.key !== "Backspace")
+			return;
+
+		this.navigateUp();
+	}
+
 	private itemClicked(item: FilePickerListItem, index: number, button: number): void {
 		if (this.gettingFiles || this.fading)
 			return;
@@ -266,6 +274,18 @@ class FilePicker {
 			target = target.parentNode as HTMLElement;
 			if (!target)
 				return;
+		}
+
+		if (target.classList.contains("list-item")) {
+			const childNodes = target.childNodes;
+			for (let i = 0; i < childNodes.length; i++) {
+				if (childNodes[i] && (childNodes[i] as HTMLElement).tagName && !(childNodes[i] as HTMLElement).classList.contains("hidden")) {
+					target = childNodes[i] as HTMLElement;
+					if (target.getAttribute("data-check"))
+						CheckboxControl.setChecked(target as HTMLButtonElement, !CheckboxControl.isChecked(target as HTMLButtonElement));
+					break;
+				}
+			}
 		}
 
 		if (target.getAttribute("data-check")) {

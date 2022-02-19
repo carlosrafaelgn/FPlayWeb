@@ -76,8 +76,8 @@
 			--playlist-item-size: 56px;
 		}
 	</style>
-	<link rel="stylesheet" type="text/css" href="assets/css/graphicalFilterEditor.css?20220213" />
-	<link rel="stylesheet" type="text/css" href="assets/css/style.css?20220213" />
+	<link rel="stylesheet" type="text/css" href="assets/css/graphicalFilterEditor.css?20220219" />
+	<link rel="stylesheet" type="text/css" href="assets/css/style.css?20220219" />
 </head>
 <body>
 	<div id="ruler" style="position: absolute; z-index: -1; left: 0; top: 0; height: 8rem; visibility: hidden; pointer-events: none;"></div>
@@ -128,7 +128,7 @@
 				<div id="top-message" class="fade"></div>
 			</div>
 
-			<div id="playlist-control" tabindex="-1"></div>
+			<div id="playlist-control"></div>
 
 			<div id="middle-panel" class="toolbar border-top">
 				<button type="button" class="btn square transparent toolbar-left hidden-normal" onclick="AppUI.toggleView(true)" title="ShowEffects" data-string="aria-label|ShowEffects">
@@ -180,7 +180,7 @@
 		//<![CDATA[
 		"use strict";
 
-		var CACHE_VERSION = "20220213";
+		var CACHE_VERSION = "20220219";
 
 		(function () {
 			if (location.href.startsWith("file://")) {
