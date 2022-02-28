@@ -80,6 +80,7 @@ class Alert {
 
 		if (!Alert.element) {
 			Alert.element = document.createElement("div");
+			Alert.element.setAttribute("role", "alert");
 			Alert.element.className = "alert fade";
 			Alert.element.onclick = Alert.hide;
 

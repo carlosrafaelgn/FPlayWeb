@@ -29,7 +29,7 @@ interface IntermediateNodeFactory {
 }
 
 class Player {
-	public static readonly maxVolume = 40;
+	public static readonly minVolume = -40;
 
 	private static readonly nop = function () { };
 
@@ -54,15 +54,15 @@ class Player {
 	private readonly mediaSession: any | null;
 
 	private readonly boundPlaybackError: any;
-	private readonly boundNotifySongChanged: any;
+	private readonly boundNotifySongChange: any;
 	private readonly boundCheckAudioContext: any;
-	//private readonly boundNotifyLoadingChanged: any;
-	//private readonly boundNotifyPausedChanged: any;
+	//private readonly boundNotifyLoadingChange: any;
+	//private readonly boundNotifyPausedChange: any;
 
-	public onsongchanged: ((song: Song | null) => void) | null;
-	public onloadingchanged: ((loading: boolean) => void) | null;
-	public onpausedchanged: ((paused: boolean) => void) | null;
-	public oncurrenttimeschanged: ((currentTimeS: number) => void) | null;
+	public onsongchange: ((song: Song | null) => void) | null;
+	public onloadingchange: ((loading: boolean) => void) | null;
+	public onpausedchange: ((paused: boolean) => void) | null;
+	public oncurrenttimeschange: ((currentTimeS: number) => void) | null;
 	public onerror: ((message: string) => void) | null;
 
 	public constructor(volume?: number, ...intermediateNodesFactory: IntermediateNodeFactory[]) {
@@ -78,7 +78,7 @@ class Player {
 			latencyHint
 		})) as AudioContext;
 		this.audioContext.suspend();
-		this.audioContext.onstatechange = this.audioContextStateChanged.bind(this);
+		this.audioContext.onstatechange = this.audioContextStateChange.bind(this);
 
 		let intermediateNodes: ConnectableNode[];
 
@@ -90,30 +90,30 @@ class Player {
 			intermediateNodes = [];
 		}
 
-		this.onsongchanged = null;
-		this.onloadingchanged = null;
-		this.onpausedchanged = null;
-		this.oncurrenttimeschanged = null;
+		this.onsongchange = null;
+		this.onloadingchange = null;
+		this.onpausedchange = null;
+		this.oncurrenttimeschange = null;
 		this.onerror = null;
 
 		this.boundPlaybackError = this.playbackError.bind(this);
-		this.boundNotifySongChanged = this.notifySongChanged.bind(this);
+		this.boundNotifySongChange = this.notifySongChange.bind(this);
 		this.boundCheckAudioContext = this.checkAudioContext.bind(this);
-		//this.boundNotifyLoadingChanged = this.notifyLoadingChanged.bind(this);
-		//this.boundNotifyPausedChanged = this.notifyPausedChanged.bind(this);
+		//this.boundNotifyLoadingChange = this.notifyLoadingChange.bind(this);
+		//this.boundNotifyPausedChange = this.notifyPausedChange.bind(this);
 
 		this.audio = new Audio();
 		this.audio.loop = false;
 		this.audio.controls = false;
 		this.audio.volume = 1;
 
-		const boundPlaybackLoadStarted = this.playbackLoadStarted.bind(this);
-		this.audio.onwaiting = boundPlaybackLoadStarted;
-		this.audio.onloadstart = boundPlaybackLoadStarted;
+		const boundPlaybackLoadStart = this.playbackLoadStart.bind(this);
+		this.audio.onwaiting = boundPlaybackLoadStart;
+		this.audio.onloadstart = boundPlaybackLoadStart;
 
-		this.audio.oncanplay = this.playbackLoadEnded.bind(this);
+		this.audio.oncanplay = this.playbackLoadEnd.bind(this);
 
-		this.audio.onended = this.playbackEnded.bind(this);
+		this.audio.onended = this.playbackEnd.bind(this);
 		this.audio.onerror = this.boundPlaybackError;
 
 		this.audio.onpause = this.playbackPaused.bind(this);
@@ -126,9 +126,9 @@ class Player {
 		this.audio.onabort = boundPlaybackAborted;
 		this.audio.onemptied = boundPlaybackAborted;
 
-		this.audio.ondurationchange = this.playbackLengthChanged.bind(this);
+		this.audio.ondurationchange = this.playbackLengthChange.bind(this);
 
-		this.audio.ontimeupdate = this.currentTimeChanged.bind(this);
+		this.audio.ontimeupdate = this.currentTimeChange.bind(this);
 
 		this.source = this.audioContext.createMediaElementSource(this.audio);
 
@@ -137,11 +137,11 @@ class Player {
 		this._paused = true;
 		this._playlist = null;
 		this._currentSong = null;
-		this._volume = Player.maxVolume;
+		this._volume = 0;
 
 		this.lastObjectURL = null;
 
-		this.volume = (volume === undefined ? Player.maxVolume : volume);
+		this.volume = (volume === undefined ? 0 : volume);
 
 		this.sourceNode = new SourceNode(this.source);
 		this.sourceNode.enabled = true;
@@ -226,13 +226,12 @@ class Player {
 	}
 
 	public set volume(volume: number) {
-		volume |= 0;
-		this._volume = (volume <= 0 ? 0 : (volume >= Player.maxVolume ? Player.maxVolume : volume));
+		this._volume = Math.max(Player.minVolume, Math.min(0, volume | 0));
 
 		// Apparently, browsers assume volume is on a linear scale...
 		// https://github.com/whatwg/html/issues/5501
 		if (this.audio)
-			this.audio.volume = (volume ? Math.pow(10, (this._volume - Player.maxVolume) / 20) : 0);
+			this.audio.volume = ((volume <= Player.minVolume) ? 0 : Math.pow(10, this._volume / 20));
 	}
 
 	public get playlist(): Playlist | null {
@@ -255,7 +254,7 @@ class Player {
 		return (this._currentSong ? ((this.audio.currentTime * 1000) | 0) : -1);
 	}
 
-	private audioContextStateChanged(): void {
+	private audioContextStateChange(): void {
 		if (!this._alive)
 			return;
 
@@ -265,27 +264,27 @@ class Player {
 		}
 	}
 
-	private playbackLoadStarted(): void {
+	private playbackLoadStart(): void {
 		if (!this._alive || this._loading)
 			return;
 
 		this._loading = true;
-		//queueMicrotask(this.boundNotifyLoadingChanged);
-		if (this.onloadingchanged)
-			this.onloadingchanged(true);
+		//queueMicrotask(this.boundNotifyLoadingChange);
+		if (this.onloadingchange)
+			this.onloadingchange(true);
 	}
 
-	private playbackLoadEnded(): void {
+	private playbackLoadEnd(): void {
 		if (!this._alive || !this._loading)
 			return;
 
 		this._loading = false;
-		//queueMicrotask(this.boundNotifyLoadingChanged);
-		if (this.onloadingchanged)
-			this.onloadingchanged(false);
+		//queueMicrotask(this.boundNotifyLoadingChange);
+		if (this.onloadingchange)
+			this.onloadingchange(false);
 	}
 
-	private playbackEnded(): void {
+	private playbackEnd(): void {
 		if (!this._alive)
 			return;
 
@@ -355,9 +354,9 @@ class Player {
 
 		this._paused = true;
 		this.suspendAudioContext(true);
-		//queueMicrotask(this.boundNotifyPausedChanged);
-		if (this.onpausedchanged)
-			this.onpausedchanged(true);
+		//queueMicrotask(this.boundNotifyPausedChange);
+		if (this.onpausedchange)
+			this.onpausedchange(true);
 		if (App.hostInterface)
 			App.hostInterface.setPaused(true);
 	}
@@ -368,9 +367,9 @@ class Player {
 
 		this._paused = false;
 		this.resumeAudioContext();
-		//queueMicrotask(this.boundNotifyPausedChanged);
-		if (this.onpausedchanged)
-			this.onpausedchanged(false);
+		//queueMicrotask(this.boundNotifyPausedChange);
+		if (this.onpausedchange)
+			this.onpausedchange(false);
 		if (App.hostInterface)
 			App.hostInterface.setPaused(false);
 	}
@@ -381,40 +380,40 @@ class Player {
 
 		if (this._loading) {
 			this._loading = false;
-			//queueMicrotask(this.boundNotifyLoadingChanged);
-			if (this.onloadingchanged)
-				this.onloadingchanged(false);
+			//queueMicrotask(this.boundNotifyLoadingChange);
+			if (this.onloadingchange)
+				this.onloadingchange(false);
 		}
 
 		if (!this._paused) {
 			this._paused = true;
 			this.suspendAudioContext(true);
-			//queueMicrotask(this.boundNotifyPausedChanged);
-			if (this.onpausedchanged)
-				this.onpausedchanged(true);
+			//queueMicrotask(this.boundNotifyPausedChange);
+			if (this.onpausedchange)
+				this.onpausedchange(true);
 			if (App.hostInterface)
 				App.hostInterface.setPaused(true);
 		}
 	}
 
-	private playbackLengthChanged(): void {
+	private playbackLengthChange(): void {
 		if (!this._alive || !this.audio || !this._playlist || !this._currentSong)
 			return;
 
-		this._playlist.songLengthChanged(this._currentSong, this.audio.duration);
+		this._playlist.updateSongLength(this._currentSong, this.audio.duration);
 		if (this.mediaSession && this.audio.duration > 0 && ("setPositionState" in this.mediaSession))
 			this.mediaSession.setPositionState({ duration: this.audio.duration });
 	}
 
-	private currentTimeChanged(): void {
+	private currentTimeChange(): void {
 		if (!this._alive || !this.audio || !this._currentSong)
 			return;
 
-		if (this.oncurrenttimeschanged)
-			this.oncurrenttimeschanged(this.audio.currentTime);
+		if (this.oncurrenttimeschange)
+			this.oncurrenttimeschange(this.audio.currentTime);
 	}
 
-	private notifySongChanged(): void {
+	private notifySongChange(): void {
 		if (this._alive) {
 			const currentSong = this._currentSong,
 				mediaSession = this.mediaSession;
@@ -440,19 +439,19 @@ class Player {
 				}
 			}
 
-			if (this.onsongchanged)
-				this.onsongchanged(currentSong);
+			if (this.onsongchange)
+				this.onsongchange(currentSong);
 		}
 	}
 
-	/*private notifyLoadingChanged(): void {
-		if (this._alive && this.onloadingchanged)
-			this.onloadingchanged(this._loading);
+	/*private notifyLoadingChange(): void {
+		if (this._alive && this.onloadingchange)
+			this.onloadingchange(this._loading);
 	}
 
-	private notifyPausedChanged(): void {
-		if (this._alive && this.onpausedchanged)
-			this.onpausedchanged(this._paused);
+	private notifyPausedChange(): void {
+		if (this._alive && this.onpausedchange)
+			this.onpausedchange(this._paused);
 	}*/
 
 	public previous(): void {
@@ -510,7 +509,7 @@ class Player {
 			}
 
 			this._currentSong = currentSong;
-			queueMicrotask(this.boundNotifySongChanged);
+			queueMicrotask(this.boundNotifySongChange);
 
 			this.resumeAudioContext();
 
@@ -607,23 +606,23 @@ class Player {
 
 			if (this._loading) {
 				this._loading = false;
-				//queueMicrotask(this.boundNotifyLoadingChanged);
-				if (this.onloadingchanged)
-					this.onloadingchanged(false);	
+				//queueMicrotask(this.boundNotifyLoadingChange);
+				if (this.onloadingchange)
+					this.onloadingchange(false);	
 			}
 
 			if (!this._paused) {
 				this._paused = true;
-				//queueMicrotask(this.boundNotifyPausedChanged);
-				if (this.onpausedchanged)
-					this.onpausedchanged(true);
+				//queueMicrotask(this.boundNotifyPausedChange);
+				if (this.onpausedchange)
+					this.onpausedchange(true);
 				if (App.hostInterface)
 					App.hostInterface.setPaused(true);
 			}
 
 			this._currentSong = null;
-			//queueMicrotask(this.boundNotifySongChanged);
-			this.notifySongChanged();
+			//queueMicrotask(this.boundNotifySongChange);
+			this.notifySongChange();
 		}
 
 		this.suspendAudioContext(false);

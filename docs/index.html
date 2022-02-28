@@ -76,8 +76,8 @@
 			--playlist-item-size: 56px;
 		}
 	</style>
-	<link rel="stylesheet" type="text/css" href="assets/css/graphicalFilterEditor.css?20220219" />
-	<link rel="stylesheet" type="text/css" href="assets/css/style.css?20220219" />
+	<link rel="stylesheet" type="text/css" href="assets/css/graphicalFilterEditor.css?20220228" />
+	<link rel="stylesheet" type="text/css" href="assets/css/style.css?20220228" />
 </head>
 <body>
 	<div id="ruler" style="position: absolute; z-index: -1; left: 0; top: 0; height: 8rem; visibility: hidden; pointer-events: none;"></div>
@@ -121,42 +121,45 @@
 	<noscript>Sorry! You need to enable JavaScript in order to run the player :(</noscript>
 
 	<div id="panel-container" class="web">
-		<div id="fixed-panel">
-			<div id="top-panel" class="toolbar border-bottom">
-				<div id="title-label"><i class="large margin icon-title pink"></i>-</div>
-				<div id="artist-label"><i class="large margin icon-artist orange"></i>-</div>
-				<div id="top-message" class="fade"></div>
-			</div>
+		<main id="fixed-panel">
+			<header id="top-panel" class="toolbar border-bottom">
+				<div aria-atomic="true" aria-live="polite">
+					<p id="title-label"><i class="large margin icon-title pink" data-string="data-title|TitleLabel"></i>-</p>
+					<p id="artist-label"><i class="large margin icon-artist orange" data-string="data-title|ArtistLabel"></i>-</p>
+					<p class="sr-only"><span data-string="DurationLabel"></span><span id="assistive-song-length-label"></span></p>
+				</div>
+				<div id="top-message" class="fade" aria-atomic="true" aria-live="assertive"></div>
+			</header>
 
 			<div id="playlist-control"></div>
 
 			<div id="middle-panel" class="toolbar border-top">
-				<button type="button" class="btn square transparent toolbar-left hidden-normal" onclick="AppUI.toggleView(true)" title="ShowEffects" data-string="aria-label|ShowEffects">
+				<button type="button" class="btn square transparent toolbar-left hidden-normal" onclick="AppUI.toggleView(true)" title="ShowEffects">
 					<i class="large icon-filter"></i>
 				</button>
-				<button type="button" class="btn square green transparent" onclick="AppUI.addFiles()" title="AddSongs" data-string="aria-label|AddSongs">
+				<button type="button" class="btn square green transparent" onclick="AppUI.addFiles()" title="AddSongs">
 					<i class="large icon-add-title green"></i>
-				</button><button id="add-folder-button" type="button" class="btn square orange transparent" onclick="AppUI.addFiles(true)" title="AddFolders" data-string="aria-label|AddFolders">
+				</button><button id="add-folder-button" type="button" class="btn square orange transparent" onclick="AppUI.addFiles(true)" title="AddFolders">
 					<i class="large icon-add-folder orange"></i>
-				</button><button type="button" class="btn square red transparent" onclick="AppUI.toggleDeleteMode(true)" title="DeleteSongs" data-string="aria-label|DeleteSongs">
+				</button><button type="button" class="btn square red transparent" onclick="AppUI.toggleDeleteMode(true)" title="DeleteSongs">
 					<i class="large icon-clear red"></i>
-				</button><button type="button" class="btn square transparent toolbar-right" onclick="AppUI.showAbout()" title="Menu" data-string="aria-label|Menu">
+				</button><button type="button" class="btn square transparent toolbar-right" onclick="AppUI.showAbout()" title="Menu">
 					<i class="large icon-menu"></i>
 				</button>
 			</div>
 
 			<div id="bottom-panel" class="toolbar border-top">
-				<div id="seek-slider" data-string="aria-label|Seek"></div>
+				<div id="seek-slider"></div>
 				<div>
-					<button type="button" class="btn square transparent" onclick="App.player && App.player.previous()" title="Previous" data-string="aria-label|Previous"><i class="large icon-previous"></i></button><button type="button" class="btn square transparent" onclick="App.player && App.player.playPause()" title="PlayPause" data-string="aria-label|PlayPause"><i class="large icon-play" id="i-play"></i><i class="large icon-pause hidden" id="i-pause"></i></button><button type="button" class="btn square transparent" onclick="App.player && App.player.stop()" title="Stop" data-string="aria-label|Stop" id="button-stop"><i class="large icon-stop"></i></button><button type="button" class="btn square transparent" onclick="App.player && App.player.next()" title="Next" data-string="aria-label|Next"><i class="large icon-next"></i></button><span class="left-margin" id="volume-slider" data-string="aria-label|Volume"></span>
+					<button type="button" class="btn square transparent" onclick="App.player && App.player.previous()" title="Previous"><i class="large icon-previous"></i></button><button type="button" class="btn square transparent" onclick="App.player && App.player.playPause()" title="PlayPause"><i class="large icon-play" id="i-play"></i><i class="large icon-pause hidden" id="i-pause"></i></button><button type="button" class="btn square transparent" onclick="App.player && App.player.stop()" title="Stop" id="button-stop"><i class="large icon-stop"></i></button><button type="button" class="btn square transparent" onclick="App.player && App.player.next()" title="Next"><i class="large icon-next"></i></button><span class="left-margin" id="volume-slider"></span>
 				</div>
 			</div>
-		</div>
+		</main>
 
-		<div id="optional-panel" class="scrollable">
+		<aside id="optional-panel" class="scrollable">
 			<div id="optional-panel-container">
 				<div class="toolbar border-bottom hidden-normal">
-					<button type="button" class="btn transparent" onclick="AppUI.toggleView(true)" title="ShowPlaylist" data-string="ShowPlaylist"><i class="large margin icon-playlist"></i></button>
+					<button id="toggle-view-button" type="button" class="btn transparent" onclick="AppUI.toggleView(true)" data-string="ShowPlaylist"><i class="large margin icon-playlist"></i></button>
 				</div>
 
 				<div class="toolbar">
@@ -165,22 +168,22 @@
 
 				<div id="filter-container" class="top-margin"></div>
 
-				<div class="border-top"><input class="btn transparent" type="checkbox" id="stereo-panner-control-enabled" title="Panning" data-icon="icon-multiple-stop" /><span class="left-margin" id="stereo-panner-slider" data-string="aria-label|Panning"></span></div>
+				<div class="border-top"><input class="btn transparent" type="checkbox" id="stereo-panner-control-enabled" title="Panning" data-icon="icon-multiple-stop" /><span class="left-margin" id="stereo-panner-slider"></span></div>
 
 				<div class="border-top" id="mono-down-mixer-control-container"><input class="btn transparent" type="checkbox" id="mono-down-mixer-control-enabled" title="DownMixToMono" data-icon="icon-call-merge-flipped" /></div>
 			</div>
-		</div>
+		</aside>
 	</div>
 
 	<div id="cover" class="fade in"></div>
 
-	<i class="loading" id="icon-loading"></i>
+	<i class="loading" id="icon-loading" aria-hidden="true"></i>
 
 	<script type="text/javascript">
 		//<![CDATA[
 		"use strict";
 
-		var CACHE_VERSION = "20220219";
+		var CACHE_VERSION = "20220228";
 
 		(function () {
 			if (location.href.startsWith("file://")) {
@@ -279,10 +282,12 @@
 					// https://caniuse.com/wasm / https://caniuse.com/mdn-javascript_operators_await
 					// if a browser has support for WebAssembly it also has support for async/await
 					// (but not the opposite).
-					if (webAssemblyInWindow)
+
+					// We are always going with ES6 from now on... at least for now ;)
+					//if (webAssemblyInWindow)
 						loadMainScript("");
-					else
-						loadMainScript("es6");
+					//else
+					//	loadMainScript("es6");
 				}, function (msg, url, line, col, error) {
 					showError("Impossible to load the library script :(", arguments);
 				});

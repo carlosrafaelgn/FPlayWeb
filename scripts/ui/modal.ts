@@ -42,7 +42,9 @@ interface ModalOptions {
 	text?: string;
 	html?: string | HTMLElement | HTMLElement[];
 	title?: string | HTMLElement;
+	titleHeader?: HTMLElement;
 	titleStringKey?: string;
+	returnFocusElement?: HTMLElement | null;
 	transparentBackground?: boolean;
 	rightHeader?: boolean;
 	leftBody?: boolean;
@@ -55,7 +57,7 @@ interface ModalOptions {
 	buttons?: ModalButtonOptions[];
 	onbuttonclick?: ModalButtonCallback;
 	onshowing?: () => void;
-	onshown?: () => void;
+	onshown?: () => HTMLElement | null;
 	onhiding?: () => boolean;
 	onhidden?: () => void;
 	onok?: () => void;
@@ -63,6 +65,8 @@ interface ModalOptions {
 }
 
 class Modal {
+	private static internalId = 0;
+
 	private static modal: Modal | null = null;
 
 	public static get visible(): boolean {
@@ -175,13 +179,19 @@ class Modal {
 		this.containerElement = containerElement;
 		containerElement.className = (!options.transparentBackground ? "modal-container fade background" : "modal-container fade");
 
-		const modalElement = document.createElement("form");
+		const headerId = "modalHeader" + Modal.internalId,
+			modalElement = document.createElement("form");
 		this.modalElement = modalElement;
+		modalElement.setAttribute("tabindex", "-1");
+		modalElement.setAttribute("role", "dialog");
+		modalElement.setAttribute("aria-modal", "true");
+		modalElement.setAttribute("aria-labelledby", headerId);
 		modalElement.className = "modal" + (options.fullHeight ? " full-height" : "");
 		modalElement.onsubmit = this.submit.bind(this);
 
 		const modalHeaderElement = document.createElement("div");
 		this.modalHeaderElement = modalHeaderElement;
+		(options.titleHeader || modalHeaderElement).setAttribute("id", headerId);
 		modalHeaderElement.className = "modal-header padding" + (options.rightHeader ? " right" : "");
 		if (options.title) {
 			if ((typeof options.title) === "string")
@@ -288,8 +298,13 @@ class Modal {
 			DelayControl.delayFadeCB(() => {
 				this.fading = false;
 
-				if (this.options.onshown)
-					this.options.onshown();
+				const element = ((this.options.onshown && this.options.onshown()) || this.modalElement);
+
+				try {
+					element.focus();
+				} catch (ex: any) {
+					// Just ignore...
+				}
 			});
 		});
 	}
@@ -308,6 +323,14 @@ class Modal {
 
 		DelayControl.delayFadeCB(() => {
 			Modal.modal = null;
+
+			if (this.options.returnFocusElement) {
+				try {
+					this.options.returnFocusElement.focus();
+				} catch (ex: any) {
+					// Just ignore...
+				}
+			}
 
 			if (this.options.onhidden)
 				this.options.onhidden();
@@ -329,7 +352,7 @@ class Modal {
 	}
 
 	private documentKeyDown(e: KeyboardEvent): void {
-		if (e.key === "Escape")
+		if (!e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey && !e.repeat && e.key === "Escape")
 			this.defaultCancelActionInternal();
 	}
 

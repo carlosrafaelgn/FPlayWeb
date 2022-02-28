@@ -68,6 +68,23 @@ class Strings {
 	public static PlayPause = "Play / Pause";
 	public static Stop = "Stop";
 	public static Next = "Next";
+	public static Seek = "Seek";
+	public static Title = "Title";
+	public static TitleLabel = "Title: ";
+	public static CurrentTitleLabel = "Current title: ";
+	public static Artist = "Artist";
+	public static ArtistLabel = "Artist: ";
+	public static CurrentArtistLabel = "Current artist: ";
+	public static Duration = "Duration";
+	public static DurationLabel = "Duration: ";
+	public static Playlist = "Playlist";
+	public static FileList = "File list";
+	public static CurrentPathLabel = "Current path: ";
+	public static Loading = "Loading";
+	public static LoadingLabel = "Loading\u2026 ";
+	public static LoadingCurrentPathLabel = "Loading current path: ";
+	public static Folder = "Folder";
+	public static FolderLabel = "Folder: ";
 	public static LeftAbbrev = "L";
 	public static RightAbbrev = "R";
 	public static Volume = "Volume";
@@ -139,6 +156,23 @@ This project is licensed under the <a target="_blank" href="https://github.com/c
 			Strings.PlayPause = "Tocar / Pausar";
 			Strings.Stop = "Parar";
 			Strings.Next = "Próxima";
+			Strings.Seek = "Buscar";
+			Strings.Title = "Título";
+			Strings.TitleLabel = "Título: ";
+			Strings.CurrentTitleLabel = "Título atual: ";
+			Strings.Artist = "Artista";
+			Strings.ArtistLabel = "Artista: ";
+			Strings.CurrentArtistLabel = "Artista atual: ";
+			Strings.Duration = "Duração";
+			Strings.DurationLabel = "Duração: ";
+			Strings.Playlist = "Playlist";
+			Strings.FileList = "Lista de arquivos";
+			Strings.CurrentPathLabel = "Caminho atual: ";
+			Strings.Loading = "Carregando";
+			Strings.LoadingLabel = "Carregando\u2026 ";
+			Strings.LoadingCurrentPathLabel = "Carregando camino atual: ";
+			Strings.Folder = "Pasta";
+			Strings.FolderLabel = "Pasta: ";
 			Strings.LeftAbbrev = "E";
 			Strings.RightAbbrev = "D";
 			//Strings.Volume = "Volume";
@@ -221,5 +255,12 @@ Este projeto é licenciado sob a <a target="_blank" href="https://github.com/car
 			element.appendChild(document.createTextNode(text));
 		else
 			node.nodeValue = text;
+	}
+
+	public static createSrOnlyText(text: string): HTMLSpanElement {
+		const span = document.createElement("span");
+		span.className = "sr-only";
+		Strings.changeText(span, text);
+		return span;
 	}
 }

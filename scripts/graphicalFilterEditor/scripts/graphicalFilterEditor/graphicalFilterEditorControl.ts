@@ -190,6 +190,7 @@ class GraphicalFilterEditorControl {
 
 		this.element = element;
 		element.className = "GE";
+		element.setAttribute("aria-hidden", "true");
 
 		this.boundMouseMove = this.mouseMove.bind(this);
 

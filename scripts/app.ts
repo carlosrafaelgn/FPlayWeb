@@ -222,14 +222,6 @@ class App {
 		App.installPrompt = e;
 	}
 
-	private static adjustCover(): void {
-		const cover = document.getElementById("cover");
-		if (cover) {
-			const rect = document.body.getBoundingClientRect();
-			cover.style.transform = `scale(${Math.ceil(rect.right * 0.5)}, ${Math.ceil(rect.bottom * 0.5)})`;
-		}
-	}
-
 	private static sortFiles(files: File[]): File[] {
 		if (files.length) {
 			const comparer = Strings.comparer;
@@ -277,6 +269,7 @@ class App {
 							Modal.show({
 								html: Strings.PleaseRefresh,
 								title: Strings.UpdateAvailable,
+								returnFocusElement: AppUI.playlistControlElement,
 								okText: Strings.Refresh,
 								okCancel: true,
 								onok: function () {
@@ -288,9 +281,6 @@ class App {
 				});
 			}
 		}
-
-		window.addEventListener("resize", App.adjustCover);
-		App.adjustCover();
 
 		if (App.ipcRenderer) {
 			App.ipcRenderer.on("mainWindowStateChanged", App.mainWindowStateChanged);
@@ -337,7 +327,7 @@ class App {
 			function (audioContext) {
 				App.stereoPannerControl = new StereoPannerControl(document.getElementById("stereo-panner-slider") as HTMLSpanElement, audioContext);
 				App.stereoPannerControl.enabled = !!appSettings.stereoPannerControlEnabled;
-				App.stereoPannerControl.onappliedgainchanged = function (appliedGain) {
+				App.stereoPannerControl.onappliedgainchange = function (appliedGain) {
 					if (App.monoDownMixerControl)
 						App.monoDownMixerControl.multiplier = 1 / (1 + appliedGain);
 				};
@@ -357,21 +347,6 @@ class App {
 			App.player.playlist = playlist;
 
 		AppUI.init(appSettings);
-
-		const cover = document.getElementById("cover");
-		if (cover)
-			cover.classList.remove("in");
-
-		DelayControl.delayShortCB(function () {
-			AppUI.centerCurrentSongIntoView();
-
-			DelayControl.delayFadeCB(function () {
-				window.removeEventListener("resize", App.adjustCover);
-				const cover = document.getElementById("cover");
-				if (cover)
-					document.body.removeChild(cover);
-			});
-		});
 
 		App.loading = false;
 	}

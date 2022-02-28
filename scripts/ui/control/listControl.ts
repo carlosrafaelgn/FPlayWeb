@@ -25,6 +25,8 @@
 //
 
 class ListControlItem<T> {
+	private static internalId = 0;
+
 	// index is only used when useVirtualItems is false
 	public index: number;
 	public selected: boolean;
@@ -41,6 +43,10 @@ class ListControlItem<T> {
 		this.keyboard = false;
 		this.item = null;
 		this.element = element;
+		element.setAttribute("id", "listControlItem" + (ListControlItem.internalId++));
+		element.setAttribute("role", "row");
+		element.setAttribute("aria-selected", "false");
+		element.setAttribute("aria-readonly", "true");
 	}
 
 	public reset(): void {
@@ -49,8 +55,10 @@ class ListControlItem<T> {
 		this.current = false;
 		this.keyboard = false;
 		this.item = null;
-		if (this.element)
+		if (this.element) {
 			this.element.classList.remove("current", "selected", "keyboard");
+			this.element.setAttribute("aria-selected", "false");
+		}
 	}
 
 	public zero(): void {
@@ -78,8 +86,9 @@ class ListControl<T> {
 	private firstIndex: number;
 	private lastIndex: number;
 	private currentListItem: T | null;
-	// currentItem is only used when useVirtualItems is false
+	// currentItem and keyboardItem are only used when useVirtualItems is false
 	private currentItem: ListControlItem<T> | null;
+	private keyboardItem: ListControlItem<T> | null;
 	private clientHeight: number;
 	private containerHeight: number;
 	private scrollbarPadding: boolean;
@@ -99,14 +108,19 @@ class ListControl<T> {
 	private readonly boundAdjustScrollbarPaddingFromResize: any;
 
 	public deleteMode: boolean;
-	public onitemclicked: ((item: T, index: number, button: number) => void) | null;
-	public onitemcontrolclicked: ((item: T, index: number, button: number, target: HTMLElement) => void) | null;
+	public onitemclick: ((item: T, index: number, button: number) => void) | null;
+	public onitemcontrolclick: ((item: T, index: number, button: number, target: HTMLElement) => void) | null;
 	public onitemcontextmenu: ((item: T, index: number) => void) | null;
 
-	public constructor(element: string | HTMLElement, useVirtualItems: boolean) {
+	public constructor(element: string | HTMLElement, label: string, useVirtualItems: boolean) {
 		this.element = (((typeof element) === "string") ? document.getElementById(element as string) : element) as HTMLElement;
 		this.element.classList.add("list", "scrollable");
 		this.element.style.padding = "0";
+		this.element.setAttribute("role", "grid");
+		this.element.setAttribute("aria-label", label);
+		this.element.setAttribute("aria-readonly", "true");
+		this.element.setAttribute("aria-rowcount", "0");
+		this.element.removeAttribute("aria-activedescendant");
 		if (!this.element.getAttribute("tabindex"))
 			this.element.setAttribute("tabindex", "0");
 
@@ -114,6 +128,7 @@ class ListControl<T> {
 
 		const container = document.createElement("div");
 		container.className = "list-container";
+		container.setAttribute("role", "rowgroup");
 		this.container = container;
 		this.element.appendChild(container);
 
@@ -143,6 +158,7 @@ class ListControl<T> {
 		this.lastIndex = 0;
 		this.currentListItem = null;
 		this.currentItem = null;
+		this.keyboardItem = null;
 		this.clientHeight = 1;
 		this.containerHeight = 0;
 		this.scrollbarPadding = false;
@@ -157,12 +173,12 @@ class ListControl<T> {
 		this.lastKeyboardIndex = -1;
 
 		this.deleteMode = false;
-		this.onitemclicked = null;
-		this.onitemcontrolclicked = null;
+		this.onitemclick = null;
+		this.onitemcontrolclick = null;
 		this.onitemcontextmenu = null;
 
-		container.onclick = this.containerClick.bind(this);
-		container.oncontextmenu = this.containerContextMenu.bind(this);
+		this.element.onclick = this.elementClick.bind(this);
+		this.element.oncontextmenu = this.elementContextMenu.bind(this);
 
 		this.resize();
 
@@ -205,8 +221,12 @@ class ListControl<T> {
 
 			this.prepareAdapter();
 
-			if (!this.useVirtualItems && adapter.list.length)
-				this.notifyItemsAdded(0, adapter.list.length);
+			if (!this.useVirtualItems) {
+				if (adapter.list.length)
+					this.notifyItemsAdded(0, adapter.list.length - 1);
+			} else {
+				this.element.setAttribute("aria-rowcount", adapter.list.length.toString());
+			}
 		}
 	}
 
@@ -301,6 +321,7 @@ class ListControl<T> {
 		this.lastIndex = 0;
 		this.currentListItem = null;
 		this.currentItem = null;
+		this.keyboardItem = null;
 		this.element.scrollTop = 0;
 		this.containerHeight = 0;
 		this.container.style.height = "0";
@@ -311,6 +332,9 @@ class ListControl<T> {
 		} else {
 			this.lastKeyboardIndex = -1;
 		}
+
+		this.element.setAttribute("aria-rowcount", "0");
+		this.element.removeAttribute("aria-activedescendant");
 
 		this.adjustScrollbarPadding();
 	}
@@ -398,13 +422,20 @@ class ListControl<T> {
 				tmp = (keyboardIndex === firstIndex);
 				if (item.keyboard !== tmp) {
 					item.keyboard = tmp;
-					if (tmp)
+					if (tmp) {
 						item.element.classList.add("keyboard");
-					else
+						item.element.setAttribute("aria-selected", "true");
+						this.element.setAttribute("aria-activedescendant", item.element.getAttribute("id") as string);
+					} else {
+						if (this.element.getAttribute("aria-activedescendant") === item.element.getAttribute("id"))
+							this.element.removeAttribute("aria-activedescendant");
 						item.element.classList.remove("keyboard");
+						item.element.setAttribute("aria-selected", "false");
+					}
 				}
 
 				adapter.prepareElement(listItem, firstIndex, length, item.element);
+				item.element.setAttribute("aria-rowindex", firstIndex.toString());
 
 				if (!item.item)
 					container.appendChild(item.element);
@@ -451,10 +482,31 @@ class ListControl<T> {
 			container = this.container;
 
 		if (!this.useVirtualItems) {
-			const visibleCount = this.visibleCount;
+			const visibleCount = this.visibleCount,
+				newKeyboardItem = ((keyboardIndex >= 0 && keyboardIndex < items.length) ? items[keyboardIndex] : null);
 
-			for (let i = 0, firstIndex = this.indexFromY(0); i <= visibleCount && firstIndex < length; i++, firstIndex++)
-				adapter.prepareElement(list.item(firstIndex), firstIndex, length, items[firstIndex].element);
+			if (this.keyboardItem !== newKeyboardItem) {
+				if (this.keyboardItem) {
+					this.keyboardItem.element.classList.remove("keyboard");
+					this.keyboardItem.element.setAttribute("aria-selected", "false");
+				}
+
+				if (newKeyboardItem) {
+					newKeyboardItem.element.classList.add("keyboard");
+					newKeyboardItem.element.setAttribute("aria-selected", "true");
+					this.element.setAttribute("aria-activedescendant", newKeyboardItem.element.getAttribute("id") as string);
+				} else {
+					this.element.removeAttribute("aria-activedescendant");
+				}
+
+				this.keyboardItem = newKeyboardItem;
+			}
+
+			for (let i = 0, firstIndex = this.indexFromY(0); i <= visibleCount && firstIndex < length; i++, firstIndex++) {
+				const element = items[firstIndex].element;
+				adapter.prepareElement(list.item(firstIndex), firstIndex, length, element);
+				element.setAttribute("aria-rowindex", firstIndex.toString());
+			}
 
 			return;
 		}
@@ -491,13 +543,20 @@ class ListControl<T> {
 			tmp = (keyboardIndex === firstIndex);
 			if (item.keyboard !== tmp) {
 				item.keyboard = tmp;
-				if (tmp)
+				if (tmp) {
 					item.element.classList.add("keyboard");
-				else
+					item.element.setAttribute("aria-selected", "true");
+					this.element.setAttribute("aria-activedescendant", item.element.getAttribute("id") as string);
+				} else {
+					if (this.element.getAttribute("aria-activedescendant") === item.element.getAttribute("id"))
+						this.element.removeAttribute("aria-activedescendant");
 					item.element.classList.remove("keyboard");
+					item.element.setAttribute("aria-selected", "false");
+				}
 			}
 
 			adapter.prepareElement(listItem, firstIndex, length, item.element);
+			item.element.setAttribute("aria-rowindex", firstIndex.toString());
 
 			if (!item.item)
 				container.appendChild(item.element);
@@ -561,8 +620,8 @@ class ListControl<T> {
 		}
 	}
 
-	private containerClick(e: MouseEvent): void {
-		if (!this.element || !this.adapter || !e.target) // || !(e.target as HTMLElement).classList.contains("list-item"))
+	private elementClick(e: MouseEvent): void {
+		if (!this.element || !this._adapter || !e.target) // || !(e.target as HTMLElement).classList.contains("list-item"))
 			return;
 
 		const rect = this.element.getBoundingClientRect(),
@@ -576,22 +635,22 @@ class ListControl<T> {
 		if (index >= 0) {
 			this.lastKeyboardIndex = index;
 
-			const item = this.adapter.list.item(index);
+			const item = this._adapter.list.item(index);
 			if (item) {
 				if ((e.target as HTMLElement).classList.contains("list-item")) {
 					if (this.deleteMode)
-						this.adapter.list.removeItems(index, index);
-					else if (this.onitemclicked)
-						this.onitemclicked(item, index, e.button);
-				} else if (this.onitemcontrolclicked) {
-					this.onitemcontrolclicked(item, index, e.button, e.target as HTMLElement);
+						this._adapter.list.removeItems(index, index);
+					else if (this.onitemclick)
+						this.onitemclick(item, index, e.button);
+				} else if (this.onitemcontrolclick) {
+					this.onitemcontrolclick(item, index, e.button, e.target as HTMLElement);
 				}
 			}
 		}
 	}
 
-	private containerContextMenu(e: MouseEvent): boolean {
-		if (!this.element || !this.adapter || !this.onitemcontextmenu || !e.target) // || !(e.target as HTMLElement).classList.contains("list-item"))
+	private elementContextMenu(e: MouseEvent): boolean {
+		if (!this.element || !this._adapter || !this.onitemcontextmenu || !e.target) // || !(e.target as HTMLElement).classList.contains("list-item"))
 			return cancelEvent(e);
 
 		const rect = this.element.getBoundingClientRect(),
@@ -605,7 +664,7 @@ class ListControl<T> {
 		if (index >= 0) {
 			this.lastKeyboardIndex = index;
 
-			const item = this.adapter.list.item(index);
+			const item = this._adapter.list.item(index);
 			if (item)
 				this.onitemcontextmenu(item, index);
 		}
@@ -628,7 +687,8 @@ class ListControl<T> {
 	}
 
 	private elementKeyDown(e: KeyboardEvent): any {
-		if (!this.adapter || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey)
+		const adapter = this._adapter;
+		if (!adapter || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey)
 			return;
 
 		let delta = 0, end = 0;
@@ -666,7 +726,7 @@ class ListControl<T> {
 				return;
 		}
 
-		const length = this.adapter.list.length;
+		const length = adapter.list.length;
 
 		if (length > 0) {
 			let keyboardIndex = this.keyboardIndex;
@@ -675,9 +735,9 @@ class ListControl<T> {
 				keyboardIndex = this.lastKeyboardIndex;
 
 			if (!this.isItemVisible(keyboardIndex)) {
-				keyboardIndex = (this.isItemVisible(this.adapter.list.currentIndex) ?
-					this.adapter.list.currentIndex :
-					this.indexFromY(this.clientHeight >> 1));
+				keyboardIndex = (this.isItemVisible(adapter.list.currentIndex) ?
+					adapter.list.currentIndex :
+					this.indexFromY(0));
 			}
 
 			keyboardIndex = Math.min(length - 1, Math.max(0, keyboardIndex));
@@ -704,22 +764,22 @@ class ListControl<T> {
 			this.refreshVisibleItems();
 
 			if (end > 1) {
-				const item = this.adapter.list.item(keyboardIndex);
+				const item = adapter.list.item(keyboardIndex);
 				if (item) {
 					switch (end) {
 						case 2:
 							if (this.deleteMode)
-								this.adapter.list.removeItems(keyboardIndex, keyboardIndex);
-							else if (this.onitemclicked)
-								this.onitemclicked(item, keyboardIndex, 0);
+								adapter.list.removeItems(keyboardIndex, keyboardIndex);
+							else if (this.onitemclick)
+								this.onitemclick(item, keyboardIndex, 0);
 							break;
 						case 3:
 							if (this.deleteMode) {
-								this.adapter.list.removeItems(keyboardIndex, keyboardIndex);
-							} else if (this.onitemcontrolclicked) {
+								adapter.list.removeItems(keyboardIndex, keyboardIndex);
+							} else if (this.onitemcontrolclick) {
 								const listItem = this.listControlItemFromIndex(keyboardIndex);
 								if (listItem)
-									this.onitemcontrolclicked(item, keyboardIndex, 0, listItem.element);
+									this.onitemcontrolclick(item, keyboardIndex, 0, listItem.element);
 							}
 							break;
 					}
@@ -736,26 +796,24 @@ class ListControl<T> {
 	private elementKeyUp(e: KeyboardEvent): any {
 		// Apparently, onkeyup is called after onfocus (when the
 		// user navigates to the control using Tab or Shift+Tab)
-		if (!this.adapter || e.ctrlKey || e.metaKey || e.altKey || e.key !== "Tab" || !this.focused)
+		const adapter = this._adapter;
+		if (!adapter || e.ctrlKey || e.metaKey || e.altKey || e.key !== "Tab" || !this.focused)
 			return;
 
-		const length = this.adapter.list.length;
+		const length = adapter.list.length;
 
 		if (!length)
 			return;
 
 		let keyboardIndex = Math.min(length - 1, Math.max(0, this.lastKeyboardIndex));
 
-		if (!this.isItemVisible(keyboardIndex)) {
-			keyboardIndex = (this.isItemVisible(this.adapter.list.currentIndex) ?
-				this.adapter.list.currentIndex :
-				this.indexFromY(this.clientHeight >> 1));
+		if (!this.isItemVisible(keyboardIndex))
+			keyboardIndex = (this.isItemVisible(adapter.list.currentIndex) ?
+				adapter.list.currentIndex :
+				this.indexFromY(0));
 
-			this.keyboardIndex = keyboardIndex;
-			this.bringItemIntoView(keyboardIndex);
-		} else {
-			this.keyboardIndex = keyboardIndex;
-		}
+		this.keyboardIndex = keyboardIndex;
+		this.bringItemIntoView(keyboardIndex);
 
 		this.refreshVisibleItems();
 	}
@@ -772,7 +830,7 @@ class ListControl<T> {
 	}
 
 	private listControlItemFromIndex(index: number): ListControlItem<T> | null {
-		if (!this.adapter || !this.items)
+		if (!this.items)
 			return null;
 
 		const items = this.items;
@@ -790,10 +848,10 @@ class ListControl<T> {
 	}
 
 	public indexFromY(y: number): number {
-		if (!this.element || !this.adapter)
+		if (!this.element || !this._adapter)
 			return -1;
 		const index = ((y + this.element.scrollTop + 0.9) / this.itemHeightAndMargin) | 0;
-		return ((index < 0 || index >= this.adapter.list.length) ? -1 : index);
+		return ((index < 0 || index >= this._adapter.list.length) ? -1 : index);
 	}
 
 	public isItemVisible(index: number): boolean {
@@ -835,7 +893,7 @@ class ListControl<T> {
 		if (this.useVirtualItems) {
 			this.refreshVisibleItems();
 		} else {
-			const adapter = this.adapter,
+			const adapter = this._adapter,
 				count = lastIndex - firstIndex + 1;
 
 			if (!adapter || count <= 0)
@@ -853,6 +911,7 @@ class ListControl<T> {
 					item = new ListControlItem<T>(adapter.createEmptyElement("list-item real"));
 
 				adapter.prepareElement(listItem, i, length, item.element);
+				item.element.setAttribute("aria-rowindex", i.toString());
 				newItems[i - firstIndex] = item;
 
 				if (currentListItem === listItem) {
@@ -882,19 +941,28 @@ class ListControl<T> {
 			for (let i = 0; i < count; i++)
 				container.insertBefore(newItems[i].element, insertBeforeReference);
 
-			for (let i = items.length - 1; i > lastIndex; i--)
-				adapter.prepareElementIndexOrLengthChanged(list.item(i), i, length, items[i].element);
+			for (let i = items.length - 1; i > lastIndex; i--) {
+				const element = items[i].element;
+				adapter.prepareElementIndexOrLengthChanged(list.item(i), i, length, element);
+				element.setAttribute("aria-rowindex", i.toString());
+			}
 
-			for (let i = firstIndex - 1; i >= 0; i--)
-				adapter.prepareElementIndexOrLengthChanged(list.item(i), i, length, items[i].element);
+			for (let i = firstIndex - 1; i >= 0; i--) {
+				const element = items[i].element;
+				adapter.prepareElementIndexOrLengthChanged(list.item(i), i, length, element);
+				element.setAttribute("aria-rowindex", i.toString());
+			}
 		}
+
+		if (this.element && this._adapter)
+			this.element.setAttribute("aria-rowcount", this._adapter.list.length.toString());
 	}
 
 	public notifyItemsRemoved(firstIndex: number, lastIndex: number): void {
 		if (this.useVirtualItems) {
 			this.refreshVisibleItems();
 		} else {
-			const adapter = this.adapter,
+			const adapter = this._adapter,
 				count = lastIndex - firstIndex + 1;
 
 			if (!adapter || count <= 0)
@@ -919,11 +987,17 @@ class ListControl<T> {
 			if (this.items.length !== list.length)
 				throw new Error("Assertion error: this.items.length !== list.length");
 
-			for (let i = items.length - 1; i >= 0; i--)
-				adapter.prepareElementIndexOrLengthChanged(list.item(i), i, length, items[i].element);
+			for (let i = items.length - 1; i >= 0; i--) {
+				const element = items[i].element;
+				adapter.prepareElementIndexOrLengthChanged(list.item(i), i, length, element);
+				element.setAttribute("aria-rowindex", i.toString());
+			}
 
 			this.adjustContainerHeight();
 		}
+
+		if (this.element && this._adapter)
+			this.element.setAttribute("aria-rowcount", this._adapter.list.length.toString());
 	}
 
 	public notifyCurrentItemChanged(oldIndex: number, newIdex: number): void {
@@ -938,7 +1012,7 @@ class ListControl<T> {
 	private notifyCurrentItemChangedInternal(): void {
 		this.notifyCurrentItemChangedEnqueued = false;
 
-		const adapter = this.adapter;
+		const adapter = this._adapter;
 
 		if (!adapter)
 			return;

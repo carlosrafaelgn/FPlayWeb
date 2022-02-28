@@ -56,7 +56,7 @@ class FilePickerListAdapter extends ListAdapter<FilePickerListItem> {
 			parent: div
 		}).setAttribute("data-delete", "1");
 
-		div.appendChild(Icon.createLarge("icon-folder", "orange button-top-margin margin"));
+		div.appendChild(Icon.createLarge("icon-folder", "orange button-top-margin margin", null, Strings.FolderLabel));
 		div.appendChild(Icon.createLarge("icon-add-folder", "green button-top-margin margin left-margin"));
 		div.appendChild(document.createTextNode(Formatter.none));
 
@@ -73,7 +73,7 @@ class FilePickerListAdapter extends ListAdapter<FilePickerListItem> {
 			else
 				(childNodes[3] as HTMLElement).classList.add("hidden");
 		} else {
-			const checkboxButton = (childNodes[0] as HTMLButtonElement);
+			const checkboxButton = (childNodes[0] as HTMLLabelElement);
 			checkboxButton.classList.remove("hidden");
 			if (item.dir)
 				checkboxButton.classList.remove("small-right-margin");
@@ -120,12 +120,12 @@ class FilePicker {
 		return !!FilePicker.filePicker;
 	}
 
-	public static show(): Promise<File[] | string[] | null> {
+	public static show(returnFocusElement?: HTMLElement | null): Promise<File[] | string[] | null> {
 		if (FilePicker.filePicker || Modal.visible)
 			return Promise.resolve(null);
 
 		return new Promise(function (resolve) {
-			FilePicker.filePicker = new FilePicker(resolve);
+			FilePicker.filePicker = new FilePicker(resolve, returnFocusElement);
 		});
 	}
 
@@ -147,8 +147,11 @@ class FilePicker {
 	private path: string | null;
 	private rootLength: number;
 
-	private constructor(resolve: (value: File[] | PromiseLike<File[] | null> | null) => void) {
+	private constructor(resolve: (value: File[] | PromiseLike<File[] | null> | null) => void, returnFocusElement?: HTMLElement | null) {
 		const header = document.createElement("div");
+
+		const headerLabel = Strings.createSrOnlyText(Strings.AddSongs);
+		header.appendChild(headerLabel);
 
 		ButtonControl.create({
 			color: "orange",
@@ -167,18 +170,23 @@ class FilePicker {
 
 		const pathDiv = document.createElement("div");
 		pathDiv.className = "file-picker-path padding border-bottom left";
+		pathDiv.setAttribute("aria-atomic", "true");
+		pathDiv.setAttribute("aria-live", "assertive");
+		pathDiv.setAttribute("aria-relevant", "all");
 
-		const iconFolder = Icon.createLarge("icon-folder-open", "orange hidden");
+		const iconFolder = Icon.createLarge("icon-folder-open", "orange hidden", null, Strings.CurrentPathLabel);
 		pathDiv.appendChild(iconFolder);
 
 		const iconLoading = document.createElement("i");
 		iconLoading.className = "icon loading large";
+		iconLoading.appendChild(Strings.createSrOnlyText(Strings.LoadingCurrentPathLabel));
+
 		pathDiv.appendChild(iconLoading);
 
 		const pathElement = document.createElement("div");
 		pathElement.className = "file-picker-path-element small-left-padding";
 		pathDiv.appendChild(pathElement);
-		
+
 		const listElement = document.createElement("div");
 		listElement.className = "file-picker-list fade bottom-margin";
 
@@ -186,10 +194,10 @@ class FilePicker {
 		this.provider = ((App.hostType === App.hostTypeAndroid) ? new FilePickerAndroidProvider() : new FilePickerFileSystemAPIProvider());
 		this.list = new List();
 		this.listAdapter = new FilePickerListAdapter(this.list);
-		this.listControl = new ListControl(listElement, true);
+		this.listControl = new ListControl(listElement, Strings.FileList, true);
 		this.listControl.element.addEventListener("keydown", this.listKeyDown.bind(this));
-		this.listControl.onitemclicked = this.itemClicked.bind(this);
-		this.listControl.onitemcontrolclicked = this.itemControlClicked.bind(this);
+		this.listControl.onitemclick = this.itemClick.bind(this);
+		this.listControl.onitemcontrolclick = this.itemControlClick.bind(this);
 		this.listControl.adapter = this.listAdapter;
 
 		this.selectedFiles = null;
@@ -209,6 +217,8 @@ class FilePicker {
 		if (!Modal.show({
 			html: [pathDiv, listElement],
 			title: header,
+			titleHeader: headerLabel,
+			returnFocusElement,
 			rightHeader: true,
 			leftBody: true,
 			skipBody: true,
@@ -251,7 +261,7 @@ class FilePicker {
 		this.navigateUp();
 	}
 
-	private itemClicked(item: FilePickerListItem, index: number, button: number): void {
+	private itemClick(item: FilePickerListItem, index: number, button: number): void {
 		if (this.gettingFiles || this.fading)
 			return;
 
@@ -266,9 +276,15 @@ class FilePicker {
 		}
 	}
 
-	private itemControlClicked(item: FilePickerListItem, index: number, button: number, target: HTMLElement): void {
+	private itemControlClick(item: FilePickerListItem, index: number, button: number, target: HTMLElement): void {
 		if (this.gettingFiles || this.fading)
 			return;
+
+		if (target.tagName === "INPUT") {
+			target = target.parentNode as HTMLElement;
+			if (!target)
+				return;
+		}
 
 		if (target.tagName === "SPAN") {
 			target = target.parentNode as HTMLElement;
@@ -282,14 +298,14 @@ class FilePicker {
 				if (childNodes[i] && (childNodes[i] as HTMLElement).tagName && !(childNodes[i] as HTMLElement).classList.contains("hidden")) {
 					target = childNodes[i] as HTMLElement;
 					if (target.getAttribute("data-check"))
-						CheckboxControl.setChecked(target as HTMLButtonElement, !CheckboxControl.isChecked(target as HTMLButtonElement));
+						CheckboxControl.setChecked(target as HTMLLabelElement, !CheckboxControl.isChecked(target as HTMLLabelElement));
 					break;
 				}
 			}
 		}
 
 		if (target.getAttribute("data-check")) {
-			item.selected = CheckboxControl.isChecked(target as HTMLButtonElement);
+			item.selected = CheckboxControl.isChecked(target as HTMLLabelElement);
 		} else if (target.getAttribute("data-delete")) {
 			this.updateIconLoading(true);
 			this.provider.removeRoot(item).then(this.boundRefreshRoot, this.boundRefreshRoot);
@@ -410,8 +426,10 @@ class FilePicker {
 		this.listControl.refreshVisibleItems();
 	}
 
-	private modalShown(): void {
+	private modalShown(): HTMLElement | null {
 		this.navigate(this.path);
+
+		return this.listControl.element;
 	}
 
 	private modalHiding(): boolean {

@@ -50,6 +50,7 @@ class Icon {
 				(j > i) ? className.substring(i, j) : className.substring(i),
 				(j > i) ? (className.substring(0, i) + className.substring(j + 1)) : className.substring(0, i),
 				null,
+				null,
 				icon
 			);
 		}
@@ -58,14 +59,15 @@ class Icon {
 	}
 
 	public static createHTML(name: string, large: boolean, className?: string | null, id?: string | null): string {
-		return `<i class="icon ${large ? "large" : ""} ${className || ""}" ${id ? ("id=" + id) : ""}><svg><use href="#${name}" /></svg></i>`;
+		return `<i class="icon ${large ? "large" : ""} ${className || ""}" ${id ? ("id=" + id) : ""}><svg aria-hidden="true"><use href="#${name}" /></svg></i>`;
 	}
 
-	public static create(name: string, className?: string | null, id?: string | null, existingElement?: HTMLElement | null): HTMLElement {
+	public static create(name: string, className?: string | null, id?: string | null, title?: string | null, existingElement?: HTMLElement | null): HTMLElement {
 		const i = existingElement || document.createElement("i"),
 			svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"),
 			use = document.createElementNS("http://www.w3.org/2000/svg", "use");
 
+		svg.setAttribute("aria-hidden", "true");
 		use.setAttribute("href", "#" + name);
 		svg.appendChild(use);
 
@@ -73,12 +75,23 @@ class Icon {
 			i.setAttribute("id", id);
 
 		i.className = (className ? ("icon " + className) : "icon");
+
+		if (existingElement && !title) {
+			title = existingElement.getAttribute("data-title");
+			existingElement.removeAttribute("data-title");
+		}
+
+		if (title)
+			i.appendChild(Strings.createSrOnlyText(title));
+		else
+			i.setAttribute("aria-hidden", "true");
+
 		i.appendChild(svg);
 
 		return i;
 	}
 
-	public static createLarge(name: string, className?: string | null, id?: string | null): HTMLElement {
-		return Icon.create(name, className ? (className + " large") : "large", id);
+	public static createLarge(name: string, className?: string | null, id?: string | null, title?: string | null): HTMLElement {
+		return Icon.create(name, className ? (className + " large") : "large", id, title);
 	}
 }

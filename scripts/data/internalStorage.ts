@@ -72,7 +72,7 @@ class InternalStorage {
 			// Just ignore...
 		}
 		return {
-			playerVolume: 100,
+			playerVolume: 0,
 			graphicalFilterControlEnabled: false,
 			graphicalFilterControlSimpleMode: (window.innerWidth < (512 + 32)),
 			stereoPannerControlEnabled: false,

@@ -37,15 +37,17 @@ class PlaylistAdapter extends ListAdapter<Song> {
 		const div = document.createElement("div");
 		div.className = baseClass + " playlist-item";
 
-		div.appendChild(Icon.create("icon-title", "pink margin"));
+		div.appendChild(Icon.create("icon-title", "pink margin", null, Strings.TitleLabel));
 		div.appendChild(document.createTextNode(Formatter.none));
 		div.appendChild(document.createElement("br"));
 
-		div.appendChild(Icon.create("icon-artist", "orange margin"));
+		div.appendChild(Icon.create("icon-artist", "orange margin", null, Strings.ArtistLabel));
 		let span = document.createElement("span");
 		Strings.changeText(span, Formatter.none);
 		div.appendChild(span);
 		div.appendChild(document.createElement("br"));
+
+		div.appendChild(Strings.createSrOnlyText(Strings.DurationLabel));
 
 		span = document.createElement("span");
 		span.className = "length";
@@ -53,6 +55,7 @@ class PlaylistAdapter extends ListAdapter<Song> {
 		div.appendChild(span);
 
 		span = document.createElement("span");
+		span.setAttribute("aria-hidden", "true");
 		span.className = "float-right";
 		Strings.changeText(span, Formatter.none);
 		div.appendChild(span);
@@ -64,12 +67,12 @@ class PlaylistAdapter extends ListAdapter<Song> {
 		const childNodes = element.childNodes;
 		(childNodes[1] as Text).nodeValue = item.title;
 		(childNodes[4].firstChild as Text).nodeValue = item.artist;
-		(childNodes[6].firstChild as Text).nodeValue = item.length;
-		(childNodes[7].firstChild as Text).nodeValue = ((item.url || item.file) ? `${(index + 1)} / ${length}` : `(${Strings.Missing}) ${(index + 1)} / ${length}`);
+		(childNodes[7].firstChild as Text).nodeValue = item.length;
+		(childNodes[8].firstChild as Text).nodeValue = ((item.url || item.file) ? `${(index + 1)} / ${length}` : `(${Strings.Missing}) ${(index + 1)} / ${length}`);
 	}
 
 	public prepareElementIndexOrLengthChanged(item: Song, index: number, length: number, element: HTMLElement): void {
-		(element.childNodes[7].firstChild as Text).nodeValue = ((item.url || item.file) ? `${(index + 1)} / ${length}` : `(${Strings.Missing}) ${(index + 1)} / ${length}`);
+		(element.childNodes[8].firstChild as Text).nodeValue = ((item.url || item.file) ? `${(index + 1)} / ${length}` : `(${Strings.Missing}) ${(index + 1)} / ${length}`);
 	}
 }
 
@@ -113,16 +116,16 @@ class Playlist extends List<Song> {
 
 	private missingSongs: Map<string, Song> | null;
 
-	public onsonglengthchanged: ((song: Song) => void) | null;
+	public onsonglengthchange: ((song: Song) => void) | null;
 
 	public constructor(songs?: Song[] | null, currentIndex?: number, missingSongs?: Map<string, Song> | null) {
 		super(songs, currentIndex);
 
 		this.missingSongs = missingSongs || null;
-		this.onsonglengthchanged = null;
+		this.onsonglengthchange = null;
 	}
 
-	public songLengthChanged(song: Song, lengthS: number): void {
+	public updateSongLength(song: Song, lengthS: number): void {
 		if (lengthS <= 0 || isNaN(lengthS) || !isFinite(lengthS)) {
 			if (song.lengthMS < 0)
 				return;
@@ -139,8 +142,8 @@ class Playlist extends List<Song> {
 		song.lengthMS = lengthS;
 		song.length = Formatter.formatTimeMS(lengthS);
 
-		if (this.onsonglengthchanged)
-			this.onsonglengthchanged(song);
+		if (this.onsonglengthchange)
+			this.onsonglengthchange(song);
 	}
 
 	public clear(): void {

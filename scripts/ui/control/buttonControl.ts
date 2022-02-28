@@ -73,8 +73,11 @@ class ButtonControl {
 
 		button.className = className;
 
-		const span = ButtonControl.prepare(button),
+		const span = document.createElement("span"),
 			text = (options.text || (options.stringKey ? Strings.translate(options.stringKey) : ""));
+
+		span.setAttribute("tabindex", "-1");
+		span.setAttribute("aria-hidden", "true");
 
 		if (options.icon) {
 			className = "large";
@@ -86,12 +89,12 @@ class ButtonControl {
 			span.appendChild(Icon.create(options.icon, className));
 		}
 
-		if (options.square) {
-			button.setAttribute("aria-label", text);
+		button.setAttribute("aria-label", text);
+
+		if (options.square)
 			button.setAttribute("title", text);
-		} else {
+		else
 			span.appendChild(document.createTextNode(text));
-		}
 
 		if (!skipClickAndAppend) {
 			const o = options as ButtonControlOptions;
@@ -103,12 +106,15 @@ class ButtonControl {
 				o.parent.appendChild(button);
 		}
 
+		button.appendChild(span);
+
 		return button;
 	}
 
 	public static prepare(button: HTMLButtonElement): HTMLSpanElement {
 		const span = document.createElement("span");
 		span.setAttribute("tabindex", "-1");
+		span.setAttribute("aria-hidden", "true");
 
 		while (button.firstChild) {
 			const firstChild = button.firstChild;
@@ -118,10 +124,14 @@ class ButtonControl {
 
 		button.appendChild(span);
 
+		button.setAttribute("aria-label", (button.classList.contains("square") ? button.getAttribute("title") : button.textContent) as string);
+
 		return span;
 	}
 
 	public static setText(button: HTMLButtonElement, text: string): void {
+		button.setAttribute("aria-label", text);
+
 		let span = button.firstChild as HTMLElement;
 		if (!span || span.tagName !== "SPAN") {
 			span = button.querySelector("span") as HTMLElement;
@@ -134,5 +144,10 @@ class ButtonControl {
 			span.appendChild(document.createTextNode(text));
 		else
 			textNode.nodeValue = text;
+	}
+
+	public static getDefaultFocusElement(button: HTMLButtonElement): HTMLElement {
+		const spans = button.getElementsByTagName("span");
+		return (spans[0] || button);
 	}
 }

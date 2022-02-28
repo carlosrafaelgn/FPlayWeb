@@ -30,10 +30,6 @@ class SimpleFilterEditorControl {
 
 	private readonly sliders: SliderControl[];
 
-	private static sliderToDB(sliderValue: number): string {
-		return Formatter.formatDB(sliderValue * 0.5);
-	}
-
 	private static sliderToY(sliderValue: number): number {
 		return GraphicalFilterEditor.zeroChannelValueY - (sliderValue << 1);
 	}
@@ -48,7 +44,11 @@ class SimpleFilterEditorControl {
 
 		element.classList.add("simple-filter");
 
-		const sliders = new Array(GraphicalFilterEditor.shelfEquivalentZoneCount);
+		const sliders = new Array(GraphicalFilterEditor.shelfEquivalentZoneCount),
+			sliderToDB = function (sliderValue: number): string {
+				return Formatter.formatDB(sliderValue * 0.5);
+			};
+
 		this.sliders = sliders;
 		for (let i = 0; i < sliders.length; i++) {
 			const span = document.createElement("span"),
@@ -56,37 +56,45 @@ class SimpleFilterEditorControl {
 				gain = document.createElement("span"),
 				sliderValue = this.filterToSlider(i);
 
+			let label: string;
+
 			freq.className = "simple-filter-freq small-bottom-margin";
 			switch (i) {
 				case 0:
 					freq.innerHTML = '31<br/>62';
+					label = "31 / 62 Hz";
 					break;
 				case 1:
 					freq.innerHTML = '<br/>125';
+					label = "125 Hz";
 					break;
 				case 2:
 					freq.innerHTML = '<br/>250';
+					label = "250 Hz";
 					break;
 				case 3:
 					freq.innerHTML = '500<br/>1k';
+					label = "500 / 1000 Hz";
 					break;
 				case 4:
 					freq.innerHTML = '2k<br/>4k';
+					label = "2000 / 4000 Hz";
 					break;
 				case 5:
 					freq.innerHTML = '<br/>8k';
+					label = "8000 Hz";
 					break;
-				case 6:
+				default:
 					freq.innerHTML = '<br/>16k';
+					label = "16000 Hz";
 					break;
 			}
 
-			Strings.changeText(gain, SimpleFilterEditorControl.sliderToDB(sliderValue));
 			gain.className = "small-top-margin";
 
 			span.className = "simple-filter-slider" + ((!i || AppUI.primaryInputIsTouch) ? "" : " left-margin");
 			element.appendChild(span);
-			sliders[i] = new SliderControl(span, true, true, -30, 30, sliderValue, gain, freq);
+			sliders[i] = new SliderControl(span, label, sliderToDB, SliderControlValueChild.LeftChild, true, true, -30, 30, sliderValue, gain, freq);
 			this.createHandler(sliders[i], i);
 		}
 	}
@@ -98,17 +106,13 @@ class SimpleFilterEditorControl {
 	private createHandler(slider: SliderControl, sliderIndex: number): void {
 		const editor = this.editor;
 
-		slider.onvaluechanged = function (value) {
-			Strings.changeText(slider.leftChild as HTMLElement, SimpleFilterEditorControl.sliderToDB(value));
-		};
-
 		const commitChanges = function (value: number): void {
 			editor.changeShelfZoneY(sliderIndex, SimpleFilterEditorControl.sliderToY(value));
 			editor.commitChanges();
 		};
 
-		slider.ondragended = commitChanges;
-		slider.onkeyboardchanged = commitChanges;
+		slider.ondragend = commitChanges;
+		slider.onkeyboardchange = commitChanges;
 	}
 
 	public updateSliders(): void {

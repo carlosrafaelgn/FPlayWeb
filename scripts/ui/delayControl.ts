@@ -25,8 +25,8 @@
 //
 
 class DelayControl {
-	public static readonly shortDelayMS = 20;
-	public static readonly fadeDelayMS = 320;
+	public static readonly shortDelayMS = 50;
+	public static readonly fadeDelayMS = 350;
 
 	public static delayShortCB(callback: () => void): number {
 		return setTimeout(callback, DelayControl.shortDelayMS);
