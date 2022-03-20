@@ -686,7 +686,7 @@ class ListControl<T> {
 		this.focused = true;
 	}
 
-	private elementKeyDown(e: KeyboardEvent): any {
+	public elementKeyDown(e: KeyboardEvent): any {
 		const adapter = this._adapter;
 		if (!adapter || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey)
 			return;
@@ -789,8 +789,7 @@ class ListControl<T> {
 			this.keyboardIndex = -1;
 		}
 
-		e.preventDefault();
-		return false;
+		return cancelEvent(e);
 	}
 
 	private elementKeyUp(e: KeyboardEvent): any {

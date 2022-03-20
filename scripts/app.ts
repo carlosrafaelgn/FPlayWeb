@@ -26,7 +26,7 @@
 
 interface IpcRenderer {
 	invoke(channel: string, ...args: any[]): Promise<any>;
-	on(channel: string, listener: (event: any, ...args: any[]) => void): IpcRenderer;
+	on(channel: string, listener: (e: any, ...args: any[]) => void): IpcRenderer;
 	send(channel: string, ...args: any[]): void;
 	sendSync(channel: string, ...args: any[]): any;
 }
@@ -57,6 +57,7 @@ interface AppCloseHandler {
 interface AppSettings {
 	devicePixelRatio?: number;
 	playerVolume?: number;
+	playerPossibleResumeTimeS?: number;
 	graphicalFilterControlEnabled?: boolean;
 	graphicalFilterControlSimpleMode?: boolean;
 	stereoPannerControlEnabled?: boolean;
@@ -129,6 +130,7 @@ class App {
 			InternalStorage.saveAppSettings({
 				devicePixelRatio: devicePixelRatio,
 				playerVolume: App.player.volume,
+				playerPossibleResumeTimeS: App.player.possibleResumeTimeS,
 				graphicalFilterControlEnabled: (App.graphicalFilterControl ? App.graphicalFilterControl.enabled : false),
 				graphicalFilterControlSimpleMode: (App.graphicalFilterControl ? App.graphicalFilterControl.simpleMode : true),
 				stereoPannerControlEnabled: (App.stereoPannerControl ? App.stereoPannerControl.enabled : false),

@@ -436,8 +436,7 @@ class SliderControl {
 				return;
 		}
 
-		e.preventDefault();
-		return false;
+		return cancelEvent(e);
 	}
 
 	private focus(): void {

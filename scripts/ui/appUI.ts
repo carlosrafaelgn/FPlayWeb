@@ -355,6 +355,26 @@ class AppUI {
 					if (!e.repeat && App.player)
 						App.player.next();
 					return cancelEvent(e);
+				default:
+					if (e.target === document.body && !AppUI.panelContainerToggled && !Modal.visible) {
+						switch (e.key) {
+							case "ArrowDown":
+							case "ArrowRight":
+							case "ArrowUp":
+							case "ArrowLeft":
+							case "PageDown":
+							case "PageUp":
+							case "Home":
+							case "End":
+							case "Enter":
+							case " ":
+								cancelEvent(e);
+								AppUI.playlistControl.element.focus();
+								AppUI.playlistControl.elementKeyDown(e);
+								return false;
+						}
+					}
+					break;
 			}
 		}
 	}

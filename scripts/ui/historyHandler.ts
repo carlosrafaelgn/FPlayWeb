@@ -36,7 +36,7 @@ class HistoryHandler {
 		window.addEventListener("popstate", HistoryHandler.historyStatePopped);
 	}
 
-	private static historyStatePopped(ev: PopStateEvent): void {
+	private static historyStatePopped(e: PopStateEvent): void {
 		if (HistoryHandler.poppedInternally) {
 			HistoryHandler.poppedInternally = false;
 			return;

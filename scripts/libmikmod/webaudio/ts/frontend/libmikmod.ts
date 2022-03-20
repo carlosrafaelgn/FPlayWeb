@@ -75,8 +75,8 @@ class LibMikMod {
 			await new Promise<void>(function (resolve, reject) {
 				const audioNode = new AudioWorkletNode(audioContext, "libmikmodprocessor");
 
-				audioNode.port.onmessage = function (ev) {
-					const message = ev.data as LibMikModResponse;
+				audioNode.port.onmessage = function (e) {
+					const message = e.data as LibMikModResponse;
 
 					if (!message || message.messageId !== LibMikModMessageId.INIT || !LibMikMod.initializing || LibMikMod.currentId)
 						return;
@@ -89,8 +89,8 @@ class LibMikMod {
 					}
 				};
 
-				audioNode.onprocessorerror = function (ev) {
-					reject(ev);
+				audioNode.onprocessorerror = function (e) {
+					reject(e);
 				};
 
 				LibMikMod.audioNode = audioNode;
@@ -188,11 +188,11 @@ class LibMikMod {
 				});
 			} else {
 				const reader = new FileReader();
-				reader.onerror = function (ev) {
+				reader.onerror = function (e) {
 					if (id !== LibMikMod.currentId)
 						return;
 
-					LibMikMod.notifyReaderError(ev);
+					LibMikMod.notifyReaderError(e);
 				};
 				reader.onload = function () {
 					if (id !== LibMikMod.currentId)
@@ -289,8 +289,8 @@ class LibMikMod {
 			onended();
 	}
 
-	private static handleResponse(ev: MessageEvent): void {
-		const message = ev.data as LibMikModResponse;
+	private static handleResponse(e: MessageEvent): void {
+		const message = e.data as LibMikModResponse;
 
 		if (!message)
 			return;

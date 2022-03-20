@@ -148,12 +148,12 @@ class MonoDownMixerControl extends ConnectableNode {
 
 			this.audioNode = audioNode;
 
-			audioNode.onprocessorerror = (ev) => {
+			audioNode.onprocessorerror = (e) => {
 				if (this.audioNode && this.audioNode === audioNode) {
 					audioNode.disconnect();
 					super.enabled = false;
 					this.audioNode = null;
-					this.showError("processing the mono down-mixer", ev);
+					this.showError("processing the mono down-mixer", e);
 				}
 			};
 

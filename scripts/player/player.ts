@@ -34,14 +34,13 @@ class Player {
 	private static readonly nop = function () { };
 
 	public readonly audioContext: AudioContext;
-	private readonly sourceNode: SourceNode;
 	private readonly intermediateNodes: ConnectableNode[];
 	private readonly destinationNode: DestinationNode;
 
-	private audio: HTMLAudioElement;
+	private audio: HTMLAudioElement | null;
+	private sourceNode: SourceNode | null;
 	private audioContextTimeout: number;
 	private audioContextSuspended: boolean;
-	private source: MediaElementAudioSourceNode;
 
 	private _alive: boolean;
 	private _loading: boolean;
@@ -50,14 +49,19 @@ class Player {
 	private _playlist: Playlist | null;
 	private _currentSong: Song | null;
 	private lastObjectURL: string | null;
+	private lastTimeS: number;
+	private songStartedAutomatically: boolean;
 
 	private readonly mediaSession: any | null;
 
-	private readonly boundPlaybackError: any;
+	private boundPlaybackError: any;
 	private readonly boundNotifySongChange: any;
 	private readonly boundCheckAudioContext: any;
+	private readonly boundAutoNext: any;
 	//private readonly boundNotifyLoadingChange: any;
 	//private readonly boundNotifyPausedChange: any;
+
+	public haltOnAllErrors: boolean;
 
 	public onsongchange: ((song: Song | null) => void) | null;
 	public onloadingchange: ((loading: boolean) => void) | null;
@@ -90,47 +94,23 @@ class Player {
 			intermediateNodes = [];
 		}
 
+		this.intermediateNodes = intermediateNodes;
+
+		this.destinationNode = new DestinationNode(this.audioContext.destination);
+		this.destinationNode.enabled = true;
+
 		this.onsongchange = null;
 		this.onloadingchange = null;
 		this.onpausedchange = null;
 		this.oncurrenttimeschange = null;
 		this.onerror = null;
 
-		this.boundPlaybackError = this.playbackError.bind(this);
+		this.boundPlaybackError = null;
 		this.boundNotifySongChange = this.notifySongChange.bind(this);
 		this.boundCheckAudioContext = this.checkAudioContext.bind(this);
+		this.boundAutoNext = this.next.bind(this, true);
 		//this.boundNotifyLoadingChange = this.notifyLoadingChange.bind(this);
 		//this.boundNotifyPausedChange = this.notifyPausedChange.bind(this);
-
-		this.audio = new Audio();
-		this.audio.loop = false;
-		this.audio.controls = false;
-		this.audio.volume = 1;
-
-		const boundPlaybackLoadStart = this.playbackLoadStart.bind(this);
-		this.audio.onwaiting = boundPlaybackLoadStart;
-		this.audio.onloadstart = boundPlaybackLoadStart;
-
-		this.audio.oncanplay = this.playbackLoadEnd.bind(this);
-
-		this.audio.onended = this.playbackEnd.bind(this);
-		this.audio.onerror = this.boundPlaybackError;
-
-		this.audio.onpause = this.playbackPaused.bind(this);
-
-		const boundPlaybackStarted = this.playbackStarted.bind(this);
-		this.audio.onplay = boundPlaybackStarted;
-		this.audio.onplaying = boundPlaybackStarted;
-
-		const boundPlaybackAborted = this.playbackAborted.bind(this);
-		this.audio.onabort = boundPlaybackAborted;
-		this.audio.onemptied = boundPlaybackAborted;
-
-		this.audio.ondurationchange = this.playbackLengthChange.bind(this);
-
-		this.audio.ontimeupdate = this.currentTimeChange.bind(this);
-
-		this.source = this.audioContext.createMediaElementSource(this.audio);
 
 		this._alive = true;
 		this._loading = false;
@@ -140,26 +120,16 @@ class Player {
 		this._volume = 0;
 
 		this.lastObjectURL = null;
+		this.lastTimeS = -1;
+		this.songStartedAutomatically = true;
+		this.haltOnAllErrors = false;
 
 		this.volume = (volume === undefined ? 0 : volume);
 
-		this.sourceNode = new SourceNode(this.source);
-		this.sourceNode.enabled = true;
+		this.audio = null;
+		this.sourceNode = null;
 
-		this.destinationNode = new DestinationNode(this.audioContext.destination);
-		this.destinationNode.enabled = true;
-
-		if (intermediateNodes.length) {
-			this.sourceNode.connectToDestination(intermediateNodes[0]);
-
-			for (let i = 0; i < intermediateNodes.length - 1; i++)
-				intermediateNodes[i].connectToDestination(intermediateNodes[i + 1]);
-
-			intermediateNodes[intermediateNodes.length - 1].connectToDestination(this.destinationNode);
-		} else {
-			this.sourceNode.connectToDestination(this.destinationNode);
-		}
-		this.intermediateNodes = intermediateNodes;
+		this.recreateAudioPath();
 
 		// https://developers.google.com/web/updates/2017/02/media-session
 		// https://w3c.github.io/mediasession
@@ -169,13 +139,73 @@ class Player {
 		if (mediaSession && ("setActionHandler" in mediaSession)) {
 			const boundPlayPause = this.playPause.bind(this);
 
-			mediaSession.setActionHandler("previoustrack", this.previous.bind(this));
+			mediaSession.setActionHandler("previoustrack", () => { this.previous(); });
 			mediaSession.setActionHandler("seekbackward", this.seekBackward.bind(this));
 			mediaSession.setActionHandler("pause", boundPlayPause);
 			mediaSession.setActionHandler("play", boundPlayPause);
 			mediaSession.setActionHandler("seekforward", this.seekForward.bind(this));
-			mediaSession.setActionHandler("nexttrack", this.next.bind(this));
+			mediaSession.setActionHandler("nexttrack", () => { this.next(); });
 		}
+	}
+
+	private recreateAudioPath(): void {
+		const intermediateNodes = this.intermediateNodes;
+
+		if (this.sourceNode)
+			this.sourceNode.disconnectFromDestination();
+
+		for (let i = intermediateNodes.length - 1; i >= 0; i--)
+			intermediateNodes[i].disconnectFromDestination();
+
+		const audio = new Audio(),
+			source = this.audioContext.createMediaElementSource(audio),
+			sourceNode = new SourceNode(source);
+
+		this.audio = audio;
+		this.sourceNode = sourceNode;
+	
+		audio.loop = false;
+		audio.controls = false;
+
+		const boundPlaybackLoadStart = () => { if (this.audio === audio) this.playbackLoadStart(); };
+		audio.onwaiting = boundPlaybackLoadStart;
+		audio.onloadstart = boundPlaybackLoadStart;
+
+		audio.oncanplay = () => { if (this.audio === audio) this.playbackLoadEnd(); };
+
+		audio.onended = () => { if (this.audio === audio) this.playbackEnd(); };
+		const boundPlaybackError = (e: Event | string, source?: string, lineno?: number, colno?: number, error?: Error) => { if (this.audio === audio) this.playbackError(e, source, lineno, colno, error); };
+		this.boundPlaybackError = boundPlaybackError;
+		audio.onerror = boundPlaybackError;
+
+		audio.onpause = () => { if (this.audio === audio) this.playbackPaused(); };
+
+		const boundPlaybackStarted = () => { if (this.audio === audio) this.playbackStarted(); };
+		audio.onplay = boundPlaybackStarted;
+		audio.onplaying = boundPlaybackStarted;
+
+		const boundPlaybackAborted = () => { if (this.audio === audio) this.playbackAborted(); };
+		audio.onabort = boundPlaybackAborted;
+		audio.onemptied = boundPlaybackAborted;
+
+		audio.ondurationchange = () => { if (this.audio === audio) this.playbackLengthChange(); };
+
+		audio.ontimeupdate = () => { if (this.audio === audio) this.currentTimeChange(); };
+
+		sourceNode.enabled = true;
+
+		if (intermediateNodes.length) {
+			sourceNode.connectToDestination(intermediateNodes[0]);
+
+			for (let i = 0; i < intermediateNodes.length - 1; i++)
+				intermediateNodes[i].connectToDestination(intermediateNodes[i + 1]);
+
+			intermediateNodes[intermediateNodes.length - 1].connectToDestination(this.destinationNode);
+		} else {
+			sourceNode.connectToDestination(this.destinationNode);
+		}
+
+		this.volume = this._volume;
 	}
 
 	public destroy(partial?: boolean): Promise<void> | void {
@@ -199,11 +229,12 @@ class Player {
 		} else {
 			this._alive = false;
 
-			this.sourceNode.disconnectFromDestination();
+			if (this.sourceNode)
+				this.sourceNode.disconnectFromDestination();
 
 			const intermediateNodes = this.intermediateNodes;
 			if (intermediateNodes && intermediateNodes.length) {
-				for (let i = 0; i < intermediateNodes.length; i++)
+				for (let i = intermediateNodes.length - 1; i >= 0; i--)
 					intermediateNodes[i].disconnectFromDestination();
 			}
 		}
@@ -251,7 +282,58 @@ class Player {
 	}
 
 	public get currentTimeMS(): number {
-		return (this._currentSong ? ((this.audio.currentTime * 1000) | 0) : -1);
+		if (this._currentSong && this.audio) {
+			const t = this.audio.currentTime;
+			this.lastTimeS = t;
+			return (t * 1000) | 0;
+		}
+		return -1;
+	}
+
+	public get possibleResumeTimeS(): number {
+		let t = 0;
+
+		if (this._currentSong && this._playlist && this._playlist.currentItem === this._currentSong) {
+			try {
+				if (this.audio)
+					t = this.audio.currentTime;
+			} catch (ex: any) {
+				// Just ignore...
+			}
+			if (t <= 0)
+				t = this.lastTimeS;
+		}
+
+		return t;
+	}
+
+	private handleError(message: string): void {
+		const lastTimeS = this.lastTimeS;
+
+		this.stop();
+
+		// It's rare, but after several successive errors, the playback can halt on a few browsers.
+		// In order to try to tackle this, we recreate the audio node when an error happens.
+		this.recreateAudioPath();
+
+		if (this.haltOnAllErrors) {
+			if (this.onerror)
+				this.onerror(message);
+
+			return;
+		}
+
+		let notifyError = false;
+
+		if (!this._playlist || !this._playlist.length)
+			notifyError = true;
+		else if (lastTimeS <= 0)
+			notifyError = !this.songStartedAutomatically;
+
+		if (notifyError && this.onerror)
+			this.onerror(message);
+		else
+			queueMicrotask(this.boundAutoNext);
 	}
 
 	private audioContextStateChange(): void {
@@ -288,20 +370,17 @@ class Player {
 		if (!this._alive)
 			return;
 
-		this.next();
+		this.next(true);
 	}
 
-	private playbackError(event: Event | string, source?: string, line?: number, col?: number, error?: Error): void {
+	private playbackError(e: Event | string, source?: string, line?: number, col?: number, error?: Error): void {
 		if (!this._alive)
 			return;
 
-		this.stop();
-
-		if (this.onerror)
-			this.onerror(error ?
-				(error.message ? error.message : (((typeof error) === "string") ? (error as any) : error.toString())) :
-				(((typeof event) === "string") ? (event as string) : Strings.UnknownError)
-			);
+		this.handleError(error ?
+			(error.message ? error.message : (((typeof error) === "string") ? (error as any) : error.toString())) :
+			(((typeof e) === "string") ? (e as string) : Strings.UnknownError)
+		);
 	}
 
 	private suspendAudioContext(delay: boolean): void {
@@ -409,8 +488,11 @@ class Player {
 		if (!this._alive || !this.audio || !this._currentSong)
 			return;
 
+		const t = this.audio.currentTime;
+		this.lastTimeS = t;
+
 		if (this.oncurrenttimeschange)
-			this.oncurrenttimeschange(this.audio.currentTime);
+			this.oncurrenttimeschange(t);
 	}
 
 	private notifySongChange(): void {
@@ -454,12 +536,12 @@ class Player {
 			this.onpausedchange(this._paused);
 	}*/
 
-	public previous(): void {
+	public previous(automaticCall?: boolean): void {
 		if (!this._alive || !this._playlist)
 			return;
 
 		this._playlist.moveCurrentToPrevious();
-		this.play(-1);
+		this.play(-1, automaticCall);
 	}
 
 	public seekBackward(): void {
@@ -478,12 +560,12 @@ class Player {
 		// when the browser goes to the background.
 		this.suspendAudioContext(false);
 
-		if (this._currentSong)
+		if (this._currentSong && this.audio)
 			this.audio.pause();
 	}
 
-	public play(index?: number): void {
-		if (!this._alive)
+	public play(index?: number, automaticCall?: boolean): void {
+		if (!this._alive || !this.audio)
 			return;
 
 		let playPromise: Promise<void> | undefined;
@@ -509,6 +591,8 @@ class Player {
 			}
 
 			this._currentSong = currentSong;
+			this.lastTimeS = -1;
+			this.songStartedAutomatically = !!automaticCall;
 			queueMicrotask(this.boundNotifySongChange);
 
 			this.resumeAudioContext();
@@ -537,27 +621,20 @@ class Player {
 					if (!this._playlist || lastCurrentIndex !== this._playlist.currentIndex || lastCurrentSong !== this._playlist.currentItem)
 						return;
 
-					if (!file) {
-						this.stop();
-						if (this.onerror)
-							this.onerror(Strings.FileNotFoundOrNoPermissionError);
-					} else {
-						this.play(lastCurrentIndex);
-					}
+					if (!file)
+						this.handleError(Strings.FileNotFoundOrNoPermissionError);
+					else
+						this.play(lastCurrentIndex, automaticCall);
 				}, () => {
 					if (!this._playlist || lastCurrentIndex !== this._playlist.currentIndex || lastCurrentSong !== this._playlist.currentItem)
 						return;
 
-					this.stop();
-					if (this.onerror)
-						this.onerror(Strings.FileNotFoundOrNoPermissionError);
+					this.handleError(Strings.FileNotFoundOrNoPermissionError);
 				});
 
 				return;
 			} else {
-				this.stop();
-				if (this.onerror)
-					this.onerror(Strings.MissingSongError);
+				this.handleError(Strings.MissingSongError);
 				return;
 			}
 			source.onerror = this.boundPlaybackError;
@@ -577,7 +654,7 @@ class Player {
 	}
 
 	public playPause(): void {
-		if (!this._alive)
+		if (!this._alive || !this.audio)
 			return;
 
 		if (!this._currentSong || this.audio.paused)
@@ -587,7 +664,7 @@ class Player {
 	}
 
 	public stop(): void {
-		if (!this._alive)
+		if (!this._alive || !this.audio)
 			return;
 
 		if (this._currentSong) {
@@ -621,6 +698,7 @@ class Player {
 			}
 
 			this._currentSong = null;
+			this.lastTimeS = -1;
 			//queueMicrotask(this.boundNotifySongChange);
 			this.notifySongChange();
 		}
@@ -635,19 +713,20 @@ class Player {
 		this.seekTo(10000, true);
 	}
 
-	public next(): void {
+	public next(automaticCall?: boolean): void {
 		if (!this._alive || !this._playlist)
 			return;
 
 		this._playlist.moveCurrentToNext();
-		this.play(-1);
+		this.play(-1, automaticCall);
 	}
 
 	public seekTo(timeMS: number, relative?: boolean): void {
-		if (!this._alive || !this._currentSong || this._currentSong.lengthMS <= 0 || !this.audio.seekable || !this.audio.seekable.length)
+		if (!this._alive || !this.audio || !this._currentSong || this._currentSong.lengthMS <= 0 || !this.audio.seekable || !this.audio.seekable.length)
 			return;
 
-		const timeS = (timeMS / 1000) + (relative ? this.audio.currentTime : 0);
-		this.audio.currentTime = ((timeS > this.audio.duration) ? this.audio.duration : (timeS <= 0 ? 0 : timeS));
+		const timeS = Math.min(this.audio.duration, Math.max(0, (timeMS / 1000) + (relative ? this.audio.currentTime : 0)));
+		this.lastTimeS = timeS || 0.01; // 0.01 just to indicate somesort of playback has already happened
+		this.audio.currentTime = timeS;
 	}
 }
