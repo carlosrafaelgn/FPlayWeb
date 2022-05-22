@@ -37,38 +37,46 @@ class PlaylistAdapter extends ListAdapter<Song> {
 		const div = document.createElement("div");
 		div.className = baseClass + " playlist-item";
 
-		div.appendChild(Icon.create("icon-title", "pink margin", null, Strings.TitleLabel));
-		div.appendChild(document.createTextNode(Formatter.none));
-		div.appendChild(document.createElement("br"));
+		const row1 = document.createElement("span");
+		row1.className = "playlist-item-row1";
+		row1.appendChild(Icon.create("icon-title", "playlist-item-icon pink margin", null, Strings.TitleLabel));
+		row1.appendChild(document.createTextNode(Formatter.none));
+		div.appendChild(row1);
 
-		div.appendChild(Icon.create("icon-artist", "orange margin", null, Strings.ArtistLabel));
-		let span = document.createElement("span");
-		Strings.changeText(span, Formatter.none);
-		div.appendChild(span);
-		div.appendChild(document.createElement("br"));
+		const srow1 = document.createElement("span");
+		srow1.className = "playlist-item-s-row1";
+		srow1.appendChild(Strings.createSrOnlyText(Strings.DurationLabel));
+		srow1.appendChild(document.createTextNode(Formatter.none));
+		div.appendChild(srow1);
 
-		div.appendChild(Strings.createSrOnlyText(Strings.DurationLabel));
+		const row2 = document.createElement("span");
+		row2.className = "playlist-item-row2";
+		row2.appendChild(Icon.create("icon-artist", "playlist-item-icon orange margin", null, Strings.ArtistLabel));
+		row2.appendChild(document.createTextNode(Formatter.none));
+		div.appendChild(row2);
 
-		span = document.createElement("span");
-		span.className = "length";
-		Strings.changeText(span, Formatter.none);
-		div.appendChild(span);
+		const row3 = document.createElement("span");
+		row3.className = "playlist-item-row3";
+		row3.appendChild(Icon.create("icon-album", "playlist-item-icon green margin", null, Strings.AlbumLabel));
+		row3.appendChild(document.createTextNode(Formatter.none));
+		div.appendChild(row3);
 
-		span = document.createElement("span");
-		span.setAttribute("aria-hidden", "true");
-		span.className = "float-right";
-		Strings.changeText(span, Formatter.none);
-		div.appendChild(span);
+		const srow3 = document.createElement("span");
+		srow3.className = "playlist-item-s-row3";
+		srow3.setAttribute("aria-hidden", "true");
+		srow3.appendChild(document.createTextNode(Formatter.none));
+		div.appendChild(srow3);
 
 		return div;
 	}
 
 	public prepareElement(item: Song, index: number, length: number, element: HTMLElement): void {
 		const childNodes = element.childNodes;
-		(childNodes[1] as Text).nodeValue = item.title;
-		(childNodes[4].firstChild as Text).nodeValue = item.artist;
-		(childNodes[7].firstChild as Text).nodeValue = item.length;
-		(childNodes[8].firstChild as Text).nodeValue = ((item.url || item.file) ? `${(index + 1)} / ${length}` : `(${Strings.Missing}) ${(index + 1)} / ${length}`);
+		(childNodes[0].childNodes[1] as Text).nodeValue = item.title;
+		(childNodes[1].childNodes[1] as Text).nodeValue = item.length;
+		(childNodes[2].childNodes[1] as Text).nodeValue = item.artist;
+		(childNodes[3].childNodes[1] as Text).nodeValue = item.album;
+		(childNodes[4].firstChild as Text).nodeValue = ((item.url || item.file) ? `${(index + 1)} / ${length}` : `(${Strings.Missing}) ${(index + 1)} / ${length}`);
 	}
 
 	public prepareElementIndexOrLengthChanged(item: Song, index: number, length: number, element: HTMLElement): void {

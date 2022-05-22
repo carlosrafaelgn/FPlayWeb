@@ -242,6 +242,7 @@ a:active {
 	margin: var(--button-size) auto;
 	width: 512px;
 	max-width: 90%;
+	text-align: center;
 }
 
 .modal.full-height {
@@ -253,17 +254,14 @@ a:active {
 	margin: 16px auto 0;
 }
 
-.modal-header, .modal-body {
-	text-align: center;
-}
-
 .modal-header {
 	font-weight: 700;
     border-bottom: var(--thin-border) solid $color-border-secondary;
 }
 
 .modal-body {
-	padding: $s8 $s2;
+	padding-top: $s8 !important;
+	padding-bottom: $s8 !important;
 	word-break: break-word;
 }
 
@@ -623,6 +621,7 @@ input[type="checkbox"]:checked + .icon + .icon {
 
 .list {
 	width: 100%;
+	text-align: left;
 }
 
 .scrollable {
@@ -675,21 +674,58 @@ input[type="checkbox"]:checked + .icon + .icon {
 }
 
 .playlist-item {
-	padding: $s1;
 	height: var(--playlist-item-size);
 	line-height: $small-contents-size;
 }
 
-.playlist-item > .icon,
-.playlist-item > .icon > svg {
+.playlist-item-row1, .playlist-item-row2, .playlist-item-row3, .playlist-item-s-row1, .playlist-item-s-row3 {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.playlist-item-row1, .playlist-item-row2, .playlist-item-row3 {
+	position: absolute;
+	left: $s1;
+	right: 16rem;
+	padding-right: $s1;
+	margin-right: $s1;
+}
+
+.playlist-item-s-row1, .playlist-item-s-row3 {
+	position: absolute;
+	right: $s1;
+	width: 16rem;
+	text-align: right;
+}
+
+.playlist-item-row2, .playlist-item-row3, .playlist-item-s-row1, .playlist-item-s-row3 {
+	color: $color-text-secodary;
+}
+
+.playlist-item-row1, .playlist-item-s-row1 {
+	top: $s1;
+}
+
+.playlist-item-row2 {
+	margin-top: $s1;
+	top: $small-contents-size;
+}
+
+.playlist-item-row3, .playlist-item-s-row3 {
+	margin-top: $s1;
+	top: $small-contents-size + $small-contents-size;
+}
+
+.playlist-item-icon,
+.playlist-item-icon > svg {
 	width: $small-contents-size;
 	height: $small-contents-size;
 }
 
-.playlist-item > .icon {
+.playlist-item-icon {
 	padding: 0;
 }
-
+/*
 .playlist-item > span {
 	color: $color-text-secodary;
 }
@@ -697,6 +733,7 @@ input[type="checkbox"]:checked + .icon + .icon {
 .playlist-item > .length {
 	margin-left: calc(#{$small-contents-size} + #{$s1});
 }
+*/
 
 #seek-slider {
 	width: 100%;
@@ -1006,7 +1043,7 @@ input[type="checkbox"]:checked + .icon + .icon {
 	.padding {
 		padding: $s1;
 	}
-	
+
 	.large-padding {
 		padding: $s2;
 	}

@@ -72,6 +72,9 @@ class Strings {
 	public static Title = "Title";
 	public static TitleLabel = "Title: ";
 	public static CurrentTitleLabel = "Current title: ";
+	public static Album = "Album";
+	public static AlbumLabel = "Album: ";
+	public static CurrentAlbumLabel = "Current album: ";
 	public static Artist = "Artist";
 	public static ArtistLabel = "Artist: ";
 	public static CurrentArtistLabel = "Current artist: ";
@@ -160,6 +163,9 @@ This project is licensed under the <a target="_blank" href="https://github.com/c
 			Strings.Title = "Título";
 			Strings.TitleLabel = "Título: ";
 			Strings.CurrentTitleLabel = "Título atual: ";
+			Strings.Album = "Álbum";
+			Strings.AlbumLabel = "Álbum: ";
+			Strings.CurrentAlbumLabel = "Álbum atual: ";
 			Strings.Artist = "Artista";
 			Strings.ArtistLabel = "Artista: ";
 			Strings.CurrentArtistLabel = "Artista atual: ";

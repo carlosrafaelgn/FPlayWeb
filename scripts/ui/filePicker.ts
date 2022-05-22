@@ -219,8 +219,6 @@ class FilePicker {
 			title: header,
 			titleHeader: headerLabel,
 			returnFocusElement,
-			rightHeader: true,
-			leftBody: true,
 			skipBody: true,
 			fullHeight: true,
 			okCancel: true,

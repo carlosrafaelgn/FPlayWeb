@@ -204,7 +204,7 @@ class Modal {
 
 		const modalBodyElement = document.createElement("div");
 		this.modalBodyElement = modalBodyElement;
-		modalBodyElement.className = "modal-body" + (options.leftBody ? " left" : "");
+		modalBodyElement.className = "modal-body padding" + (options.leftBody ? " left" : "");
 
 		if (!options.html) {
 			options.html = document.createElement("div");
@@ -239,7 +239,7 @@ class Modal {
 
 		const modalFooterElement = document.createElement("div");
 		this.modalFooterElement = modalFooterElement;
-		modalFooterElement.className = "modal-footer padding left-margin right-margin" + ((options.buttons && options.buttons.length === 1) ? " right" : "");
+		modalFooterElement.className = "modal-footer padding left-margin right-margin";
 
 		this.defaultCancelButton = null;
 		this.defaultSubmitButton = null;
@@ -253,8 +253,8 @@ class Modal {
 					this.defaultCancelButton = button;
 				if (currentButton.defaultSubmit)
 					this.defaultSubmitButton = button;
-				if (i)
-					button.style.float = "right";
+				//if (i)
+				//	button.style.float = "right";
 				button.onclick = () => {
 					if (this.fading)
 						return;
