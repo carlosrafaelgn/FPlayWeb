@@ -83,6 +83,7 @@ class ListControl<T> {
 	private itemHeight: number;
 	private itemMargin: number;
 	private itemHeightAndMargin: number;
+	private ignoreFirstIndex: boolean;
 	private firstIndex: number;
 	private lastIndex: number;
 	private currentListItem: T | null;
@@ -154,6 +155,7 @@ class ListControl<T> {
 		this.itemHeight = 1;
 		this.itemMargin = 1;
 		this.itemHeightAndMargin = 2;
+		this.ignoreFirstIndex = false;
 		this.firstIndex = 0;
 		this.lastIndex = 0;
 		this.currentListItem = null;
@@ -357,6 +359,11 @@ class ListControl<T> {
 
 		if (oldFirstIndex < 0)
 			oldFirstIndex = 0;
+
+		if (this.ignoreFirstIndex)
+			this.ignoreFirstIndex = false;
+		else if (this.firstIndex === firstIndex)
+			return;
 
 		this.firstIndex = firstIndex;
 
@@ -608,8 +615,10 @@ class ListControl<T> {
 		if (oldClientHeight !== clientHeight) {
 			this.clientHeight = clientHeight;
 
-			if (this.useVirtualItems)
+			if (this.useVirtualItems) {
+				this.ignoreFirstIndex = true;
 				this.elementScroll();
+			}
 
 			// Changing the padding in response to the resize event of a ResizeObserver
 			// could cause a "ResizeObserver - loop limit exceeded" error
