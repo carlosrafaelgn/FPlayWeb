@@ -2,6 +2,7 @@
 	"name": "FPlay",
 	"short_name": "FPlay",
 	"start_url": "/",
+	"id": "/",
 	"dir": "ltr",
 	"lang": "en-US",
 	"orientation": "any",
