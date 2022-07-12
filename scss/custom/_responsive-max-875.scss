@@ -1,0 +1,19 @@
+#optional-panel {
+	margin-left: 0;
+	margin-right: 0;
+	width: 100%;
+	min-width: 0;
+	overflow: auto;
+}
+
+#panel-container:not(.toggled) > #optional-panel {
+	display: none;
+}
+
+#panel-container.toggled > #fixed-panel {
+	display: none;
+}
+
+.simple-filter {
+	width: auto;
+}

@@ -9,8 +9,7 @@
 }
 
 html,
-.modal,
-#top-message {
+.modal {
 	background-color: $color-background;
 }
 
@@ -33,7 +32,7 @@ body, .modal, .alert, input, textarea, select, h1, h2, h3, h4, h5, h6 {
 	color: $color-text;
 }
 
-#fixed-panel, #optional-panel, .modal, .alert, .btn, input, textarea, select, h1, h2, h3, h4, h5, h6 {
+body, .modal, .alert, .btn, input, textarea, select, h1, h2, h3, h4, h5, h6 {
 	font-size: $font-size;
 }
 
@@ -673,132 +672,6 @@ input[type="checkbox"]:checked + .icon + .icon {
 	margin-bottom: var(--thick-border);
 }
 
-.playlist-item {
-	height: var(--playlist-item-size);
-	line-height: $small-contents-size;
-}
-
-.playlist-item-row1, .playlist-item-row2, .playlist-item-row3, .playlist-item-s-row1, .playlist-item-s-row3 {
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-.playlist-item-row1, .playlist-item-row2, .playlist-item-row3 {
-	position: absolute;
-	left: $s1;
-	right: 16rem;
-	padding-right: $s1;
-	margin-right: $s1;
-}
-
-.playlist-item-s-row1, .playlist-item-s-row3 {
-	position: absolute;
-	right: $s1;
-	width: 16rem;
-	text-align: right;
-}
-
-.playlist-item-row2, .playlist-item-row3, .playlist-item-s-row1, .playlist-item-s-row3 {
-	color: $color-text-secodary;
-}
-
-.playlist-item-row1, .playlist-item-s-row1 {
-	top: $s1;
-}
-
-.playlist-item-row2 {
-	margin-top: $s1;
-	top: $small-contents-size;
-}
-
-.playlist-item-row3, .playlist-item-s-row3 {
-	margin-top: $s1;
-	top: $small-contents-size + $small-contents-size;
-}
-
-.playlist-item-icon,
-.playlist-item-icon > svg {
-	width: $small-contents-size;
-	height: $small-contents-size;
-}
-
-.playlist-item-icon {
-	padding: 0;
-}
-/*
-.playlist-item > span {
-	color: $color-text-secodary;
-}
-
-.playlist-item > .length {
-	margin-left: calc(#{$small-contents-size} + #{$s1});
-}
-*/
-
-#seek-slider {
-	width: 100%;
-}
-
-.seek-label {
-	width: 16rem;
-}
-
-#volume-slider {
-	width: 38rem;
-}
-
-#volume-label, .db-label {
-	font-size: $small-font-size;
-	width: 13rem;
-}
-
-.db-label.large {
-	width: 15rem;
-}
-
-#panel-container {
-	position: relative;
-	width: 100%;
-	height: calc(100% - var(--button-size));
-	max-width: 2000px;
-	margin: 0;
-	display: flex;
-	flex-direction: row;
-	flex-wrap: nowrap;
-	align-items: stretch;
-}
-
-#panel-container.web {
-	margin-top: 0;
-	height: 100%;
-}
-
-#fixed-panel {
-	position: relative;
-	display: flex;
-	flex-direction: column;
-    flex-wrap: nowrap;
-	flex: 1 1 auto;
-	padding: $s2 0;
-	min-width: 0; // https://css-tricks.com/flexbox-truncated-text/
-}
-
-#optional-panel {
-	position: relative;
-	margin: $s2 0 $s2 $s2;
-	width: 512px;
-	min-width: 512px;
-	text-align: center;
-	box-sizing: content-box;
-}
-
-#optional-panel-container {
-	display: flex;
-	min-height: 100%;
-	flex-direction: column;
-	justify-content: center;
-}
-
 #cover {
 	position: absolute;
 	z-index: 99999;
@@ -835,65 +708,6 @@ input[type="checkbox"]:checked + .icon + .icon {
 	right: 0;
 }
 
-#playlist-control {
-	flex: 1 1 auto;
-}
-
-#title-label,
-#artist-label,
-#top-message {
-	padding: $s1 0;
-	line-height: $contents-size;
-}
-
-#title-label,
-#artist-label {
-	position: absolute;
-	left: 0;
-	width: 100%;
-	margin: 0;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	-webkit-user-select: text;
-	user-select: text;
-}
-
-#title-label {
-	top: $s1;
-}
-
-#artist-label {
-	top: calc(#{$contents-size} + #{$s5});
-}
-
-#top-message {
-	min-height: calc(#{$contents-size * 2} + #{$s8});
-	visibility: hidden;
-	display: flex;
-	flex-direction: column;
-	justify-content: space-evenly;
-}
-
-.simple-filter {
-	width: 512px;
-	white-space: nowrap;
-}
-
-.simple-filter-freq {
-	height: $font-size * 2;
-}
-
-.simple-filter-slider {
-	height: 256px;
-	font-size: $small-font-size;
-	line-height: $small-font-size + 0.5rem;
-}
-
-#stereo-panner-slider {
-	width: 38rem;
-}
-
 .file-picker-path {
 	display: flex;
 	flex-direction: row;
@@ -912,6 +726,8 @@ input[type="checkbox"]:checked + .icon + .icon {
 .file-picker-list {
 	flex: 1 1 auto;
 }
+
+@import "custom/style";
 
 .border-top {
 	margin-top: $s2;
@@ -1036,10 +852,6 @@ input[type="checkbox"]:checked + .icon + .icon {
 		margin-left: $s1;
 	}
 
-	#fixed-panel {
-		padding: $s1 0 $s2;
-	}
-
 	.padding {
 		padding: $s1;
 	}
@@ -1110,22 +922,16 @@ input[type="checkbox"]:checked + .icon + .icon {
 	.large-bottom-margin {
 		margin-bottom: $s2;
 	}
+
+	@import "custom/responsive-max-511";
 }
 
 @media (max-width: 400px) {
-	#button-stop {
-		display: none;
-	}
+	@import "custom/responsive-max-400";
 }
 
 @media (max-width: 339px) {
-	#volume-slider {
-		width: 24rem;
-	}
-
-	#volume-label {
-		display: none;
-	}
+	@import "custom/responsive-max-339";
 }
 
 .left {
@@ -1228,10 +1034,12 @@ input[type="checkbox"]:checked + .icon + .icon {
 	display: none;
 }
 
-@media (min-width: 875.1px) {
+@media (min-width: 875.01px) {
 	.hidden-normal {
 		display: none;
 	}
+
+	@import "custom/responsive-min-875";
 }
 
 @media (max-width: 875px) {
@@ -1240,23 +1048,5 @@ input[type="checkbox"]:checked + .icon + .icon {
 		right: 5%;
 	}
 
-	#optional-panel {
-		margin-left: 0;
-		margin-right: 0;
-		width: 100%;
-		min-width: 0;
-		overflow: auto;
-	}
-
-	#panel-container:not(.toggled) > #optional-panel {
-		display: none;
-	}
-
-	#panel-container.toggled > #fixed-panel {
-		display: none;
-	}
-
-	.simple-filter {
-		width: auto;
-	}
+	@import "custom/responsive-max-875";
 }
