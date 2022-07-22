@@ -205,19 +205,30 @@ class List<T> {
 		return total + 128;
 	}
 
-	public serialize(writer?: DataWriter | null): DataWriter {
-		const items = this.items,
-			count = items.length;
+	protected get version(): number {
+		return 0;
+	}
 
+	protected serializeExtraProperties(writer: DataWriter, count: number): DataWriter {
+		return writer;
+	}
+
+	protected serializeExtraPropertiesWeb(serializedObject: any): any {
+		return serializedObject;
+	}
+
+	public serialize(writer?: DataWriter | null): DataWriter {
 		if (!writer)
 			writer = new DataWriter(this.estimateSerializedLength());
 
-		if (!items || !items[0] || !("serialize" in items[0]))
-			return writer;
+		const items = this.items,
+			count = ((items && items[0] && ("serialize" in items[0])) ? items.length : 0);
 
-		writer.writeUint8(0) // version
+		writer.writeUint8(this.version)
 			.writeInt32(count)
 			.writeInt32(this._currentIndex);
+
+		this.serializeExtraProperties(writer, count);
 
 		for (let i = 0; i < count; i++)
 			(items[i] as any).serialize(writer);
@@ -227,18 +238,16 @@ class List<T> {
 
 	public serializeWeb(): any {
 		const items = this.items,
-			count = items.length,
+			count = ((items && items[0] && ("serializeWeb" in items[0])) ? items.length : 0),
 			tmp = new Array(count);
 
-		if (items && items[0] && ("serializeWeb" in items[0])) {
-			for (let i = 0; i < count; i++)
-				tmp[i] = (items[i] as any).serializeWeb();
-		}
+		for (let i = 0; i < count; i++)
+			tmp[i] = (items[i] as any).serializeWeb();
 
-		return {
+		return this.serializeExtraPropertiesWeb({
 			currentIndex: this._currentIndex,
 			items: tmp
-		};
+		});
 	}
 
 	public moveCurrentToPrevious(): number {

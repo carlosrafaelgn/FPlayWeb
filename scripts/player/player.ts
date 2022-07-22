@@ -51,6 +51,8 @@ class Player {
 	private lastObjectURL: string | null;
 	private lastTimeS: number;
 	private songStartedAutomatically: boolean;
+	private songToResumeTime: Song | null;
+	private resumeTimeS: number;
 
 	private readonly mediaSession: any | null;
 
@@ -69,7 +71,7 @@ class Player {
 	public oncurrenttimeschange: ((currentTimeS: number) => void) | null;
 	public onerror: ((message: string) => void) | null;
 
-	public constructor(volume?: number, ...intermediateNodesFactory: IntermediateNodeFactory[]) {
+	public constructor(volume?: number, playlist?: Playlist | null, ...intermediateNodesFactory: IntermediateNodeFactory[]) {
 		this.audioContextTimeout = 0;
 		this.audioContextSuspended = true;
 		// https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/AudioContext#options
@@ -122,9 +124,11 @@ class Player {
 		this.lastObjectURL = null;
 		this.lastTimeS = -1;
 		this.songStartedAutomatically = true;
+		this.songToResumeTime = null;
+		this.resumeTimeS = 0;
 		this.haltOnAllErrors = false;
 
-		this.volume = (volume === undefined ? 0 : volume);
+		this.volume = volume || 0;
 
 		this.audio = null;
 		this.sourceNode = null;
@@ -146,6 +150,9 @@ class Player {
 			mediaSession.setActionHandler("seekforward", this.seekForward.bind(this));
 			mediaSession.setActionHandler("nexttrack", () => { this.next(); });
 		}
+
+		if (playlist)
+			this.playlist = playlist;
 	}
 
 	private recreateAudioPath(): void {
@@ -275,6 +282,13 @@ class Player {
 
 		this.stop();
 		this._playlist = playlist;
+
+		// stop() only resets these when _currentSong is not null
+		this.songToResumeTime = null;
+		this.resumeTimeS = 0;
+
+		if (playlist && playlist.currentIndexResumeTimeS > 0 && (this.songToResumeTime = playlist.currentItem))
+			this.resumeTimeS = playlist.currentIndexResumeTimeS;
 	}
 
 	public get currentSong(): Song | null {
@@ -290,13 +304,16 @@ class Player {
 		return -1;
 	}
 
-	public get possibleResumeTimeS(): number {
+	public get currentIndexResumeTimeS(): number {
+		if (this.songToResumeTime)
+			return this.resumeTimeS;
+
 		let t = 0;
 
-		if (this._currentSong && this._playlist && this._playlist.currentItem === this._currentSong) {
+		if (this._currentSong && this._currentSong.isSeekable && this._playlist && this._playlist.currentItem === this._currentSong) {
 			try {
 				if (this.audio)
-					t = this.audio.currentTime;
+					t = this.audio.currentTime || 0;
 			} catch (ex: any) {
 				// Just ignore...
 			}
@@ -305,6 +322,11 @@ class Player {
 		}
 
 		return t;
+	}
+
+	public set currentIndexResumeTimeS(currentIndexResumeTimeS: number) {
+		if (this.songToResumeTime)
+			this.resumeTimeS = currentIndexResumeTimeS;
 	}
 
 	private handleError(message: string): void {
@@ -327,7 +349,7 @@ class Player {
 
 		if (!this._playlist || !this._playlist.length)
 			notifyError = true;
-		else if (lastTimeS <= 0)
+		else if (lastTimeS < 0)
 			notifyError = !this.songStartedAutomatically;
 
 		if (notifyError && this.onerror)
@@ -361,6 +383,23 @@ class Player {
 			return;
 
 		this._loading = false;
+
+		if (this.songToResumeTime) {
+			if (this.audio && this.songToResumeTime === this._currentSong && this.resumeTimeS > 0) {
+				this.lastTimeS = this.resumeTimeS;
+				try {
+					this.audio.currentTime = this.resumeTimeS;
+				} catch (ex: any) {
+					// Just ignore...
+				}
+				const playPromise = this.audio.play();
+				if (playPromise)
+					playPromise.catch(Player.nop);
+			}
+			this.songToResumeTime = null;
+			this.resumeTimeS = 0;
+		}
+
 		//queueMicrotask(this.boundNotifyLoadingChange);
 		if (this.onloadingchange)
 			this.onloadingchange(false);
@@ -536,6 +575,15 @@ class Player {
 			this.onpausedchange(this._paused);
 	}*/
 
+	public setPlaylistData(): void {
+		const playlist = this._playlist;
+
+		if (!playlist)
+			return;
+
+		playlist.currentIndexResumeTimeS = this.currentIndexResumeTimeS;
+	}
+
 	public previous(automaticCall?: boolean): void {
 		if (!this._alive || !this._playlist)
 			return;
@@ -641,7 +689,9 @@ class Player {
 
 			this.audio.appendChild(source);
 			this.audio.load();
-			playPromise = this.audio.play();
+
+			if (this.songToResumeTime !== currentSong)
+				playPromise = this.audio.play();
 		}
 
 		// https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/load#usage_notes
@@ -699,6 +749,8 @@ class Player {
 
 			this._currentSong = null;
 			this.lastTimeS = -1;
+			this.songToResumeTime = null;
+			this.resumeTimeS = 0;
 			//queueMicrotask(this.boundNotifySongChange);
 			this.notifySongChange();
 		}
@@ -722,11 +774,11 @@ class Player {
 	}
 
 	public seekTo(timeMS: number, relative?: boolean): void {
-		if (!this._alive || !this.audio || !this._currentSong || this._currentSong.lengthMS <= 0 || !this.audio.seekable || !this.audio.seekable.length)
+		if (!this._alive || !this.audio || !this._currentSong || !this._currentSong.isSeekable || this._currentSong.lengthMS <= 0 || !this.audio.seekable || !this.audio.seekable.length)
 			return;
 
-		const timeS = Math.min(this.audio.duration, Math.max(0, (timeMS / 1000) + (relative ? this.audio.currentTime : 0)));
-		this.lastTimeS = timeS || 0.01; // 0.01 just to indicate somesort of playback has already happened
+		const timeS = Math.min(this.audio.duration || 0, Math.max(0, (timeMS / 1000) + (relative ? this.audio.currentTime : 0)));
+		this.lastTimeS = timeS;
 		this.audio.currentTime = timeS;
 	}
 }

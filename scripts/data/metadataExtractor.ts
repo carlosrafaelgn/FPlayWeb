@@ -24,8 +24,13 @@
 // https://github.com/carlosrafaelgn/FPlayWeb
 //
 
+enum MetadataFlags {
+	Seekable = 1
+};
+
 interface Metadata {
 	url: string;
+	flags: MetadataFlags;
 	title?: string | null;
 	artist?: string | null;
 	album?: string | null;
@@ -738,7 +743,8 @@ class MetadataExtractor {
 
 	private static async extractID3v2Andv1(file: File, f: BufferedFileHandle, tmpPtr: Uint8Array[]): Promise<Metadata | null> {
 		const metadata: Metadata = {
-			url: FileUtils.urlOrPathToURL((file as any)["data-path"]) || ""
+			url: FileUtils.urlOrPathToURL((file as any)["data-path"]) || "",
+			flags: MetadataFlags.Seekable
 		};
 
 		if (!metadata.url) {

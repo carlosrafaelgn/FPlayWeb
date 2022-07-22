@@ -51,9 +51,10 @@ class SliderControl {
 	private _min: number;
 	private _max: number;
 	private _value: number;
-	private valueOnMouseDown: number;
 	private delta: number;
 	private percent: number;
+	private forcedDragging: boolean;
+	private valueChangedDragging: boolean;
 
 	public readonly element: HTMLElement;
 	public readonly mapper: SliderControlValueMapper | null;
@@ -137,8 +138,9 @@ class SliderControl {
 		this._disabled = false;
 		this._value = min - 1;
 		this.percent = 0;
+		this.forcedDragging = false;
+		this.valueChangedDragging = false;
 		this.value = (value === undefined ? min : value);
-		this.valueOnMouseDown = this._value;
 
 		this.pointerHandler = new PointerHandler(container, this.mouseDown.bind(this), this.mouseMove.bind(this), this.mouseUp.bind(this));
 
@@ -206,7 +208,7 @@ class SliderControl {
 	}
 
 	public get dragging(): boolean {
-		return (this.pointerHandler ? this.pointerHandler.captured : false);
+		return (this.forcedDragging || (this.pointerHandler ? this.pointerHandler.captured : false));
 	}
 
 	public get disabled(): boolean {
@@ -338,6 +340,9 @@ class SliderControl {
 				}
 			}
 
+			if (this.dragging)
+				this.valueChangedDragging = true;
+
 			if (this.onvaluechange)
 				this.onvaluechange(value);
 		}
@@ -373,9 +378,12 @@ class SliderControl {
 		// Firefox ignores :active pseudo-class when event.preventDefault() is called
 		this.container.classList.add("active");
 
-		this.valueOnMouseDown = this._value;
+		this.forcedDragging = true;
+		this.valueChangedDragging = false;
 
 		this.mouseMove(e);
+
+		this.forcedDragging = false;
 
 		return true;
 	}
@@ -399,8 +407,10 @@ class SliderControl {
 		// Firefox ignores :active pseudo-class when event.preventDefault() is called
 		this.container.classList.remove("active");
 
-		if (this.ondragend && this._value !== this.valueOnMouseDown)
+		if (this.ondragend && this.valueChangedDragging)
 			this.ondragend(this._value);
+
+		this.valueChangedDragging = false;
 	}
 
 	private keyDown(e: KeyboardEvent): any {

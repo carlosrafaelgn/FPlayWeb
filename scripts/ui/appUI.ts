@@ -503,7 +503,12 @@ class AppUI {
 
 			AppUI.preparePlaylist();
 
-			AppUI.playerSongChange(App.player.currentSong);
+			if (App.player.currentIndexResumeTimeS > 0 && App.player.playlist && App.player.playlist.currentItem) {
+				AppUI.playerSongChange(App.player.playlist.currentItem);
+				AppUI.playerCurrentTimeSChange(App.player.currentIndexResumeTimeS);
+			} else {
+				AppUI.playerSongChange(App.player.currentSong);
+			}
 
 			AppUI.centerCurrentSongIntoView();
 
@@ -722,6 +727,9 @@ class AppUI {
 		const s = ((value / 1000) | 0);
 		if (AppUI.currentTimeS !== s) {
 			AppUI.currentTimeS = s;
+
+			if (App.player && !App.player.currentSong)
+				App.player.currentIndexResumeTimeS = s;
 
 			AppUI.seekSlider.manuallyChangeAria(Formatter.formatTimeS(s), SliderControlValueChild.LeftChild);
 		}

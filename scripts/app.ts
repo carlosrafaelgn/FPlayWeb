@@ -57,7 +57,6 @@ interface AppCloseHandler {
 interface AppSettings {
 	devicePixelRatio?: number;
 	playerVolume?: number;
-	playerPossibleResumeTimeS?: number;
 	graphicalFilterControlEnabled?: boolean;
 	graphicalFilterControlSimpleMode?: boolean;
 	stereoPannerControlEnabled?: boolean;
@@ -127,10 +126,11 @@ class App {
 				promises: Promise<void>[] = [],
 				playlist = App.player.playlist;
 
+			App.player.setPlaylistData();
+
 			InternalStorage.saveAppSettings({
 				devicePixelRatio: devicePixelRatio,
 				playerVolume: App.player.volume,
-				playerPossibleResumeTimeS: App.player.possibleResumeTimeS,
 				graphicalFilterControlEnabled: (App.graphicalFilterControl ? App.graphicalFilterControl.enabled : false),
 				graphicalFilterControlSimpleMode: (App.graphicalFilterControl ? App.graphicalFilterControl.simpleMode : true),
 				stereoPannerControlEnabled: (App.stereoPannerControl ? App.stereoPannerControl.enabled : false),
@@ -319,6 +319,7 @@ class App {
 
 		App.player = new Player(
 			appSettings.playerVolume,
+			InternalStorage.loadPlaylistWeb(),
 
 			function (audioContext) {
 				App.graphicalFilterControl = new GraphicalFilterControl(document.getElementById("filter-container") as HTMLDivElement, document.getElementById("optional-panel-container") as HTMLDivElement, audioContext, appSettings.graphicalFilterControlSimpleMode);
@@ -342,11 +343,6 @@ class App {
 				return App.monoDownMixerControl;
 			}
 		);
-
-		const playlist = InternalStorage.loadPlaylistWeb();
-
-		if (playlist)
-			App.player.playlist = playlist;
 
 		AppUI.init(appSettings);
 

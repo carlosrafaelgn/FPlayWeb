@@ -26,6 +26,7 @@
 
 interface SongInfo {
 	url: string;
+	flags: MetadataFlags;
 	title: string;
 	artist: string;
 	album: string;
@@ -45,12 +46,11 @@ class Song implements SerializableListItem, SongInfo {
 	public static deserialize(reader: DataReader): Song {
 		// NEVER change this order! (changing will destroy existing playlists)
 		reader.readUint8(); // version
-		reader.readInt32(); // flags
-		const song = new Song(reader.readString(), reader.readString(), reader.readString(), reader.readString(), reader.readInt16(), reader.readInt32(), reader.readInt16(), reader.readString(), reader.readInt32());
-		return song;
+		return new Song(reader.readString(), reader.readInt32(), reader.readString(), reader.readString(), reader.readString(), reader.readInt16(), reader.readInt32(), reader.readInt16(), reader.readString(), reader.readInt32());
 	}
 
 	public readonly url: string;
+	public readonly flags: MetadataFlags;
 	public readonly isHttp: boolean;
 	public readonly title: string;
 	public readonly artist: string;
@@ -64,10 +64,11 @@ class Song implements SerializableListItem, SongInfo {
 	public readonly fileName: string | null;
 	public readonly fileSize: number;
 
-	public constructor(urlOrMetadata: string | Metadata, title?: string | null, artist?: string | null, album?: string | null, track?: number, lengthMS?: number, year?: number, fileName?: string | null, fileSize?: number) {
+	public constructor(urlOrMetadata: string | Metadata, flags?: MetadataFlags, title?: string | null, artist?: string | null, album?: string | null, track?: number, lengthMS?: number, year?: number, fileName?: string | null, fileSize?: number) {
 		if ((typeof urlOrMetadata) !== "string") {
 			const metadata = urlOrMetadata as Metadata;
 			urlOrMetadata = metadata.url;
+			flags = metadata.flags;
 			title = metadata.title;
 			artist = metadata.artist;
 			album = metadata.album;
@@ -87,6 +88,7 @@ class Song implements SerializableListItem, SongInfo {
 		}
 
 		this.url = urlOrMetadata as string;
+		this.flags = flags || 0;
 		this.isHttp = Song.isPathHttp(this.url);
 
 		if (!title) {
@@ -112,6 +114,10 @@ class Song implements SerializableListItem, SongInfo {
 		this.fileSize = fileSize || 0;
 	}
 
+	public get isSeekable(): boolean {
+		return ((this.flags & MetadataFlags.Seekable) ? true : false);
+	}
+
 	public estimateSerializedLength(): number {
 		return ((this.url.length +
 			this.title.length +
@@ -123,8 +129,8 @@ class Song implements SerializableListItem, SongInfo {
 	public serialize(writer: DataWriter): DataWriter {
 		// NEVER change this order! (changing will destroy existing playlists)
 		return writer.writeUint8(0) // version
-			.writeInt32(0) // flags
 			.writeString(this.url)
+			.writeInt32(this.flags)
 			.writeString(this.title)
 			.writeString(this.artist)
 			.writeString(this.album)
@@ -138,6 +144,7 @@ class Song implements SerializableListItem, SongInfo {
 	public serializeWeb(): SongInfo {
 		return {
 			url: this.url,
+			flags: this.flags,
 			title: this.title,
 			artist: this.artist,
 			album: this.album,

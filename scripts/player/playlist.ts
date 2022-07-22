@@ -90,18 +90,19 @@ class Playlist extends List<Song> {
 
 		const count = reader.readInt32(),
 			currentIndex = reader.readInt32(),
+			currentIndexResumeTimeS = reader.readInt32(),
 			songs: Song[] = new Array(count);
 
 		for (let i = 0; i < count; i++)
 			songs[i] = Song.deserialize(reader);
 
-		return new Playlist(songs, currentIndex);
+		return new Playlist(songs, currentIndex, currentIndexResumeTimeS);
 	}
 
 	public static deserializeWeb(json: string): Playlist | null {
 		try {
-			const tmp: any = JSON.parse(json);
-			if (!tmp || !tmp.items || !tmp.items.length)
+			const tmp = JSON.parse(json);
+			if (!tmp || !tmp.items || !Array.isArray(tmp.items))
 				return null;
 
 			const items: any[] = tmp.items,
@@ -116,21 +117,48 @@ class Playlist extends List<Song> {
 					missingSongs.set(song.fileName + song.fileSize, song);
 			}
 
-			return new Playlist(songs, tmp.currentIndex || 0, missingSongs.size ? missingSongs : null);
+			return new Playlist(songs, tmp.currentIndex || 0, tmp.currentIndexResumeTimeS || 0, missingSongs.size ? missingSongs : null);
 		} catch (ex: any) {
 			return null;
 		}
 	}
 
 	private missingSongs: Map<string, Song> | null;
+	private _currentIndexResumeTimeS: number;
 
 	public onsonglengthchange: ((song: Song) => void) | null;
 
-	public constructor(songs?: Song[] | null, currentIndex?: number, missingSongs?: Map<string, Song> | null) {
+	public constructor(songs?: Song[] | null, currentIndex?: number, currentIndexResumeTimeS?: number, missingSongs?: Map<string, Song> | null) {
 		super(songs, currentIndex);
 
+		this._currentIndexResumeTimeS = currentIndexResumeTimeS || 0;
 		this.missingSongs = missingSongs || null;
 		this.onsonglengthchange = null;
+	}
+
+	public get currentIndexResumeTimeS(): number {
+		return this._currentIndexResumeTimeS;
+	}
+
+	public set currentIndexResumeTimeS(currentIndexResumeTimeS: number) {
+		if (!this.currentItem || !currentIndexResumeTimeS || currentIndexResumeTimeS < 0)
+			currentIndexResumeTimeS = 0;
+
+		if (this._currentIndexResumeTimeS === currentIndexResumeTimeS)
+			return;
+
+		this.modified = true;
+		this._currentIndexResumeTimeS = currentIndexResumeTimeS;
+	}
+
+	protected serializeExtraProperties(writer: DataWriter, count: number): DataWriter {
+		writer.writeInt32(count ? this._currentIndexResumeTimeS : 0);
+		return writer;
+	}
+
+	protected serializeExtraPropertiesWeb(serializedObject: any): any {
+		serializedObject.currentIndexResumeTimeS = this._currentIndexResumeTimeS;
+		return serializedObject;
 	}
 
 	public updateSongLength(song: Song, lengthS: number): void {
