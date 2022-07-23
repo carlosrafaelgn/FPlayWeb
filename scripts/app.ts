@@ -65,11 +65,16 @@ interface AppSettings {
 	filePickerRootLength?: number;
 }
 
-interface HostInterface {
+interface HostMediaSession {
+	setPaused(paused: boolean): void;
+	setLoading(loading: boolean): void;
+	setMetadata(title: string | null, artist: string | null, album: string | null, track: number, lengthMS: number, year: number): void;
+}
+
+interface HostInterface extends HostMediaSession {
 	getHostType(): string;
 	getBrowserLanguage(): string;
 	getFontScale(): number;
-	setPaused(paused: boolean): void;
 	checkFilePermission(): number;
 	requestFilePermission(): void;
 	setFileURLs(fileURLs: string[]): void;
@@ -320,6 +325,7 @@ class App {
 		App.player = new Player(
 			appSettings.playerVolume,
 			InternalStorage.loadPlaylistWeb(),
+			App.hostInterface,
 
 			function (audioContext) {
 				App.graphicalFilterControl = new GraphicalFilterControl(document.getElementById("filter-container") as HTMLDivElement, document.getElementById("optional-panel-container") as HTMLDivElement, audioContext, appSettings.graphicalFilterControlSimpleMode);

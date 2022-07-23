@@ -55,6 +55,7 @@ class Player {
 	private resumeTimeS: number;
 
 	private readonly mediaSession: any | null;
+	private readonly hostMediaSession: HostMediaSession | null;
 
 	private boundPlaybackError: any;
 	private readonly boundNotifySongChange: any;
@@ -71,7 +72,7 @@ class Player {
 	public oncurrenttimeschange: ((currentTimeS: number) => void) | null;
 	public onerror: ((message: string) => void) | null;
 
-	public constructor(volume?: number, playlist?: Playlist | null, ...intermediateNodesFactory: IntermediateNodeFactory[]) {
+	public constructor(volume?: number, playlist?: Playlist | null, hostMediaSession?: HostMediaSession | null, ...intermediateNodesFactory: IntermediateNodeFactory[]) {
 		this.audioContextTimeout = 0;
 		this.audioContextSuspended = true;
 		// https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/AudioContext#options
@@ -135,20 +136,27 @@ class Player {
 
 		this.recreateAudioPath();
 
-		// https://developers.google.com/web/updates/2017/02/media-session
-		// https://w3c.github.io/mediasession
-		const mediaSession = ((("mediaSession" in navigator) && ("MediaMetadata" in window)) ? (navigator as any).mediaSession : null);
-		this.mediaSession = mediaSession;
+		this.mediaSession = null;
+		this.hostMediaSession = null;
 
-		if (mediaSession && ("setActionHandler" in mediaSession)) {
-			const boundPlayPause = this.playPause.bind(this);
+		if (hostMediaSession) {
+			this.hostMediaSession = hostMediaSession;
+		} else {
+			// https://developers.google.com/web/updates/2017/02/media-session
+			// https://w3c.github.io/mediasession
+			const mediaSession = ((("mediaSession" in navigator) && ("MediaMetadata" in window)) ? (navigator as any).mediaSession : null);
+			this.mediaSession = mediaSession;
 
-			mediaSession.setActionHandler("previoustrack", () => { this.previous(); });
-			mediaSession.setActionHandler("seekbackward", this.seekBackward.bind(this));
-			mediaSession.setActionHandler("pause", boundPlayPause);
-			mediaSession.setActionHandler("play", boundPlayPause);
-			mediaSession.setActionHandler("seekforward", this.seekForward.bind(this));
-			mediaSession.setActionHandler("nexttrack", () => { this.next(); });
+			if (mediaSession && ("setActionHandler" in mediaSession)) {
+				const boundPlayPause = this.playPause.bind(this);
+
+				mediaSession.setActionHandler("previoustrack", () => { this.previous(); });
+				mediaSession.setActionHandler("seekbackward", this.seekBackward.bind(this));
+				mediaSession.setActionHandler("pause", boundPlayPause);
+				mediaSession.setActionHandler("play", boundPlayPause);
+				mediaSession.setActionHandler("seekforward", this.seekForward.bind(this));
+				mediaSession.setActionHandler("nexttrack", () => { this.next(); });
+			}
 		}
 
 		if (playlist)
@@ -376,6 +384,8 @@ class Player {
 		//queueMicrotask(this.boundNotifyLoadingChange);
 		if (this.onloadingchange)
 			this.onloadingchange(true);
+		if (this.hostMediaSession)
+			this.hostMediaSession.setLoading(true);
 	}
 
 	private playbackLoadEnd(): void {
@@ -403,6 +413,8 @@ class Player {
 		//queueMicrotask(this.boundNotifyLoadingChange);
 		if (this.onloadingchange)
 			this.onloadingchange(false);
+		if (this.hostMediaSession)
+			this.hostMediaSession.setLoading(false);
 	}
 
 	private playbackEnd(): void {
@@ -475,8 +487,8 @@ class Player {
 		//queueMicrotask(this.boundNotifyPausedChange);
 		if (this.onpausedchange)
 			this.onpausedchange(true);
-		if (App.hostInterface)
-			App.hostInterface.setPaused(true);
+		if (this.hostMediaSession)
+			this.hostMediaSession.setPaused(true);
 	}
 
 	private playbackStarted(): void {
@@ -488,8 +500,8 @@ class Player {
 		//queueMicrotask(this.boundNotifyPausedChange);
 		if (this.onpausedchange)
 			this.onpausedchange(false);
-		if (App.hostInterface)
-			App.hostInterface.setPaused(false);
+		if (this.hostMediaSession)
+			this.hostMediaSession.setPaused(false);
 	}
 
 	private playbackAborted(): void {
@@ -501,6 +513,8 @@ class Player {
 			//queueMicrotask(this.boundNotifyLoadingChange);
 			if (this.onloadingchange)
 				this.onloadingchange(false);
+			if (this.hostMediaSession)
+				this.hostMediaSession.setLoading(false);
 		}
 
 		if (!this._paused) {
@@ -509,8 +523,8 @@ class Player {
 			//queueMicrotask(this.boundNotifyPausedChange);
 			if (this.onpausedchange)
 				this.onpausedchange(true);
-			if (App.hostInterface)
-				App.hostInterface.setPaused(true);
+			if (this.hostMediaSession)
+				this.hostMediaSession.setPaused(true);
 		}
 	}
 
@@ -519,8 +533,7 @@ class Player {
 			return;
 
 		this._playlist.updateSongLength(this._currentSong, this.audio.duration);
-		if (this.mediaSession && this.audio.duration > 0 && ("setPositionState" in this.mediaSession))
-			this.mediaSession.setPositionState({ duration: this.audio.duration });
+		this.notifyMediaSessionChange();
 	}
 
 	private currentTimeChange(): void {
@@ -534,35 +547,49 @@ class Player {
 			this.oncurrenttimeschange(t);
 	}
 
-	private notifySongChange(): void {
-		if (this._alive) {
-			const currentSong = this._currentSong,
-				mediaSession = this.mediaSession;
+	private notifyMediaSessionChange(): void {
+		if (!this._alive)
+			return;
 
-			if (mediaSession) {
-				if (currentSong) {
-					mediaSession.metadata = new (window as any).MediaMetadata({
-						title: currentSong.title,
-						artist: currentSong.artist,
-						album: currentSong.album,
-						artwork: [
-							{ src: "assets/images/albumArts/64x64.png", sizes: "64x64", type: "image/png" },
-							{ src: "assets/images/albumArts/96x96.png", sizes: "96x96", type: "image/png" },
-							{ src: "assets/images/albumArts/192x192.png", sizes: "192x192", type: "image/png" },
-							{ src: "assets/images/albumArts/256x256.png", sizes: "256x256", type: "image/png" },
-							{ src: "assets/images/albumArts/512x512.png", sizes: "512x512", type: "image/png" }
-						]
-					});
-					if (currentSong.lengthMS > 0 && ("setPositionState" in mediaSession))
-						mediaSession.setPositionState({ duration: (currentSong.lengthMS / 1000) });
-				} else {
-					mediaSession.playbackState = "none";
-				}
+		const currentSong = this._currentSong,
+			hostMediaSession = this.hostMediaSession,
+			mediaSession = this.mediaSession;
+
+		if (hostMediaSession) {
+			if (currentSong)
+				hostMediaSession.setMetadata(currentSong.title, currentSong.artist, currentSong.album, currentSong.track, currentSong.lengthMS, currentSong.year);
+			else
+				hostMediaSession.setMetadata(null, null, null, 0, 0, 0);
+		} else if (mediaSession) {
+			if (currentSong) {
+				mediaSession.metadata = new (window as any).MediaMetadata({
+					title: currentSong.title,
+					artist: currentSong.artist,
+					album: currentSong.album,
+					artwork: [
+						{ src: "assets/images/albumArts/64x64.png", sizes: "64x64", type: "image/png" },
+						{ src: "assets/images/albumArts/96x96.png", sizes: "96x96", type: "image/png" },
+						{ src: "assets/images/albumArts/192x192.png", sizes: "192x192", type: "image/png" },
+						{ src: "assets/images/albumArts/256x256.png", sizes: "256x256", type: "image/png" },
+						{ src: "assets/images/albumArts/512x512.png", sizes: "512x512", type: "image/png" }
+					]
+				});
+				if (currentSong.lengthMS > 0 && ("setPositionState" in mediaSession))
+					mediaSession.setPositionState({ duration: (currentSong.lengthMS / 1000) });
+			} else {
+				mediaSession.playbackState = "none";
 			}
-
-			if (this.onsongchange)
-				this.onsongchange(currentSong);
 		}
+	}
+
+	private notifySongChange(): void {
+		if (!this._alive)
+			return;
+
+		if (this.onsongchange)
+			this.onsongchange(this._currentSong);
+
+		this.notifyMediaSessionChange();
 	}
 
 	/*private notifyLoadingChange(): void {
@@ -735,7 +762,9 @@ class Player {
 				this._loading = false;
 				//queueMicrotask(this.boundNotifyLoadingChange);
 				if (this.onloadingchange)
-					this.onloadingchange(false);	
+					this.onloadingchange(false);
+				if (this.hostMediaSession)
+					this.hostMediaSession.setLoading(false);
 			}
 
 			if (!this._paused) {
@@ -743,8 +772,8 @@ class Player {
 				//queueMicrotask(this.boundNotifyPausedChange);
 				if (this.onpausedchange)
 					this.onpausedchange(true);
-				if (App.hostInterface)
-					App.hostInterface.setPaused(true);
+				if (this.hostMediaSession)
+					this.hostMediaSession.setPaused(true);
 			}
 
 			this._currentSong = null;

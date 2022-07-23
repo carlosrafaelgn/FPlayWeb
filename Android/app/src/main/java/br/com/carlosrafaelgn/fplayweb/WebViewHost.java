@@ -31,15 +31,12 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Application;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.PixelFormat;
-import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
@@ -70,6 +67,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import br.com.carlosrafaelgn.fplayweb.callback.HostMediaSession;
+import br.com.carlosrafaelgn.fplayweb.callback.IntentReceiver;
 import br.com.carlosrafaelgn.fplayweb.list.FileFetcher;
 import br.com.carlosrafaelgn.fplayweb.list.FileSt;
 import br.com.carlosrafaelgn.fplayweb.util.JsonBuilder;
@@ -116,30 +115,6 @@ public class WebViewHost {
 		return new Uri[] { Uri.parse(INITIAL_URL) };
 	}
 
-	private final class IntentReceiver extends BroadcastReceiver {
-		private boolean noisyIntentUnregistered = true;
-
-		public void syncNoisyRegistration(boolean paused) {
-			if (noisyIntentUnregistered == paused)
-				return;
-
-			noisyIntentUnregistered = paused;
-
-			if (paused)
-				application.unregisterReceiver(this);
-			else
-				application.registerReceiver(this, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
-		}
-
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			final WebView webView = WebViewHost.this.webView;
-
-			if (webView != null)
-				webView.evaluateJavascript("App.player && App.player.pause()", null);
-		}
-	}
-
 	@SuppressWarnings("unused")
 	private final class LibWebViewJavaScriptInterface {
 		private final Object lock = new Object();
@@ -148,12 +123,13 @@ public class WebViewHost {
 		private final Handler handler;
 
 		private final IntentReceiver intentReceiver;
+		private final HostMediaSession hostMediaSession;
 
 		private boolean alive;
 		private ValueCallback<Uri[]> filePathCallback;
 		private FileFetcher fileFetcher;
 
-		public volatile boolean paused;
+		public boolean paused;
 
 		LibWebViewJavaScriptInterface(String browserLanguage, double fontScale) {
 			alive = true;
@@ -161,7 +137,8 @@ public class WebViewHost {
 			this.browserLanguage = browserLanguage;
 			this.fontScale = fontScale;
 			handler = new Handler(Looper.getMainLooper());
-			intentReceiver = new IntentReceiver();
+			intentReceiver = new IntentReceiver(WebViewHost.this);
+			hostMediaSession = new HostMediaSession(WebViewHost.this);
 		}
 
 		@JavascriptInterface
@@ -180,25 +157,49 @@ public class WebViewHost {
 		}
 
 		@JavascriptInterface
-		public void setPaused(boolean paused) {
-			synchronized (lock) {
-				if (!alive || this.paused == paused)
-					return;
-
-				this.paused = paused;
-			}
+		public void setPaused(final boolean paused) {
+			//synchronized (lock) {
+			//	if (!alive || this.paused == paused)
+			//		return;
+			//
+			//	this.paused = paused;
+			//}
 
 			handler.post(() -> {
-				final boolean tmp;
+				synchronized (lock) {
+					if (!alive || this.paused == paused)
+						return;
 
+					this.paused = paused;
+				}
+
+				intentReceiver.syncNoisyRegistration(paused);
+
+				hostMediaSession.setPaused(paused);
+			});
+		}
+
+		@JavascriptInterface
+		public void setLoading(final boolean loading) {
+			handler.post(() -> {
 				synchronized (lock) {
 					if (!alive)
 						return;
-
-					tmp = this.paused;
 				}
 
-				intentReceiver.syncNoisyRegistration(tmp);
+				hostMediaSession.setLoading(loading);
+			});
+		}
+
+		@JavascriptInterface
+		public void setMetadata(final String title, final String artist, final String album, final int track, final long lengthMS, final int year) {
+			handler.post(() -> {
+				synchronized (lock) {
+					if (!alive)
+						return;
+				}
+
+				hostMediaSession.setMetadata(title, artist, album, track, lengthMS, year);
 			});
 		}
 
@@ -397,6 +398,8 @@ public class WebViewHost {
 				}
 
 				intentReceiver.syncNoisyRegistration(true);
+
+				hostMediaSession.destroy();
 			}
 		}
 	}
@@ -595,14 +598,15 @@ public class WebViewHost {
 		}
 	}
 
-	private final Application application;
 	private Activity activity;
 	private float density;
 	private int floatViewInitialY, floatViewInitialRawY;
 	private boolean floatViewMoving, pendingPermissionRequestResult;
-	private WebView webView;
 	private FrameLayout floatView;
 	private LibWebViewJavaScriptInterface webViewJavaScriptInterface;
+
+	public final Application application;
+	public WebView webView;
 
 	public WebViewHost(Application application) {
 		hostAlive = true;
