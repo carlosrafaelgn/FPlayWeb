@@ -192,14 +192,14 @@ public class WebViewHost {
 		}
 
 		@JavascriptInterface
-		public void setMetadata(final String title, final String artist, final String album, final int track, final long lengthMS, final int year) {
+		public void setMetadata(final long id, final String title, final String artist, final String album, final int track, final long lengthMS, final int year) {
 			handler.post(() -> {
 				synchronized (lock) {
 					if (!alive)
 						return;
 				}
 
-				hostMediaSession.setMetadata(title, artist, album, track, lengthMS, year);
+				hostMediaSession.setMetadata(id, title, artist, album, track, lengthMS, year);
 			});
 		}
 

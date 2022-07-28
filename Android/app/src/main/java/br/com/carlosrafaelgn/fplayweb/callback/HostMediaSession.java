@@ -32,6 +32,7 @@ import android.content.Intent;
 import android.media.MediaMetadata;
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
@@ -43,6 +44,12 @@ import br.com.carlosrafaelgn.fplayweb.MainActivity;
 import br.com.carlosrafaelgn.fplayweb.WebViewHost;
 
 public final class HostMediaSession {
+	// https://developer.android.com/guide/topics/media-apps/media-apps-overview
+	// https://developer.android.com/guide/topics/media-apps/audio-app/building-a-mediabrowserservice
+	// https://developer.android.com/guide/topics/media-apps/audio-app/building-a-mediabrowserservice#mediastyle-notifications
+
+	private static final String NONE = "-";
+
 	private static final int MSG_HEADSET_HOOK_TIMER = 0x0100;
 
 	private final WebViewHost webViewHost;
@@ -70,7 +77,18 @@ public final class HostMediaSession {
 		try {
 			mediaSessionMetadataBuilder = new MediaMetadata.Builder();
 			mediaSessionPlaybackStateBuilder = new PlaybackState.Builder();
-			mediaSessionPlaybackStateBuilder.setActions(PlaybackState.ACTION_SKIP_TO_PREVIOUS | PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE | PlaybackState.ACTION_PLAY_PAUSE | PlaybackState.ACTION_SKIP_TO_NEXT | PlaybackState.ACTION_STOP | PlaybackState.ACTION_SEEK_TO);
+			mediaSessionPlaybackStateBuilder.setActions(
+				PlaybackState.ACTION_PLAY_FROM_MEDIA_ID |
+				PlaybackState.ACTION_SKIP_TO_PREVIOUS |
+				PlaybackState.ACTION_REWIND |
+				PlaybackState.ACTION_PAUSE |
+				PlaybackState.ACTION_PLAY |
+				PlaybackState.ACTION_PLAY_PAUSE |
+				PlaybackState.ACTION_STOP |
+				PlaybackState.ACTION_FAST_FORWARD |
+				PlaybackState.ACTION_SKIP_TO_NEXT |
+				PlaybackState.ACTION_SEEK_TO
+			);
 			mediaSession = new MediaSession(webViewHost.application, "FPlayWeb");
 			mediaSession.setCallback(new MediaSession.Callback() {
 				@Override
@@ -85,18 +103,18 @@ public final class HostMediaSession {
 				}
 
 				@Override
-				public void onPlay() {
-					handleMediaButton(KeyEvent.KEYCODE_MEDIA_PLAY);
+				public void onPlayFromMediaId(String mediaId, Bundle extras) {
+					try {
+						if (mediaId != null && mediaId.length() > 0)
+							skipToQueueItem(Long.parseLong(mediaId));
+					} catch (Throwable ex) {
+						// Just ignore...
+					}
 				}
 
 				@Override
-				public void onPause() {
-					handleMediaButton(KeyEvent.KEYCODE_MEDIA_PAUSE);
-				}
-
-				@Override
-				public void onSkipToNext() {
-					handleMediaButton(KeyEvent.KEYCODE_MEDIA_NEXT);
+				public void onSkipToQueueItem(long id) {
+					skipToQueueItem(id);
 				}
 
 				@Override
@@ -105,8 +123,33 @@ public final class HostMediaSession {
 				}
 
 				@Override
+				public void onRewind() {
+					handleMediaButton(KeyEvent.KEYCODE_MEDIA_REWIND);
+				}
+
+				@Override
+				public void onPause() {
+					handleMediaButton(KeyEvent.KEYCODE_MEDIA_PAUSE);
+				}
+
+				@Override
+				public void onPlay() {
+					handleMediaButton(KeyEvent.KEYCODE_MEDIA_PLAY);
+				}
+
+				@Override
 				public void onStop() {
 					handleMediaButton(KeyEvent.KEYCODE_MEDIA_STOP);
+				}
+
+				@Override
+				public void onFastForward() {
+					handleMediaButton(KeyEvent.KEYCODE_MEDIA_FAST_FORWARD);
+				}
+
+				@Override
+				public void onSkipToNext() {
+					handleMediaButton(KeyEvent.KEYCODE_MEDIA_NEXT);
 				}
 
 				@Override
@@ -153,9 +196,11 @@ public final class HostMediaSession {
 	}
 
 	private void setPlaybackState() {
+		if (mediaSession == null)
+			return;
+
 		try {
-			if (mediaSession != null)
-				mediaSession.setPlaybackState(mediaSessionPlaybackStateBuilder.setState(hasSong ? (loading ? PlaybackState.STATE_BUFFERING : (paused ? PlaybackState.STATE_PAUSED : PlaybackState.STATE_PLAYING)) : PlaybackState.STATE_STOPPED, 0, 1, SystemClock.elapsedRealtime()).build());
+			mediaSession.setPlaybackState(mediaSessionPlaybackStateBuilder.setState(hasSong ? (loading ? PlaybackState.STATE_BUFFERING : (paused ? PlaybackState.STATE_PAUSED : PlaybackState.STATE_PLAYING)) : PlaybackState.STATE_STOPPED, 0, 1, SystemClock.elapsedRealtime()).build());
 		} catch (Throwable ex) {
 			ex.printStackTrace();
 		}
@@ -171,22 +216,34 @@ public final class HostMediaSession {
 		setPlaybackState();
 	}
 
-	public void setMetadata(String title, String artist, String album, int track, long lengthMS, int year) {
-		hasSong = (title != null);
-		setPlaybackState();
+	public void setMetadata(long id, String title, String artist, String album, int track, long lengthMS, int year) {
+		if (mediaSession == null)
+			return;
+
+		hasSong = (id > 0);
 		try {
-			if (title != null) {
+			if (id > 0) {
+				mediaSessionMetadataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, Long.toString(id));
 				mediaSessionMetadataBuilder.putString(MediaMetadata.METADATA_KEY_TITLE, title);
 				mediaSessionMetadataBuilder.putString(MediaMetadata.METADATA_KEY_ARTIST, artist);
 				mediaSessionMetadataBuilder.putString(MediaMetadata.METADATA_KEY_ALBUM, album);
 				mediaSessionMetadataBuilder.putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, track);
 				mediaSessionMetadataBuilder.putLong(MediaMetadata.METADATA_KEY_DURATION, lengthMS);
 				mediaSessionMetadataBuilder.putLong(MediaMetadata.METADATA_KEY_YEAR, year);
-				mediaSession.setMetadata(mediaSessionMetadataBuilder.build());
+			} else {
+				mediaSessionMetadataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, NONE);
+				mediaSessionMetadataBuilder.putString(MediaMetadata.METADATA_KEY_TITLE, NONE);
+				mediaSessionMetadataBuilder.putString(MediaMetadata.METADATA_KEY_ARTIST, NONE);
+				mediaSessionMetadataBuilder.putString(MediaMetadata.METADATA_KEY_ALBUM, NONE);
+				mediaSessionMetadataBuilder.putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, 0);
+				mediaSessionMetadataBuilder.putLong(MediaMetadata.METADATA_KEY_DURATION, 0);
+				mediaSessionMetadataBuilder.putLong(MediaMetadata.METADATA_KEY_YEAR, 0);
 			}
+			mediaSession.setMetadata(mediaSessionMetadataBuilder.build());
 		} catch (Throwable ex) {
 			ex.printStackTrace();
 		}
+		setPlaybackState();
 	}
 
 	private void handleMediaButton(int keyCode) {
@@ -232,6 +289,13 @@ public final class HostMediaSession {
 			webView.evaluateJavascript("App.player && App.player.next()", null);
 			break;
 		}
+	}
+
+	public void skipToQueueItem(long id) {
+		final WebView webView = webViewHost.webView;
+
+		if (webView != null && id > 0)
+			webView.evaluateJavascript("App.player && App.player.playSongId(" + id + ")", null);
 	}
 
 	public void seekTo(long timeMS) {

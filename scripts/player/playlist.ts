@@ -161,17 +161,26 @@ class Playlist extends List<Song> {
 		return serializedObject;
 	}
 
-	public updateSongLength(song: Song, lengthS: number): void {
+	public findIndexById(id: number): number {
+		const items = this.items;
+		for (let i = items.length - 1; i >= 0; i--) {
+			if (items[i].id === id)
+				return i;
+		}
+		return -1;
+	}
+
+	public updateSongLength(song: Song, lengthS: number): boolean {
 		if (lengthS <= 0 || isNaN(lengthS) || !isFinite(lengthS)) {
 			if (song.lengthMS < 0)
-				return;
+				return false;
 
 			lengthS = -1;
 		} else {
-			if (song.lengthMS >= 0 && ((song.lengthMS / 1000) | 0) === (lengthS | 0))
-				return;
-
 			lengthS = (lengthS * 1000) | 0;
+
+			if (song.lengthMS >= 0 && (song.lengthMS | 0) === lengthS)
+				return false;
 		}
 
 		this.modified = true;
@@ -180,6 +189,8 @@ class Playlist extends List<Song> {
 
 		if (this.onsonglengthchange)
 			this.onsonglengthchange(song);
+
+		return true;
 	}
 
 	public clear(): void {

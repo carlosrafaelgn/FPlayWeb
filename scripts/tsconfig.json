@@ -58,6 +58,7 @@
 		"audio/graphicalFilterControl.ts",
 		"audio/stereoPannerControl.ts",
 		"audio/monoDownMixerControl.ts",
+		"player/mediaSession.ts",
 		"player/player.ts",
 		"data/internalStorage.ts",
 		"ui/modal.ts",

@@ -54,8 +54,7 @@ class Player {
 	private songToResumeTime: Song | null;
 	private resumeTimeS: number;
 
-	private readonly mediaSession: any | null;
-	private readonly hostMediaSession: HostMediaSession | null;
+	private readonly mediaSession: HostMediaSession | null;
 
 	private boundPlaybackError: any;
 	private readonly boundNotifySongChange: any;
@@ -72,7 +71,7 @@ class Player {
 	public oncurrenttimeschange: ((currentTimeS: number) => void) | null;
 	public onerror: ((message: string) => void) | null;
 
-	public constructor(volume?: number, playlist?: Playlist | null, hostMediaSession?: HostMediaSession | null, ...intermediateNodesFactory: IntermediateNodeFactory[]) {
+	public constructor(volume?: number, playlist?: Playlist | null, mediaSession?: HostMediaSession | null, ...intermediateNodesFactory: IntermediateNodeFactory[]) {
 		this.audioContextTimeout = 0;
 		this.audioContextSuspended = true;
 		// https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/AudioContext#options
@@ -136,28 +135,7 @@ class Player {
 
 		this.recreateAudioPath();
 
-		this.mediaSession = null;
-		this.hostMediaSession = null;
-
-		if (hostMediaSession) {
-			this.hostMediaSession = hostMediaSession;
-		} else {
-			// https://developers.google.com/web/updates/2017/02/media-session
-			// https://w3c.github.io/mediasession
-			const mediaSession = ((("mediaSession" in navigator) && ("MediaMetadata" in window)) ? (navigator as any).mediaSession : null);
-			this.mediaSession = mediaSession;
-
-			if (mediaSession && ("setActionHandler" in mediaSession)) {
-				const boundPlayPause = this.playPause.bind(this);
-
-				mediaSession.setActionHandler("previoustrack", () => { this.previous(); });
-				mediaSession.setActionHandler("seekbackward", this.seekBackward.bind(this));
-				mediaSession.setActionHandler("pause", boundPlayPause);
-				mediaSession.setActionHandler("play", boundPlayPause);
-				mediaSession.setActionHandler("seekforward", this.seekForward.bind(this));
-				mediaSession.setActionHandler("nexttrack", () => { this.next(); });
-			}
-		}
+		this.mediaSession = mediaSession || null;
 
 		if (playlist)
 			this.playlist = playlist;
@@ -172,15 +150,27 @@ class Player {
 		for (let i = intermediateNodes.length - 1; i >= 0; i--)
 			intermediateNodes[i].disconnectFromDestination();
 
-		const audio = new Audio(),
+		if (this.audio)
+			document.body.removeChild(this.audio);
+
+		const audio = document.createElement("audio"), // new Audio(),
 			source = this.audioContext.createMediaElementSource(audio),
 			sourceNode = new SourceNode(source);
 
-		this.audio = audio;
-		this.sourceNode = sourceNode;
-	
+		// The audio element is being added to the document now to try to fix the
+		// integration between web audio and media session API's in a few browsers
+		audio.style.pointerEvents = "none";
+		audio.style.position = "absolute";
+		audio.style.left = "0";
+		audio.style.top = "0";
+		audio.style.zIndex = "-1";
 		audio.loop = false;
 		audio.controls = false;
+		audio.autoplay = false;
+		document.body.appendChild(audio);
+
+		this.audio = audio;
+		this.sourceNode = sourceNode;
 
 		const boundPlaybackLoadStart = () => { if (this.audio === audio) this.playbackLoadStart(); };
 		audio.onwaiting = boundPlaybackLoadStart;
@@ -196,7 +186,7 @@ class Player {
 		audio.onpause = () => { if (this.audio === audio) this.playbackPaused(); };
 
 		const boundPlaybackStarted = () => { if (this.audio === audio) this.playbackStarted(); };
-		audio.onplay = boundPlaybackStarted;
+		//audio.onplay = boundPlaybackStarted;
 		audio.onplaying = boundPlaybackStarted;
 
 		const boundPlaybackAborted = () => { if (this.audio === audio) this.playbackAborted(); };
@@ -231,14 +221,8 @@ class Player {
 				this._playlist.destroy();
 
 			const mediaSession = this.mediaSession;
-			if (mediaSession && ("setActionHandler" in mediaSession)) {
-				mediaSession.setActionHandler("previoustrack", null);
-				mediaSession.setActionHandler("seekbackward", null);
-				mediaSession.setActionHandler("pause", null);
-				mediaSession.setActionHandler("play", null);
-				mediaSession.setActionHandler("seekforward", null);
-				mediaSession.setActionHandler("nexttrack", null);
-			}
+			if (mediaSession && mediaSession.cleanUpMediaSession)
+				mediaSession.cleanUpMediaSession();
 
 			zeroObject(this);
 		} else {
@@ -384,8 +368,8 @@ class Player {
 		//queueMicrotask(this.boundNotifyLoadingChange);
 		if (this.onloadingchange)
 			this.onloadingchange(true);
-		if (this.hostMediaSession)
-			this.hostMediaSession.setLoading(true);
+		if (this.mediaSession)
+			this.mediaSession.setLoading(true);
 	}
 
 	private playbackLoadEnd(): void {
@@ -413,8 +397,8 @@ class Player {
 		//queueMicrotask(this.boundNotifyLoadingChange);
 		if (this.onloadingchange)
 			this.onloadingchange(false);
-		if (this.hostMediaSession)
-			this.hostMediaSession.setLoading(false);
+		if (this.mediaSession)
+			this.mediaSession.setLoading(false);
 	}
 
 	private playbackEnd(): void {
@@ -487,8 +471,8 @@ class Player {
 		//queueMicrotask(this.boundNotifyPausedChange);
 		if (this.onpausedchange)
 			this.onpausedchange(true);
-		if (this.hostMediaSession)
-			this.hostMediaSession.setPaused(true);
+		if (this.mediaSession)
+			this.mediaSession.setPaused(true);
 	}
 
 	private playbackStarted(): void {
@@ -500,8 +484,8 @@ class Player {
 		//queueMicrotask(this.boundNotifyPausedChange);
 		if (this.onpausedchange)
 			this.onpausedchange(false);
-		if (this.hostMediaSession)
-			this.hostMediaSession.setPaused(false);
+		if (this.mediaSession)
+			this.mediaSession.setPaused(false);
 	}
 
 	private playbackAborted(): void {
@@ -513,8 +497,8 @@ class Player {
 			//queueMicrotask(this.boundNotifyLoadingChange);
 			if (this.onloadingchange)
 				this.onloadingchange(false);
-			if (this.hostMediaSession)
-				this.hostMediaSession.setLoading(false);
+			if (this.mediaSession)
+				this.mediaSession.setLoading(false);
 		}
 
 		if (!this._paused) {
@@ -523,8 +507,8 @@ class Player {
 			//queueMicrotask(this.boundNotifyPausedChange);
 			if (this.onpausedchange)
 				this.onpausedchange(true);
-			if (this.hostMediaSession)
-				this.hostMediaSession.setPaused(true);
+			if (this.mediaSession)
+				this.mediaSession.setPaused(true);
 		}
 	}
 
@@ -532,8 +516,8 @@ class Player {
 		if (!this._alive || !this.audio || !this._playlist || !this._currentSong)
 			return;
 
-		this._playlist.updateSongLength(this._currentSong, this.audio.duration);
-		this.notifyMediaSessionChange();
+		if (this._playlist.updateSongLength(this._currentSong, this.audio.duration))
+			this.notifyMediaSessionChange();
 	}
 
 	private currentTimeChange(): void {
@@ -548,38 +532,15 @@ class Player {
 	}
 
 	private notifyMediaSessionChange(): void {
-		if (!this._alive)
+		if (!this._alive || !this.mediaSession)
 			return;
 
-		const currentSong = this._currentSong,
-			hostMediaSession = this.hostMediaSession,
-			mediaSession = this.mediaSession;
+		const currentSong = this._currentSong;
 
-		if (hostMediaSession) {
-			if (currentSong)
-				hostMediaSession.setMetadata(currentSong.title, currentSong.artist, currentSong.album, currentSong.track, currentSong.lengthMS, currentSong.year);
-			else
-				hostMediaSession.setMetadata(null, null, null, 0, 0, 0);
-		} else if (mediaSession) {
-			if (currentSong) {
-				mediaSession.metadata = new (window as any).MediaMetadata({
-					title: currentSong.title,
-					artist: currentSong.artist,
-					album: currentSong.album,
-					artwork: [
-						{ src: "assets/images/albumArts/64x64.png", sizes: "64x64", type: "image/png" },
-						{ src: "assets/images/albumArts/96x96.png", sizes: "96x96", type: "image/png" },
-						{ src: "assets/images/albumArts/192x192.png", sizes: "192x192", type: "image/png" },
-						{ src: "assets/images/albumArts/256x256.png", sizes: "256x256", type: "image/png" },
-						{ src: "assets/images/albumArts/512x512.png", sizes: "512x512", type: "image/png" }
-					]
-				});
-				if (currentSong.lengthMS > 0 && ("setPositionState" in mediaSession))
-					mediaSession.setPositionState({ duration: (currentSong.lengthMS / 1000) });
-			} else {
-				mediaSession.playbackState = "none";
-			}
-		}
+		if (currentSong)
+			this.mediaSession.setMetadata(currentSong.id, currentSong.title, currentSong.artist, currentSong.album, currentSong.track, currentSong.lengthMS, currentSong.year);
+		else
+			this.mediaSession.setMetadata(0, null, null, null, 0, 0, 0);
 	}
 
 	private notifySongChange(): void {
@@ -665,10 +626,12 @@ class Player {
 				return;
 			}
 
-			this._currentSong = currentSong;
 			this.lastTimeS = -1;
 			this.songStartedAutomatically = !!automaticCall;
-			queueMicrotask(this.boundNotifySongChange);
+			if (this._currentSong !== currentSong) {
+				this._currentSong = currentSong;
+				queueMicrotask(this.boundNotifySongChange);
+			}
 
 			this.resumeAudioContext();
 
@@ -730,6 +693,19 @@ class Player {
 			playPromise.catch(Player.nop);
 	}
 
+	public playSongId(id: number, automaticCall?: boolean): boolean {
+		if (!this._alive || !this.audio || !this._playlist)
+			return false;
+
+		const i = this._playlist.findIndexById(id);
+		if (i >= 0) {
+			this.play(i, automaticCall);
+			return true;
+		}
+
+		return false;
+	}
+
 	public playPause(): void {
 		if (!this._alive || !this.audio)
 			return;
@@ -763,8 +739,8 @@ class Player {
 				//queueMicrotask(this.boundNotifyLoadingChange);
 				if (this.onloadingchange)
 					this.onloadingchange(false);
-				if (this.hostMediaSession)
-					this.hostMediaSession.setLoading(false);
+				if (this.mediaSession)
+					this.mediaSession.setLoading(false);
 			}
 
 			if (!this._paused) {
@@ -772,8 +748,8 @@ class Player {
 				//queueMicrotask(this.boundNotifyPausedChange);
 				if (this.onpausedchange)
 					this.onpausedchange(true);
-				if (this.hostMediaSession)
-					this.hostMediaSession.setPaused(true);
+				if (this.mediaSession)
+					this.mediaSession.setPaused(true);
 			}
 
 			this._currentSong = null;
