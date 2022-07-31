@@ -680,7 +680,7 @@ class Player {
 			this.audio.appendChild(source);
 			this.audio.load();
 
-			if (this.songToResumeTime !== currentSong)
+			if (this.songToResumeTime !== currentSong || !this.resumeTimeS || this.resumeTimeS <= 0)
 				playPromise = this.audio.play();
 		}
 
