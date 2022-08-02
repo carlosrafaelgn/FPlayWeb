@@ -111,12 +111,12 @@ class HostMediaSession {
 									{ src: "assets/images/albumArts/512x512.png", sizes: "512x512", type: "image/png" }
 								]
 							});
-							if ("setPositionState" in mediaSession) {
-								if (lengthMS > 0)
-									mediaSession.setPositionState({ duration: (lengthMS / 1000) });
-								else
-									mediaSession.setPositionState({ duration: (lengthMS / 1000) });
-							}
+							if ("setPositionState" in mediaSession)
+								mediaSession.setPositionState({
+									duration: ((lengthMS > 0) ? (lengthMS / 1000) : 0),
+									position: 0,
+									playbackRate: 1
+								});
 							if (mediaSession.playbackState == "none")
 								mediaSession.playbackState = "paused";
 						} else {
