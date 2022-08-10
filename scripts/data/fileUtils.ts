@@ -35,6 +35,7 @@ class FileUtils {
 
 	private static readonly supportedExtensions: { [extension: string]: boolean } = {
 		".aac": true,
+		".flac": true,
 		".mp3": true,
 		".wav": true
 	};

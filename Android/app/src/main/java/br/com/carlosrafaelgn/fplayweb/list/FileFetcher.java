@@ -106,7 +106,7 @@ public final class FileFetcher implements Runnable, ArraySorter.Comparer<FileSt>
 	static {
 		//Media formats, file extensions and mime types
 		//http://developer.android.com/guide/appendix/media-formats.html
-		supportedTypes = new HashMap<>(3);
+		supportedTypes = new HashMap<>(4);
 		//supportedTypes.put(".3gp", "audio/3gpp");
 		//supportedTypes.put(".3gpp", "audio/3gpp");
 		//supportedTypes.put(".3ga", "audio/3ga");
@@ -128,7 +128,7 @@ public final class FileFetcher implements Runnable, ArraySorter.Comparer<FileSt>
 		supportedTypes.put(".wav", "audio/wav"); //audio/vnd.wave ?
 		//supportedTypes.put(".mka", "audio/x-matroska");
 		//supportedTypes.put(".mkv", "audio/x-matroska");
-		//supportedTypes.put(".flac", "audio/flac");
+		supportedTypes.put(".flac", "audio/flac");
 	}
 
 	private static boolean accept(File file) {

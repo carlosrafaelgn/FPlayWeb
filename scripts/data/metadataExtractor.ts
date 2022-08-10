@@ -59,6 +59,10 @@ class BufferedFileHandle {
 		return this._bufferAvailable;
 	}
 
+	public get filePosition(): number {
+		return this.position - this._bufferAvailable;
+	}
+
 	public get eof(): boolean {
 		return this._eof;
 	}
@@ -259,10 +263,10 @@ class MetadataExtractor {
 	private static readonly YEAR_B = 0x10;
 	private static readonly LENGTH_B = 0x20;
 
-	private static readonly textDecoderIso88591 = new TextDecoder("iso-8859-1");
-	private static readonly textDecoderUtf16 = new TextDecoder("utf-16");
-	private static readonly textDecoderUtf16be = new TextDecoder("utf-16be");
-	private static readonly textDecoderUtf8 = new TextDecoder("utf-8");
+	protected static readonly textDecoderIso88591 = new TextDecoder("iso-8859-1");
+	protected static readonly textDecoderUtf16 = new TextDecoder("utf-16");
+	protected static readonly textDecoderUtf16be = new TextDecoder("utf-16be");
+	protected static readonly textDecoderUtf8 = new TextDecoder("utf-8");
 
 	private static async extractRIFF(metadata: Metadata, f: BufferedFileHandle, tmp: Uint8Array): Promise<[Metadata, boolean] | null> {
 		// When entering extractRIFF() the first four bytes have already been consumed
@@ -530,7 +534,7 @@ class MetadataExtractor {
 				if (p)
 					await p;
 			}
-			metadata.lengthMS = (dataLength * 1000 / avgBytesPerSec) | 0;
+			metadata.lengthMS = Math.floor(dataLength * 1000 / avgBytesPerSec);
 			return [metadata, !!id3Position];
 		}
 
@@ -742,10 +746,7 @@ class MetadataExtractor {
 	}
 
 	private static async extractID3v2Andv1(file: File, f: BufferedFileHandle, tmpPtr: Uint8Array[]): Promise<Metadata | null> {
-		const metadata: Metadata = {
-			url: FileUtils.urlOrPathToURL((file as any)["data-path"]) || "",
-			flags: MetadataFlags.Seekable
-		};
+		const metadata = MetadataExtractor.createBasicMetadata(file);
 
 		if (!metadata.url) {
 			metadata.file = file;
@@ -930,25 +931,41 @@ class MetadataExtractor {
 		return metadata;
 	}
 
+	protected static createBasicMetadata(file: File): Metadata {
+		return {
+			url: FileUtils.urlOrPathToURL((file as any)["data-path"]) || "",
+			flags: MetadataFlags.Seekable
+		};
+	}
+
 	public static async extract(file: File, buffer?: Uint8Array | null, tempBuffer?: Uint8Array[] | null): Promise<Metadata | null> {
 		if (!file)
 			return null;
-
-		if (!file.name.endsWith(".mp3") &&
-			!file.name.endsWith(".aac") &&
-			!file.name.endsWith(".wav")) {
-			const lcase = file.name.toLowerCase();
-			if (!lcase.endsWith(".mp3") &&
-				!lcase.endsWith(".aac") &&
-				!lcase.endsWith(".wav"))
-				return null;
-		}
 
 		if (!buffer)
 			buffer = new Uint8Array(BufferedFileHandle.minBufferLength);
 
 		if (!tempBuffer)
 			tempBuffer = [new Uint8Array(256)];
+
+		if (!file.name.endsWith(".mp3") &&
+			!file.name.endsWith(".aac") &&
+			!file.name.endsWith(".wav")) {
+
+			if (file.name.endsWith(".flac"))
+				return FLACMetadataExtractor.extract(file, buffer, tempBuffer);
+
+			const lcase = file.name.toLowerCase();
+			if (!lcase.endsWith(".mp3") &&
+				!lcase.endsWith(".aac") &&
+				!lcase.endsWith(".wav")) {
+
+				if (lcase.endsWith(".flac"))
+					return FLACMetadataExtractor.extract(file, buffer, tempBuffer);
+
+				return null;
+			}
+		}
 
 		try {
 			const f = new BufferedFileHandle(file, buffer);

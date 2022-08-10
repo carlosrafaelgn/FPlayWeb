@@ -18,6 +18,7 @@
 		"data/dataReader.ts",
 		"data/dataWriter.ts",
 		"data/metadataExtractor.ts",
+		"data/flacMetadataExtractor.ts",
 		"utils/formatter.ts",
 		"data/list.ts",
 		"data/fileSystemAPI.ts",

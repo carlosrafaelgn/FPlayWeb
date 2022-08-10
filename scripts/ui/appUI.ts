@@ -1064,7 +1064,16 @@ class AppUI {
 
 	public static showAbout(): void {
 		Modal.show({
-			html: Strings.AboutHTML + ((App.player && App.player.audioContext) ? ('<br/><br/><small>Base latency: ' + (App.player.audioContext.baseLatency || 0).toFixed(4) + ' s<br/>Output latency: ' + (isNaN((App.player.audioContext as any).outputLatency) ? "-" : ((App.player.audioContext as any).outputLatency.toFixed(4) + ' s')) +  '</small>') : ''),
+			html: Strings.AboutHTML + ((App.player && App.player.audioContext) ? `
+				<br/><br/>
+				<small>
+					Base latency: ${(App.player.audioContext.baseLatency || 0).toFixed(4)} s
+					<br/>
+					Output latency: ${(isNaN((App.player.audioContext as any).outputLatency) ? "-" : ((App.player.audioContext as any).outputLatency.toFixed(4) + ' s'))}
+					<br/>
+					Output sample rate: ${(isNaN(App.player.audioContext.sampleRate) ? "-" : App.player.audioContext.sampleRate)} Hz
+				</small>
+			` : ''),
 			title: Strings.About + " (v" + (window as any).CACHE_VERSION + ")",
 			returnFocusElement: AppUI.playlistControl.element
 		});
