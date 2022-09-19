@@ -29,6 +29,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.provider.Settings;
@@ -111,6 +112,10 @@ public class MainActivity extends Activity {
 				// So, if we were playing when the home button was pressed, just force the activity
 				// to finish whether we managed to enter float mode or not.
 				webViewHost.enterFloatModeIfPossible();
+				finish();
+			} else if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
+				// https://developer.android.com/about/versions/12/behavior-changes-all#activity-lifecycle
+				// https://stackoverflow.com/q/71365906/3569421
 				finish();
 			}
 		}
