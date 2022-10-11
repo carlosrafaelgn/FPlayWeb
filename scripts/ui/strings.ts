@@ -25,6 +25,13 @@
 //
 
 class Strings {
+	private static readonly regExpAmp = /\&/g;
+	private static readonly regExpLT = /</g;
+	private static readonly regExpGT = />/g;
+	private static readonly regExpQuot = /\"/g;
+	private static readonly regExpApos = /\'/g;
+	private static readonly regExpGrave = /\`/g;
+
 	public static language = "en";
 
 	public static comparer: (a: string, b: string) => number;
@@ -268,5 +275,13 @@ Este projeto é licenciado sob a <a target="_blank" href="https://github.com/car
 		span.className = "sr-only";
 		Strings.changeText(span, text);
 		return span;
+	}
+
+	public static htmlEncode(text: string | null): string {
+		return (text ? text.replace(Strings.regExpAmp, "&amp;").replace(Strings.regExpLT, "&lt;").replace(Strings.regExpGT, "&gt;") : "");
+	}
+
+	public static htmlEncodeValue(text: string | null): string {
+		return (text ? text.replace(Strings.regExpAmp, "&amp;").replace(Strings.regExpLT, "&lt;").replace(Strings.regExpGT, "&gt;").replace(Strings.regExpQuot, "&#34;").replace(Strings.regExpApos, "&#39;").replace(Strings.regExpGrave, "&#96;") : "");
 	}
 }

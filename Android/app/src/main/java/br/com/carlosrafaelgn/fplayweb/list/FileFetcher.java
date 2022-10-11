@@ -32,7 +32,6 @@
 //
 package br.com.carlosrafaelgn.fplayweb.list;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -107,27 +106,9 @@ public final class FileFetcher implements Runnable, ArraySorter.Comparer<FileSt>
 		//Media formats, file extensions and mime types
 		//http://developer.android.com/guide/appendix/media-formats.html
 		supportedTypes = new HashMap<>(4);
-		//supportedTypes.put(".3gp", "audio/3gpp");
-		//supportedTypes.put(".3gpp", "audio/3gpp");
-		//supportedTypes.put(".3ga", "audio/3ga");
-		//supportedTypes.put(".3gpa", "audio/3ga");
-		//supportedTypes.put(".mp4", "audio/mp4");
-		//supportedTypes.put(".m4a", "audio/mp4");
 		supportedTypes.put(".aac", "audio/aac");
 		supportedTypes.put(".mp3", "audio/mpeg");
-		//supportedTypes.put(".mid", "audio/mid");
-		//supportedTypes.put(".rmi", "audio/mid");
-		//supportedTypes.put(".xmf", "audio/mobile-xmf");
-		//supportedTypes.put(".mxmf", "audio/mobile-xmf");
-		//supportedTypes.put(".rtttl", "audio/x-rtttl");
-		//supportedTypes.put(".rtx", "audio/rtx");
-		//supportedTypes.put(".ota", "audio/ota"); //???
-		//supportedTypes.put(".imy", "audio/imy"); //???
-		//supportedTypes.put(".ogg", "audio/ogg");
-		//supportedTypes.put(".oga", "audio/ogg");
 		supportedTypes.put(".wav", "audio/wav"); //audio/vnd.wave ?
-		//supportedTypes.put(".mka", "audio/x-matroska");
-		//supportedTypes.put(".mkv", "audio/x-matroska");
 		supportedTypes.put(".flac", "audio/flac");
 	}
 
@@ -233,16 +214,7 @@ public final class FileFetcher implements Runnable, ArraySorter.Comparer<FileSt>
 		count++;
 	}
 
-	@SuppressWarnings("deprecation")
 	private void fetchRoot() {
-		//String desc = context.getText(R.string.artists).toString();
-		//files[count] = new FileSt(FileSt.ARTIST_ROOT + FileSt.FAKE_PATH_ROOT + desc, desc, FileSt.TYPE_ARTIST_ROOT);
-		//count++;
-
-		//desc = context.getText(R.string.albums).toString();
-		//files[count] = new FileSt(FileSt.ALBUM_ROOT + FileSt.FAKE_PATH_ROOT + desc, desc, FileSt.TYPE_ALBUM_ROOT);
-		//count++;
-
 		File f;
 		try {
 			f = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
@@ -276,35 +248,6 @@ public final class FileFetcher implements Runnable, ArraySorter.Comparer<FileSt>
 		} catch (Throwable ex) {
 			ex.printStackTrace();
 		}
-
-		//the following is an improved version based on these ideas:
-		//http://sapienmobile.com/?p=204
-		//http://stackoverflow.com/questions/11281010/how-can-i-get-external-sd-card-path-for-android-4-0
-
-		/*try {
-			path = System.getenv("SECONDARY_STORAGE");
-			if (path != null && path.length() > 0) {
-				//this file helps clarifying this ':' a little bit...
-				//http://grepcode.com/file/repository.grepcode.com/java/ext/com.google.android/android/4.4.2_r1/android/os/Environment.java
-				int start = path.indexOf(':');
-				if (start < 0) {
-					addStorage(s, new File(path), true, internalCount, externalCount, usbCount, addedCount, addedPaths);
-				} else {
-					//avoid using split ;)
-					int end;
-					do {
-						end = path.indexOf(':', start + 1);
-						if (end <= start) end = path.length();
-						addStorage(s, new File(path.substring(start, end)), true, internalCount, externalCount, usbCount, addedCount, addedPaths);
-						start = end + 1;
-					} while (end < path.length());
-				}
-			}
-		} catch (Throwable ex) {
-		}
-
-		if (cancelled)
-			return;*/
 
 		InputStream is = null;
 		InputStreamReader isr = null;
@@ -397,7 +340,6 @@ public final class FileFetcher implements Runnable, ArraySorter.Comparer<FileSt>
 		fetchRoot19(internalCount, externalCount, usbCount, addedCount, addedPaths);
 	}
 
-	@TargetApi(Build.VERSION_CODES.KITKAT)
 	private void fetchRoot19(int[] internalCount, int[] externalCount, int[] usbCount, int[] addedCount, String[] addedPaths) {
 		//Massive workaround! This is a desperate attempt to fetch all possible directories
 		//in newer CM and others...
@@ -429,8 +371,6 @@ public final class FileFetcher implements Runnable, ArraySorter.Comparer<FileSt>
 		//Despite its name, EXTERNAL_CONTENT_URI also comprises the internal storage
 		//(at least it does so in all devices I have tested!)
 		//
-		//final String[] proj = { MediaStore.Audio.Artists._ID, MediaStore.Audio.Artists.ARTIST, MediaStore.Audio.Artists.NUMBER_OF_ALBUMS, MediaStore.Audio.Artists.NUMBER_OF_TRACKS };
-		//final Cursor c = s.getContentResolver().query(MediaStore.Audio.Artists.EXTERNAL_CONTENT_URI, proj, null, null, null);
 		if (c == null) {
 			count = 0;
 			files = new FileSt[0];
@@ -490,10 +430,6 @@ public final class FileFetcher implements Runnable, ArraySorter.Comparer<FileSt>
 		final Cursor c = context.getContentResolver().query(Uri.parse((artist == null) ?
 			"content://media/external/audio/albums" :
 			"content://media/external/audio/artists/" + artist + "/albums"), proj, null, null, null);
-		//final String[] proj = { MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM, MediaStore.Audio.Albums.ALBUM_ART, MediaStore.Audio.Albums.NUMBER_OF_SONGS };
-		//final Cursor c = s.getContentResolver().query((artist == null) ?
-		//		MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI :
-		//		MediaStore.Audio.Artists.Albums.getContentUri("external", Long.parseLong(artist)), proj, null, null, null);
 		if (c == null) {
 			count = 0;
 			files = new FileSt[0];
@@ -538,16 +474,6 @@ public final class FileFetcher implements Runnable, ArraySorter.Comparer<FileSt>
 				new String[] { album } :
 				new String[] { album, artist },
 			null);
-		//final String[] proj = { MediaStore.Audio.Media.DATA, MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.TRACK };
-		//final Cursor c = s.getContentResolver().query(
-		//	MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, proj,
-		//	(artist == null) ?
-		//		(MediaStore.Audio.Media.ALBUM_ID + "=?") :
-		//		(MediaStore.Audio.Media.ALBUM_ID + "=? AND " + MediaStore.Audio.Media.ARTIST_ID + "=?"),
-		//	(artist == null) ?
-		//		new String[] { album } :
-		//		new String[] { album, artist },
-		//	null);
 		if (c == null) {
 			count = 0;
 			files = new FileSt[0];

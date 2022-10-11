@@ -181,21 +181,6 @@ public final class TypedRawArrayList<E> extends AbstractList<E> implements Clone
 		modCount++;
 	}
 
-	/*
-	 * This method controls the growth of TypedRawArrayList capacities.  It represents
-	 * a time-space tradeoff: we don't want to grow lists too frequently
-	 * (which wastes time and fragments storage), but we don't want to waste
-	 * too much space in unused excess capacity.
-	 *
-	 * NOTE: This method is inlined into {@link #add(Object)} for performance.
-	 * If you change the method, change it there too!
-	 */
-	//private static int newCapacity(int currentCapacity) {
-	//	int increment = (currentCapacity < (MIN_CAPACITY_INCREMENT / 2) ?
-	//		MIN_CAPACITY_INCREMENT : currentCapacity >> 1);
-	//	return currentCapacity + increment;
-	//}
-
 	/**
 	 * Adds the objects in the specified array to this {@code TypedRawArrayList}.
 	 *
@@ -298,7 +283,6 @@ public final class TypedRawArrayList<E> extends AbstractList<E> implements Clone
 
 	/**
 	 * This method was extracted to encourage VM to inline callers.
-	 * TODO: when we have a VM that can actually inline, move the test in here too!
 	 */
 	static void throwIndexOutOfBoundsException(int index, int size) {
 		throw new IndexOutOfBoundsException("Invalid index " + index + ", size is " + size);
@@ -328,6 +312,7 @@ public final class TypedRawArrayList<E> extends AbstractList<E> implements Clone
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
+	@NonNull
 	public Object clone() {
 		try {
 			final TypedRawArrayList<E> result = (TypedRawArrayList<E>)super.clone();
@@ -357,8 +342,6 @@ public final class TypedRawArrayList<E> extends AbstractList<E> implements Clone
 
 	@Override
 	public E get(int index) {
-		if (index >= size)
-			throwIndexOutOfBoundsException(index, size);
 		return array[index];
 	}
 
@@ -451,8 +434,6 @@ public final class TypedRawArrayList<E> extends AbstractList<E> implements Clone
 	public E remove(int index) {
 		final E[] a = array;
 		int s = size;
-		if (index >= s)
-			throwIndexOutOfBoundsException(index, s);
 		final E result = a[index];
 		System.arraycopy(a, index + 1, a, index, --s - index);
 		a[s] = null;  // Prevent memory leak
@@ -524,8 +505,6 @@ public final class TypedRawArrayList<E> extends AbstractList<E> implements Clone
 	@Override
 	public E set(int index, E object) {
 		final E[] a = array;
-		if (index >= size)
-			throwIndexOutOfBoundsException(index, size);
 		E result = a[index];
 		a[index] = object;
 		return result;
@@ -567,8 +546,10 @@ public final class TypedRawArrayList<E> extends AbstractList<E> implements Clone
 	@Override
 	public <T> T[] toArray(@NonNull T[] contents) {
 		final int s = size;
-		if (contents.length < s)
+		if (contents.length < s) {
+			//noinspection ConstantConditions
 			contents = (T[])Array.newInstance(contents.getClass().getComponentType(), s);
+		}
 		System.arraycopy(this.array, 0, contents, 0, s);
 		if (contents.length > s)
 			contents[s] = null;

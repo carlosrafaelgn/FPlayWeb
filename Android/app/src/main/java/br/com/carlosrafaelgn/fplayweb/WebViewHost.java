@@ -27,7 +27,6 @@ package br.com.carlosrafaelgn.fplayweb;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Application;
@@ -80,26 +79,7 @@ public class WebViewHost {
 	// https://github.com/Red-Folder/bgs-core/issues/17
 	// https://stackoverflow.com/a/52030464/3569421
 	// https://stackoverflow.com/a/47872802/3569421
-	// Is this class really necessary nowadays...?
-	/*private static final class MediaWebView extends WebView {
-		public MediaWebView(Context context) {
-			super(context);
-		}
-
-		public MediaWebView(Context context, AttributeSet attrs) {
-			super(context, attrs);
-		}
-
-		public MediaWebView(Context context, AttributeSet attrs, int defStyleAttr) {
-			super(context, attrs, defStyleAttr);
-		}
-
-		@Override
-		protected void onWindowVisibilityChanged(int visibility) {
-			if (visibility != View.GONE)
-				super.onWindowVisibilityChanged(visibility);
-		}
-	}*/
+	// Is this class mentioned above really necessary nowadays...?
 
 	public static final int BACK_KEY_DESTROY = 0;
 	public static final int BACK_KEY_PREVENT = 1;
@@ -158,13 +138,6 @@ public class WebViewHost {
 
 		@JavascriptInterface
 		public void setPaused(final boolean paused) {
-			//synchronized (lock) {
-			//	if (!alive || this.paused == paused)
-			//		return;
-			//
-			//	this.paused = paused;
-			//}
-
 			handler.post(() -> {
 				synchronized (lock) {
 					if (!alive || this.paused == paused)
@@ -205,7 +178,7 @@ public class WebViewHost {
 
 		@JavascriptInterface
 		public int checkFilePermission() {
-			return ((application.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) ? 1 : 0);
+			return ((application.checkSelfPermission(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ? Manifest.permission.READ_MEDIA_AUDIO : Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) ? 1 : 0);
 		}
 
 		@JavascriptInterface
@@ -213,7 +186,7 @@ public class WebViewHost {
 			handler.post(() -> {
 				if (activity != null) {
 					pendingPermissionRequestResult = true;
-					activity.requestPermissions(new String[] { Manifest.permission.READ_EXTERNAL_STORAGE }, 0);
+					activity.requestPermissions(new String[] { Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ? Manifest.permission.READ_MEDIA_AUDIO : Manifest.permission.READ_EXTERNAL_STORAGE }, 0);
 				} else {
 					postCallbackPermissionResult(0);
 				}
@@ -405,6 +378,7 @@ public class WebViewHost {
 	}
 
 	private final class LibWebViewClient extends WebViewClient {
+		@SuppressWarnings("deprecation")
 		@Override
 		public boolean shouldOverrideUrlLoading(WebView view, String url) {
 			try {
@@ -584,7 +558,6 @@ public class WebViewHost {
 		}
 
 		@Override
-		@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 		public void onPermissionRequest(PermissionRequest request) {
 			try {
 				request.grant(request.getResources());
@@ -645,7 +618,6 @@ public class WebViewHost {
 		return (int)((dp * getDensity()) + 0.5f);
 	}
 
-	@SuppressWarnings("deprecation")
 	@SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
 	public void setActivity(Activity activity) {
 		this.activity = activity;
@@ -823,7 +795,7 @@ public class WebViewHost {
 			layoutParams.width = _24dp;
 			layoutParams.height = _24dp + (_24dp >> 1);
 			layoutParams.format = PixelFormat.TRANSLUCENT;
-			layoutParams.type = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_TOAST);
+			layoutParams.type = (WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
 			windowManager.addView(floatView, layoutParams);
 
 			return true;

@@ -1072,6 +1072,8 @@ class AppUI {
 					Output latency: ${(isNaN((App.player.audioContext as any).outputLatency) ? "-" : ((App.player.audioContext as any).outputLatency.toFixed(4) + ' s'))}
 					<br/>
 					Output sample rate: ${(isNaN(App.player.audioContext.sampleRate) ? "-" : App.player.audioContext.sampleRate)} Hz
+					<br/>
+					User agent: ${Strings.htmlEncode(navigator.userAgent)}
 				</small>
 			` : ''),
 			title: Strings.About + " (v" + (window as any).CACHE_VERSION + ")",

@@ -25,6 +25,8 @@
 //
 package br.com.carlosrafaelgn.fplayweb.util;
 
+import android.support.annotation.NonNull;
+
 import java.util.Stack;
 
 @SuppressWarnings({"unused", "WeakerAccess", "UnusedReturnValue"})
@@ -51,6 +53,7 @@ public final class JsonBuilder {
 	}
 
 	@Override
+	@NonNull
 	public String toString() {
 		return builder.toString();
 	}

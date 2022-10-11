@@ -71,8 +71,6 @@ public class MainActivity extends Activity {
 				// keeping it running in the background.
 				showOverlayPermissionRequest();
 
-				//super.moveTaskToBack(true);
-				//return;
 				break;
 
 			case WebViewHost.BACK_KEY_PREVENT:

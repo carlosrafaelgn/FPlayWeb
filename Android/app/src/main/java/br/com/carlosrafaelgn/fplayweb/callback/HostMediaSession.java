@@ -159,8 +159,7 @@ public final class HostMediaSession {
 			});
 			final Intent intent = new Intent(webViewHost.application, MainActivity.class);
 			intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-			mediaSession.setSessionActivity(PendingIntent.getActivity(webViewHost.application, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT));
-			mediaSession.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+			mediaSession.setSessionActivity(PendingIntent.getActivity(webViewHost.application, 0, intent, PendingIntent.FLAG_IMMUTABLE));
 			mediaSession.setPlaybackState(mediaSessionPlaybackStateBuilder.setState(PlaybackState.STATE_STOPPED, 0, 1, SystemClock.elapsedRealtime()).build());
 			mediaSession.setActive(true);
 		} catch (Throwable ex) {

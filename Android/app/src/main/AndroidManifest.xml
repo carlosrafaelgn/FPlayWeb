@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest package="br.com.carlosrafaelgn.fplayweb"
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
     android:installLocation="auto">
 
     <!-- http://developer.android.com/guide/topics/manifest/supports-screens-element.html -->
@@ -22,6 +21,8 @@
     <uses-permission android:name="android.permission.BROADCAST_STICKY" />
     <!-- http://developer.android.com/reference/android/Manifest.permission.html#READ_EXTERNAL_STORAGE -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!-- For Android 33 https://developer.android.com/about/versions/13/behavior-changes-13#granular-media-permissions -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <!-- For Android 28 https://developer.android.com/about/versions/pie/android-9.0-migration#tya -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <!-- For the floating window -->
@@ -93,14 +94,11 @@
         <!-- https://developer.android.com/guide/practices/screens_support.html#MaxAspectRatio -->
         <meta-data android:name="android.max_aspect" android:value="100.0" />
 
-        <service
-            android:name=".ForegroundService"
-            android:enabled="true" />
-
         <activity android:name=".MainActivity"
             android:clearTaskOnLaunch="true"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode"
             android:label="@string/app_name"
+            android:exported="true"
             android:launchMode="singleTask"
             android:multiprocess="false"
             android:screenOrientation="unspecified"

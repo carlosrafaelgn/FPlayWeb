@@ -104,6 +104,33 @@ class App {
 	public static stereoPannerControl: StereoPannerControl | null;
 	public static monoDownMixerControl: MonoDownMixerControl | null;
 
+	private static saveSettings(savePlaylist: boolean): void {
+		if (!App.player || !App.player.alive)
+			return;
+
+		App.player.setPlaylistData();
+
+		InternalStorage.saveAppSettings({
+			devicePixelRatio: devicePixelRatio,
+			playerVolume: App.player.volume,
+			graphicalFilterControlEnabled: (App.graphicalFilterControl ? App.graphicalFilterControl.enabled : false),
+			graphicalFilterControlSimpleMode: (App.graphicalFilterControl ? App.graphicalFilterControl.simpleMode : true),
+			stereoPannerControlEnabled: (App.stereoPannerControl ? App.stereoPannerControl.enabled : false),
+			monoDownMixerControlEnabled: (App.monoDownMixerControl ? App.monoDownMixerControl.enabled : false),
+			filePickerLastPath: FilePicker.lastPath,
+			filePickerRootLength: FilePicker.lastRootLength
+		});
+
+		if (App.graphicalFilterControl)
+			App.graphicalFilterControl.saveSettings();
+
+		if (App.stereoPannerControl)
+			App.stereoPannerControl.saveSettings();
+
+		if (savePlaylist && App.player.playlist)
+			InternalStorage.savePlaylistWeb(App.player.playlist);
+	}
+
 	private static mainWindowStateChanged(channel: string, isMinimized: boolean, isMaximized: boolean): void {
 		if (App.isMinimized !== isMinimized || App.isMaximized !== isMaximized) {
 			App.isMinimized = isMinimized;
@@ -122,29 +149,11 @@ class App {
 	private static mainWindowClosing(): void {
 		if (App.player && App.player.alive) {
 			const closeHandlers = App.closeHandlers,
-				promises: Promise<void>[] = [],
-				playlist = App.player.playlist;
+				promises: Promise<void>[] = [];
 
-			App.player.setPlaylistData();
-
-			InternalStorage.saveAppSettings({
-				devicePixelRatio: devicePixelRatio,
-				playerVolume: App.player.volume,
-				graphicalFilterControlEnabled: (App.graphicalFilterControl ? App.graphicalFilterControl.enabled : false),
-				graphicalFilterControlSimpleMode: (App.graphicalFilterControl ? App.graphicalFilterControl.simpleMode : true),
-				stereoPannerControlEnabled: (App.stereoPannerControl ? App.stereoPannerControl.enabled : false),
-				monoDownMixerControlEnabled: (App.monoDownMixerControl ? App.monoDownMixerControl.enabled : false),
-				filePickerLastPath: FilePicker.lastPath,
-				filePickerRootLength: FilePicker.lastRootLength
-			});
+			App.saveSettings(true);
 
 			App.player.destroy(true);
-
-			if (App.graphicalFilterControl)
-				App.graphicalFilterControl.saveSettings();
-
-			if (App.stereoPannerControl)
-				App.stereoPannerControl.saveSettings();
 
 			if (closeHandlers && closeHandlers.length) {
 				for (let i = closeHandlers.length - 1; i >= 0; i--) {
@@ -155,9 +164,6 @@ class App {
 					}
 				}
 			}
-
-			if (playlist)
-				InternalStorage.savePlaylistWeb(playlist);
 
 			if (!App.hostInterface)
 				return;
@@ -290,6 +296,11 @@ class App {
 			App.triggerMainWindowStateChanged();
 		} else if (!App.hostInterface) {
 			// https://developers.google.com/web/updates/2018/07/page-lifecycle-api#the-unload-event
+			// https://developer.chrome.com/blog/page-lifecycle-api/#advice-hidden
+			// https://developer.mozilla.org/en-US/docs/Web/API/Window/pagehide_event#usage_notes
+			// https://developer.mozilla.org/en-US/docs/Web/API/Document/visibilitychange_event#usage_notes
+			// Although being recommended, onvisibilitychange is called whenever the page/tab becomes invisible
+			// which happens several times on desktop environments... This must be thought over a little bit...
 			window.addEventListener(("onpagehide" in window) ? "pagehide" : "unload", App.mainWindowClosing);
 		}
 
