@@ -24,23 +24,15 @@
 // https://github.com/carlosrafaelgn/FPlayWeb
 //
 
-// TypeScript lacked these declarations in 2022/01
+// TypeScript lacked these declarations in 2022/10
 
 interface FileSystemHandle {
-	name: string;
-	kind: string;
 	queryPermission(descriptor: any): Promise<string>;
 	requestPermission(descriptor: any): Promise<string>;
 }
 
-interface FileSystemFileHandle extends FileSystemHandle {
-	getFile(): Promise<File>;
-}
-
 // This declaration is not 100%, but works... :)
 interface FileSystemDirectoryHandle extends FileSystemHandle, Array<Promise<FileSystemHandle>> {
-	getFileHandle(name: string): Promise<FileSystemFileHandle>;
-	getDirectoryHandle(name: string): Promise<FileSystemDirectoryHandle>;
 }
 
 class FileSystemAPI {
