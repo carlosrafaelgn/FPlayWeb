@@ -33,14 +33,33 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.provider.Settings;
+import android.window.OnBackInvokedDispatcher;
 
 public class MainActivity extends Activity {
 	private WebViewHost webViewHost;
+	private boolean onBackInvokedCallbackRegistered;
 
 	private void showOverlayPermissionRequest() {
 		final Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
 		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		getApplication().startActivity(intent);
+	}
+
+	private boolean handleBackPressed() {
+		if (webViewHost != null) {
+			switch (webViewHost.onBackPressed()) {
+			case WebViewHost.BACK_KEY_MOVE_TO_BACK:
+				// Show the overlay permission request and let the activity finish instead of
+				// keeping it running in the background.
+				showOverlayPermissionRequest();
+				break;
+
+			case WebViewHost.BACK_KEY_PREVENT:
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	@Override
@@ -50,6 +69,20 @@ public class MainActivity extends Activity {
 		SharedSettings.load(this);
 
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
+
+		onBackInvokedCallbackRegistered = false;
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+			OnBackInvokedDispatcher dispatcher = getOnBackInvokedDispatcher();
+			if (dispatcher != null) {
+				dispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, () -> {
+					if (handleBackPressed())
+						finish();
+				});
+
+				onBackInvokedCallbackRegistered = true;
+			}
+		}
 
 		final MainApplication application = (MainApplication)getApplication();
 
@@ -64,19 +97,8 @@ public class MainActivity extends Activity {
 
 	@Override
 	public void onBackPressed() {
-		if (webViewHost != null) {
-			switch (webViewHost.onBackPressed()) {
-			case WebViewHost.BACK_KEY_MOVE_TO_BACK:
-				// Show the overlay permission request and let the activity finish instead of
-				// keeping it running in the background.
-				showOverlayPermissionRequest();
-
-				break;
-
-			case WebViewHost.BACK_KEY_PREVENT:
-				return;
-			}
-		}
+		if (!onBackInvokedCallbackRegistered && !handleBackPressed())
+			return;
 
 		super.onBackPressed();
 	}

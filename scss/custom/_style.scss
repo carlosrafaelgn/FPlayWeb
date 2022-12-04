@@ -119,6 +119,7 @@
 	min-width: 512px;
 	text-align: center;
 	box-sizing: content-box;
+	overflow: auto;
 }
 
 #optional-panel-container {
@@ -169,7 +170,7 @@
 }
 
 .simple-filter {
-	width: 512px;
+	width: auto;
 	white-space: nowrap;
 }
 

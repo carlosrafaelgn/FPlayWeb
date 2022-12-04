@@ -79,6 +79,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:requestLegacyExternalStorage="true"
+        android:enableOnBackInvokedCallback="true"
         android:theme="@style/AppTheme">
 
         <!-- https://developer.android.com/guide/webapps/managing-webview -->
