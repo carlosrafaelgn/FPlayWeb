@@ -626,6 +626,8 @@ class AppUI {
 		if (!App.player || !AppUI.playlistControl)
 			return;
 
+		document.title = ((song && song.title) ? (song.title + " - FPlay") : "FPlay");
+
 		Strings.changeText(AppUI.titleLabel, (song && song.title) || Formatter.none);
 
 		Strings.changeText(AppUI.artistLabel, (song && song.artist) || Formatter.none);
