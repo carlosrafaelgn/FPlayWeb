@@ -106,6 +106,11 @@ class FilePickerListAdapter extends ListAdapter<FilePickerListItem> {
 	}
 }
 
+interface FilePickerQueueItem {
+	play: boolean;
+	files: File[] | string[] | null;
+}
+
 class FilePicker {
 	private static filePicker: FilePicker | null = null;
 
@@ -129,6 +134,45 @@ class FilePicker {
 		});
 	}
 
+	public static showAddPlay(returnFocusElement?: HTMLElement | null): (() => Promise<FilePickerQueueItem | null>) | null {
+		if (FilePicker.filePicker || Modal.visible)
+			return null;
+
+		let closed = false;
+		let queue: FilePickerQueueItem[] = [];
+		let lastResolve: ((value: FilePickerQueueItem | PromiseLike<FilePickerQueueItem | null> | null) => void) | null = null;
+
+		FilePicker.filePicker = new FilePicker(function () {
+			closed = true;
+			if (lastResolve) {
+				lastResolve(null);
+				lastResolve = null;
+			}
+		}, returnFocusElement, function (queueItem) {
+			if (lastResolve) {
+				lastResolve(queueItem);
+				lastResolve = null;
+			} else {
+				queue.push(queueItem);
+			}
+		});
+
+		return function () {
+			if (queue.length) {
+				const r = queue.pop() as FilePickerQueueItem;
+				return Promise.resolve(r);
+			}
+
+			if (!closed)
+				return new Promise(function (resolve) {
+					lastResolve = resolve;
+				});
+
+			return Promise.resolve(null);
+		};
+	}
+
+	private readonly callback: ((queueItem: FilePickerQueueItem) => void) | null;
 	private readonly resolve: (value: File[] | PromiseLike<File[] | null> | null) => void;
 	private readonly provider: FilePickerProvider;
 	private readonly list: List<FilePickerListItem>;
@@ -147,7 +191,7 @@ class FilePicker {
 	private path: string | null;
 	private rootLength: number;
 
-	private constructor(resolve: (value: File[] | PromiseLike<File[] | null> | null) => void, returnFocusElement?: HTMLElement | null) {
+	private constructor(resolve: (value: File[] | PromiseLike<File[] | null> | null) => void, returnFocusElement?: HTMLElement | null, callback?: ((queueItem: FilePickerQueueItem) => void) | null) {
 		const header = document.createElement("div");
 
 		const headerLabel = Strings.createSrOnlyText(Strings.AddSongs);
@@ -190,6 +234,7 @@ class FilePicker {
 		const listElement = document.createElement("div");
 		listElement.className = "file-picker-list fade bottom-margin";
 
+		this.callback = callback || null;
 		this.resolve = resolve;
 		this.provider = ((App.hostType === App.hostTypeAndroid) ? new FilePickerAndroidProvider() : new FilePickerFileSystemAPIProvider());
 		this.list = new List();
@@ -214,19 +259,49 @@ class FilePicker {
 
 		this.updatePathElement(this.path);
 
-		if (!Modal.show({
+		const options: ModalOptions = {
 			html: [pathDiv, listElement],
 			title: header,
 			titleHeader: headerLabel,
 			returnFocusElement,
 			skipBody: true,
 			fullHeight: true,
-			okCancel: true,
 			onshown: this.modalShown.bind(this),
 			onhiding: this.modalHiding.bind(this),
-			onhidden: this.modalHidden.bind(this),
-			onok: this.modalOk.bind(this)
-		}))
+			onhidden: this.modalHidden.bind(this)
+		};
+
+		if (this.callback) {
+			options.buttons = [
+				{
+					id: "cancel",
+					defaultCancel: true,
+					icon: "icon-clear",
+					text: Strings.Close,
+					color: "red",
+					onclick: Modal.hide
+				},
+				{
+					id: "add",
+					icon: "icon-add",
+					text: Strings.Add,
+					color: "green",
+					onclick: () => this.modalOk(false)
+				},
+				{
+					id: "play",
+					icon: "icon-play",
+					text: Strings.Play,
+					color: "blue",
+					onclick: () => this.modalOk(true)
+				}
+			];
+		} else {
+			options.okCancel = true;
+			options.onok = () => this.modalOk(false);
+		}
+
+		if (!Modal.show(options))
 			throw new Error("Assertion error: Modal.show() === false");
 	}
 
@@ -454,7 +529,7 @@ class FilePicker {
 			resolve(selectedFiles);
 	}
 
-	private modalOk(): void {
+	private modalOk(play: boolean): void {
 		if (FilePicker.filePicker !== this || this.gettingFiles || this.fading)
 			return;
 
@@ -490,6 +565,26 @@ class FilePicker {
 		this.provider.getFiles(selectedDirectories, selectedFiles).then((files) => {
 			if (FilePicker.filePicker !== this || !this.provider || providerVersion !== this.providerVersion)
 				return;
+
+			if (this.callback) {
+				const list = this.list;
+
+				for (let i = list.length - 1; i >= 0; i--)
+					list.item(i).selected = false;
+
+				this.listControl.refreshVisibleItems();
+
+				this.updateIconLoading(false);
+
+				this.gettingFiles = false;
+
+				this.callback({
+					play,
+					files
+				});
+
+				return;
+			}
 
 			this.selectedFiles = files;
 

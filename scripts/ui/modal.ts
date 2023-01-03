@@ -101,7 +101,7 @@ class Modal {
 					icon: "icon-clear",
 					text: options.cancelText || Strings.Cancel,
 					color: "red",
-					onclick: (options.oncancel || Modal.hide),
+					onclick: (options.oncancel || Modal.hide)
 				},
 				{
 					id: "ok",
@@ -109,7 +109,7 @@ class Modal {
 					icon: "icon-check",
 					text: options.okText || Strings.OK,
 					color: "green",
-					onclick: (options.onok || Modal.hide),
+					onclick: (options.onok || Modal.hide)
 				}
 			];
 		} else if (!options.buttons || !options.buttons.length) {
@@ -119,6 +119,7 @@ class Modal {
 					defaultCancel: true,
 					icon: "icon-clear",
 					text: Strings.Close,
+					color: "red",
 					onclick: Modal.hide
 				}
 			];

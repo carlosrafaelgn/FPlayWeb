@@ -101,6 +101,7 @@ class Strings {
 	public static Panning = "Panning";
 	public static DownMixToMono = "Down-mix to mono";
 	public static UnknownError = "Something went wrong during playback. 😢";
+	public static Add = "Add";
 	public static AddFiles = "Add files";
 	public static AddSongs = "Add songs";
 	public static AddFolders = "Add folders";
@@ -192,6 +193,7 @@ This project is licensed under the <a target="_blank" href="https://github.com/c
 			//Strings.Panning = "Panning";
 			Strings.DownMixToMono = "Fazer down-mix para mono";
 			Strings.UnknownError = "Algo saiu errado durante a reprodução. 😢";
+			Strings.Add = "Adicionar";
 			Strings.AddFiles = "Adicionar arquivos";
 			Strings.AddSongs = "Adicionar músicas";
 			Strings.AddFolders = "Adicionar pastas";

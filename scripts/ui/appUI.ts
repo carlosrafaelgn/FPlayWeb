@@ -866,16 +866,22 @@ class AppUI {
 		if (!App.player || AppUI._loading || Modal.visible || FilePicker.visible)
 			return;
 
-		const electron = (App.hostType === App.hostTypeElectron),
-			filePaths = (FilePicker.isSupported() ? await FilePicker.show(AppUI.playlistControl.element) : await App.showOpenDialogWeb(webDirectory));
+		const electron = (App.hostType === App.hostTypeElectron);
+		let filePaths: File[] | string[] | null,
+			fileFetcher: (() => Promise<FilePickerQueueItem | null>) | null;
 
-		if (!filePaths || !App.player)
+		if (FilePicker.isSupported()) {
+			filePaths = null;
+			fileFetcher = FilePicker.showAddPlay(AppUI.playlistControl.element);
+		} else {
+			filePaths = await App.showOpenDialogWeb(webDirectory);
+			fileFetcher = null;
+		}
+
+		if ((!filePaths && !fileFetcher) || !App.player)
 			return;
 
 		try {
-			AppUI._loading = true;
-			App.updateLoadingIcon();
-
 			if (!App.player.playlist) {
 				App.player.playlist = new Playlist();
 				AppUI.preparePlaylist();
@@ -887,15 +893,52 @@ class AppUI {
 
 			let missingSongWasAdded = false;
 
-			for (let i = 0; i < filePaths.length && App.player; i++) {
-				if (electron) {
-					await playlist.addSong(filePaths[i] as string);
-				} else {
-					const oldLength = playlist.length;
-					if (await playlist.addSongWeb(filePaths[i] as File, buffer, tempBuffer) && oldLength === playlist.length)
-						missingSongWasAdded = true;
+			do {
+				let playAfterAdding = false;
+
+				if (fileFetcher) {
+					const queueItem = await fileFetcher();
+					if (!queueItem)
+						break;
+
+					playAfterAdding = queueItem.play;
+					filePaths = queueItem.files;
 				}
-			}
+
+				if (!filePaths)
+					break;
+
+				AppUI._loading = true;
+				App.updateLoadingIcon();
+
+				for (let i = 0; i < filePaths.length && App.player; i++) {
+					if (electron) {
+						if (await playlist.addSong(filePaths[i] as string)) {
+							if (playAfterAdding) {
+								playAfterAdding = false;
+
+								if (App.player)
+									App.player.play(playlist.length - 1);
+							}
+						}
+					} else {
+						const oldLength = playlist.length;
+						if (await playlist.addSongWeb(filePaths[i] as File, buffer, tempBuffer)) {
+							if (oldLength == playlist.length) {
+								missingSongWasAdded = true;
+							} else if (playAfterAdding) {
+								playAfterAdding = false;
+
+								if (App.player)
+									App.player.play(oldLength);
+							}
+						}
+					}
+				}
+
+				AppUI._loading = false;
+				App.updateLoadingIcon();
+			} while (fileFetcher);
 
 			if (missingSongWasAdded && AppUI.playlistControl)
 				AppUI.playlistControl.refreshVisibleItems();

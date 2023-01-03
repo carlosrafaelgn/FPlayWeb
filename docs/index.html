@@ -76,12 +76,13 @@
 			--playlist-item-size: 56px;
 		}
 	</style>
-	<link rel="stylesheet" type="text/css" href="assets/css/graphicalFilterEditor.css?20221218" />
-	<link rel="stylesheet" type="text/css" href="assets/css/style.css?20221218" />
+	<link rel="stylesheet" type="text/css" href="assets/css/graphicalFilterEditor.css?20230103" />
+	<link rel="stylesheet" type="text/css" href="assets/css/style.css?20230103" />
 </head>
 <body>
 	<div id="ruler" style="position: absolute; z-index: -1; left: 0; top: 0; height: 8rem; visibility: hidden; pointer-events: none;"></div>
 	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" style="display: none;">
+		<symbol viewBox="0 0 12 12" id="icon-add"><path d="m5 2v3h-3v2h3v3h2v-3h3v-2h-3v-3z" /></symbol>
 		<symbol viewBox="0 0 12 12" id="icon-add-folder"><path d="M 11,3 H 6 L 5,2 H 1 v 8 H 11 Z M 9.5,7 H 8 V 8.5 H 7 V 7 H 5.5 V 6 H 7 V 4.5 H 8 V 6 h 1.5 z" /></symbol>
 		<symbol viewBox="0 0 12 12" id="icon-add-title"><path d="M 4.5 1.5 L 4.5 6.7753906 C 4.205 6.6053906 3.865 6.5 3.5 6.5 C 2.395 6.5 1.5 7.395 1.5 8.5 C 1.5 9.605 2.395 10.5 3.5 10.5 C 4.605 10.5 5.5 9.605 5.5 8.5 L 5.5 3.5 L 7.5 3.5 L 7.5 1.5 L 4.5 1.5 z M 8 6.5 L 8 8 L 6.5 8 L 6.5 9 L 8 9 L 8 10.5 L 9 10.5 L 9 9 L 10.5 9 L 10.5 8 L 9 8 L 9 6.5 L 8 6.5 z" /></symbol>
 		<symbol viewBox="0 0 12 12" id="icon-album"><path d="m6.25 7.5q0.525 0 0.8875-0.3625t0.3625-0.8875v-2.75h1.5v-1h-2v2.75q-0.1625-0.125-0.35-0.1875t-0.4-0.0625q-0.525 0-0.8875 0.3625t-0.3625 0.8875 0.3625 0.8875 0.8875 0.3625zm-3.25-6.5h8v8h-8zm1 7h6v-6h-6zm-3 3v-8h1v7h7v1zm3-9v6z" /></symbol>
@@ -184,7 +185,7 @@
 		//<![CDATA[
 		"use strict";
 
-		var CACHE_VERSION = "20221218";
+		var CACHE_VERSION = "20230103";
 
 		(function () {
 			if (location.href.startsWith("file://")) {
