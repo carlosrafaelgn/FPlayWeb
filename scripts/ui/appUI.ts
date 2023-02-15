@@ -195,8 +195,14 @@ class AppUI {
 			AppUI._buttonSizePX = AppUI._contentsSizePX + (AppUI.primaryInputIsTouch ? AppUI.s6PX : AppUI.s2PX);
 
 			// New way to choose the size of the icons
-			const referenceLargeIconSizePX = Icon.baseSizePX / devicePixelRatio,
-				largeIconsInsideContents = (AppUI._contentsSizePX / referenceLargeIconSizePX) | 0;
+			const referenceLargeIconSizePX = Icon.baseSizePX / devicePixelRatio;
+			let largeIconsInsideContents = (AppUI._contentsSizePX / referenceLargeIconSizePX) | 0;
+
+			// We can try to increase button icons a little, by allowing them to overflow up to the limit
+			// of 2px, because of the icons inside buttons with text, which have a 4px right margin
+			const tempLargeIconsInsideContents = Math.ceil(AppUI._contentsSizePX / referenceLargeIconSizePX);
+			if (((tempLargeIconsInsideContents * devicePixelRatio) - AppUI._contentsSizePX) <= 2)
+				largeIconsInsideContents = tempLargeIconsInsideContents;
 
 			let smallIconSizePXStr: string,
 				largeIconSizePXStr: string;
@@ -254,7 +260,8 @@ class AppUI {
 				--icon-size: ${smallIconSizePXStr}px;
 				--icon-padding: ${AppUI.adjustDecimal(0.5 * (AppUI._contentsSizePX - AppUI._smallIconSizePX))}px;
 				--large-icon-size: ${largeIconSizePXStr}px;
-				--large-icon-padding: ${AppUI.adjustDecimal(0.5 * (AppUI._contentsSizePX - AppUI._largeIconSizePX))}px;
+				--large-icon-margin: ${AppUI.adjustDecimal(Math.min(0, 0.5 * (AppUI._contentsSizePX - AppUI._largeIconSizePX)))}px;
+				--large-icon-padding: ${AppUI.adjustDecimal(Math.max(0, 0.5 * (AppUI._contentsSizePX - AppUI._largeIconSizePX)))}px;
 				--thin-border: ${thinBorderPXStr}px;
 				--thick-border: ${thickBorderPXStr}px;
 				--scrollbar-size: ${(AppUI.primaryInputIsTouch ? 20 : 12)}px;

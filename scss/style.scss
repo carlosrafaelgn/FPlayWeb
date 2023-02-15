@@ -71,6 +71,8 @@ body {
 .icon.large > svg {
 	width: var(--large-icon-size);
 	height: var(--large-icon-size);
+	margin-top: var(--large-icon-margin);
+	margin-left: var(--large-icon-margin);
 }
 
 .menu-icon {
