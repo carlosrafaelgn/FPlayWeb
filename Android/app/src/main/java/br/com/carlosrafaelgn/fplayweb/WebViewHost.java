@@ -81,6 +81,12 @@ public class WebViewHost {
 	// https://stackoverflow.com/a/47872802/3569421
 	// Is this class mentioned above really necessary nowadays...?
 
+	public static final String ACTION_PREV = "br.com.carlosrafaelgn.fplayweb.PREV";
+	public static final String ACTION_PAUSE = "br.com.carlosrafaelgn.fplayweb.PAUSE";
+	public static final String ACTION_PLAY = "br.com.carlosrafaelgn.fplayweb.PLAY";
+	public static final String ACTION_PLAY_PAUSE = "br.com.carlosrafaelgn.fplayweb.PLAY_PAUSE";
+	public static final String ACTION_NEXT = "br.com.carlosrafaelgn.fplayweb.NEXT";
+
 	public static final int BACK_KEY_DESTROY = 0;
 	public static final int BACK_KEY_PREVENT = 1;
 	public static final int BACK_KEY_MOVE_TO_BACK = 2;
@@ -145,8 +151,6 @@ public class WebViewHost {
 
 					this.paused = paused;
 				}
-
-				intentReceiver.syncNoisyRegistration(paused);
 
 				hostMediaSession.setPaused(paused);
 			});
@@ -370,9 +374,9 @@ public class WebViewHost {
 					fileFetcher = null;
 				}
 
-				intentReceiver.syncNoisyRegistration(true);
-
 				hostMediaSession.destroy();
+
+				intentReceiver.destroy();
 			}
 		}
 	}

@@ -513,8 +513,10 @@ class AppUI {
 			if (App.player.currentIndexResumeTimeS > 0 && App.player.playlist && App.player.playlist.currentItem) {
 				AppUI.playerSongChange(App.player.playlist.currentItem);
 				AppUI.playerCurrentTimeSChange(App.player.currentIndexResumeTimeS);
+				App.player.refreshMediaSession(App.player.playlist.currentItem);
 			} else {
 				AppUI.playerSongChange(App.player.currentSong);
+				App.player.refreshMediaSession(App.player.currentSong);
 			}
 
 			AppUI.centerCurrentSongIntoView();

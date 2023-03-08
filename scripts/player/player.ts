@@ -532,15 +532,7 @@ class Player {
 	}
 
 	private notifyMediaSessionChange(): void {
-		if (!this._alive || !this.mediaSession)
-			return;
-
-		const currentSong = this._currentSong;
-
-		if (currentSong)
-			this.mediaSession.setMetadata(currentSong.id, currentSong.title, currentSong.artist, currentSong.album, currentSong.track, currentSong.lengthMS, currentSong.year);
-		else
-			this.mediaSession.setMetadata(0, null, null, null, 0, 0, 0);
+		this.refreshMediaSession(this._currentSong);
 	}
 
 	private notifySongChange(): void {
@@ -551,6 +543,16 @@ class Player {
 			this.onsongchange(this._currentSong);
 
 		this.notifyMediaSessionChange();
+	}
+
+	public refreshMediaSession(currentSong: Song | null): void {
+		if (!this._alive || !this.mediaSession)
+			return;
+
+		if (currentSong)
+			this.mediaSession.setMetadata(currentSong.id, currentSong.title, currentSong.artist, currentSong.album, currentSong.track, currentSong.lengthMS, currentSong.year);
+		else
+			this.mediaSession.setMetadata(0, null, null, null, 0, 0, 0);
 	}
 
 	/*private notifyLoadingChange(): void {

@@ -35,31 +35,53 @@ import android.webkit.WebView;
 import br.com.carlosrafaelgn.fplayweb.WebViewHost;
 
 public final class IntentReceiver extends BroadcastReceiver {
-	private boolean noisyIntentUnregistered = true;
-
 	private final WebViewHost webViewHost;
 
 	public IntentReceiver(WebViewHost webViewHost) {
 		this.webViewHost = webViewHost;
+
+		final IntentFilter filter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+		filter.addAction(WebViewHost.ACTION_PAUSE);
+		filter.addAction(WebViewHost.ACTION_PREV);
+		filter.addAction(WebViewHost.ACTION_PLAY);
+		filter.addAction(WebViewHost.ACTION_PLAY_PAUSE);
+		filter.addAction(WebViewHost.ACTION_NEXT);
+
+		webViewHost.application.registerReceiver(this, filter);
 	}
 
-	public void syncNoisyRegistration(boolean paused) {
-		if (noisyIntentUnregistered == paused)
-			return;
-
-		noisyIntentUnregistered = paused;
-
-		if (paused)
-			webViewHost.application.unregisterReceiver(this);
-		else
-			webViewHost.application.registerReceiver(this, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
+	public void destroy() {
+		webViewHost.application.unregisterReceiver(this);
 	}
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		final WebView webView = webViewHost.webView;
 
-		if (webView != null)
+		if (intent == null || webView == null)
+			return;
+
+		final String action = intent.getAction();
+		if (action == null)
+			return;
+
+		switch (action) {
+		case AudioManager.ACTION_AUDIO_BECOMING_NOISY:
+		case WebViewHost.ACTION_PAUSE:
 			webView.evaluateJavascript("App.player && App.player.pause()", null);
+			break;
+		case WebViewHost.ACTION_PREV:
+			webView.evaluateJavascript("App.player && App.player.previous()", null);
+			break;
+		case WebViewHost.ACTION_PLAY:
+			webView.evaluateJavascript("App.player && App.player.play()", null);
+			break;
+		case WebViewHost.ACTION_PLAY_PAUSE:
+			webView.evaluateJavascript("App.player && App.player.playPause()", null);
+			break;
+		case WebViewHost.ACTION_NEXT:
+			webView.evaluateJavascript("App.player && App.player.next()", null);
+			break;
+		}
 	}
 }

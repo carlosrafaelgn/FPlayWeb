@@ -22,4 +22,10 @@
     <string name="internal_storage">Armazenamento interno</string>
     <string name="external_storage">Armazenamento externo</string>
     <string name="usb_storage">Armazenamento USB</string>
+
+    <string name="previous">Anterior</string>
+    <string name="pause">Pausar</string>
+    <string name="play">Tocar</string>
+    <string name="next">Próxima</string>
+    <string name="exit">Sair</string>
 </resources>

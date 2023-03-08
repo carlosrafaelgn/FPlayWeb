@@ -27,11 +27,18 @@
 
 package br.com.carlosrafaelgn.fplayweb.callback;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationChannelGroup;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Icon;
 import android.media.MediaMetadata;
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -41,6 +48,7 @@ import android.view.KeyEvent;
 import android.webkit.WebView;
 
 import br.com.carlosrafaelgn.fplayweb.MainActivity;
+import br.com.carlosrafaelgn.fplayweb.R;
 import br.com.carlosrafaelgn.fplayweb.WebViewHost;
 
 public final class HostMediaSession {
@@ -49,6 +57,9 @@ public final class HostMediaSession {
 	// https://developer.android.com/guide/topics/media-apps/audio-app/building-a-mediabrowserservice#mediastyle-notifications
 
 	private static final String NONE = "-";
+
+	private static final String CHANNEL_GROUP_ID = "fplaywebg";
+	private static final String CHANNEL_ID = "fplayweb";
 
 	private static final int MSG_HEADSET_HOOK_TIMER = 0x0100;
 
@@ -59,20 +70,26 @@ public final class HostMediaSession {
 	private boolean loading;
 	private boolean hasSong;
 	private int headsetHookPressCount;
+	private String lastTitle, lastArtist;
 
 	private MediaSession mediaSession;
 	private MediaMetadata.Builder mediaSessionMetadataBuilder;
 	private PlaybackState.Builder mediaSessionPlaybackStateBuilder;
+	private NotificationManager notificationManager;
+	private PendingIntent intentPrev, intentPlayPause, intentNext;
+	private Notification.Action actionPrev, actionPause, actionPlay, actionNext;
 
 	public HostMediaSession(WebViewHost webViewHost) {
 		this.webViewHost = webViewHost;
-		this.handler = new Handler(Looper.getMainLooper(), msg -> {
+		handler = new Handler(Looper.getMainLooper(), msg -> {
 			if (msg.what == MSG_HEADSET_HOOK_TIMER)
 				processHeadsetHookTimer();
 			return true;
 		});
 
-		this.paused = true;
+		paused = true;
+		lastTitle = NONE;
+		lastArtist = NONE;
 
 		try {
 			mediaSessionMetadataBuilder = new MediaMetadata.Builder();
@@ -165,6 +182,113 @@ public final class HostMediaSession {
 		} catch (Throwable ex) {
 			ex.printStackTrace();
 		}
+
+		prepareNotification();
+	}
+
+	private void prepareNotification() {
+		Intent intent;
+
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+			intent = new Intent(webViewHost.application, IntentReceiver.class);
+			intent.setAction(WebViewHost.ACTION_PREV);
+			intentPrev = PendingIntent.getBroadcast(webViewHost.application, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+
+			intent = new Intent(webViewHost.application, IntentReceiver.class);
+			intent.setAction(WebViewHost.ACTION_PLAY_PAUSE);
+			intentPlayPause = PendingIntent.getBroadcast(webViewHost.application, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+
+			intent = new Intent(webViewHost.application, IntentReceiver.class);
+			intent.setAction(WebViewHost.ACTION_NEXT);
+			intentNext = PendingIntent.getBroadcast(webViewHost.application, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+
+			actionPrev = new Notification.Action.Builder(Icon.createWithResource(webViewHost.application, R.drawable.ic_prev), webViewHost.application.getText(R.string.previous), intentPrev).build();
+			actionPause = new Notification.Action.Builder(Icon.createWithResource(webViewHost.application, R.drawable.ic_pause), webViewHost.application.getText(R.string.pause), intentPlayPause).build();
+			actionPlay = new Notification.Action.Builder(Icon.createWithResource(webViewHost.application, R.drawable.ic_play), webViewHost.application.getText(R.string.play), intentPlayPause).build();
+			actionNext = new Notification.Action.Builder(Icon.createWithResource(webViewHost.application, R.drawable.ic_next), webViewHost.application.getText(R.string.next), intentNext).build();
+		}
+
+		notificationManager = (NotificationManager)webViewHost.application.getSystemService(Context.NOTIFICATION_SERVICE);
+
+		final String appName = webViewHost.application.getText(R.string.app_name).toString();
+		notificationManager.createNotificationChannelGroup(new NotificationChannelGroup(CHANNEL_GROUP_ID, appName));
+		final NotificationChannel notificationChannel = new NotificationChannel(CHANNEL_ID, appName, NotificationManager.IMPORTANCE_LOW);
+		notificationChannel.setGroup(CHANNEL_GROUP_ID);
+		notificationChannel.enableLights(false);
+		notificationChannel.enableVibration(false);
+		notificationChannel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+		notificationChannel.setShowBadge(false);
+		notificationManager.createNotificationChannel(notificationChannel);
+
+		refreshNotification();
+	}
+
+	private void refreshNotification() {
+		if (notificationManager == null)
+			return;
+
+		final Notification.MediaStyle mediaStyle = new Notification.MediaStyle();
+		if (mediaSession != null)
+			mediaStyle.setMediaSession(mediaSession.getSessionToken());
+		mediaStyle.setShowActionsInCompactView();
+
+		final Notification.Builder builder = new Notification.Builder(webViewHost.application, CHANNEL_ID)
+			.setSmallIcon(R.drawable.ic_notification)
+			.setWhen(0)
+			.setStyle(mediaStyle)
+			.setContentTitle(lastTitle)
+			.setSubText(lastArtist)
+			.setColorized(false)
+			// Apparently, the ongoing flag shoudl be set to false for the delete intent to the send
+			// https://stackoverflow.com/q/74808095/3569421
+			.setOngoing(false);
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+			builder.setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE);
+
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+			builder
+				.addAction(actionPrev)
+				.addAction(paused ? actionPlay : actionPause)
+				.addAction(actionNext);
+
+			mediaStyle.setShowActionsInCompactView(0, 1, 2);
+		}
+
+		try {
+			notificationManager.notify(1, builder.build());
+		} catch (Throwable ex) {
+			// Why the *rare* android.os.TransactionTooLargeException?
+			// What to do?!?!
+		}
+	}
+
+	private void destroyNotification() {
+		if (notificationManager == null)
+			return;
+
+		try {
+			notificationManager.deleteNotificationChannel(CHANNEL_ID);
+		} catch (Throwable ex) {
+			//just ignore
+		}
+
+		try {
+			notificationManager.deleteNotificationChannelGroup(CHANNEL_GROUP_ID);
+		} catch (Throwable ex) {
+			//just ignore
+		}
+
+		notificationManager = null;
+
+		intentPrev = null;
+		intentPlayPause = null;
+		intentNext = null;
+
+		actionPrev = null;
+		actionPause = null;
+		actionPlay = null;
+		actionNext = null;
 	}
 
 	private void resetHeadsetHook() {
@@ -203,6 +327,8 @@ public final class HostMediaSession {
 		} catch (Throwable ex) {
 			ex.printStackTrace();
 		}
+
+		refreshNotification();
 	}
 
 	public void setPaused(boolean paused) {
@@ -222,6 +348,9 @@ public final class HostMediaSession {
 		hasSong = (id > 0);
 		try {
 			if (id > 0) {
+				lastTitle = title;
+				lastArtist = artist;
+
 				mediaSessionMetadataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, Long.toString(id));
 				mediaSessionMetadataBuilder.putString(MediaMetadata.METADATA_KEY_TITLE, title);
 				mediaSessionMetadataBuilder.putString(MediaMetadata.METADATA_KEY_ARTIST, artist);
@@ -230,6 +359,9 @@ public final class HostMediaSession {
 				mediaSessionMetadataBuilder.putLong(MediaMetadata.METADATA_KEY_DURATION, lengthMS);
 				mediaSessionMetadataBuilder.putLong(MediaMetadata.METADATA_KEY_YEAR, year);
 			} else {
+				lastTitle = NONE;
+				lastArtist = NONE;
+
 				mediaSessionMetadataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, NONE);
 				mediaSessionMetadataBuilder.putString(MediaMetadata.METADATA_KEY_TITLE, NONE);
 				mediaSessionMetadataBuilder.putString(MediaMetadata.METADATA_KEY_ARTIST, NONE);
@@ -305,6 +437,8 @@ public final class HostMediaSession {
 	}
 
 	public void destroy() {
+		destroyNotification();
+
 		resetHeadsetHook();
 
 		if (mediaSession != null) {
