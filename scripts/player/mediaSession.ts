@@ -25,9 +25,9 @@
 //
 
 interface HostMediaSession {
-	setPaused(paused: boolean): void;
-	setLoading(loading: boolean): void;
-	setMetadata(id: number, title: string | null, artist: string | null, album: string | null, track: number, lengthMS: number, year: number): void;
+	setPaused(paused: boolean, lengthMS: number, positionS: number): void;
+	setLoading(loading: boolean, lengthMS: number, positionS: number): void;
+	setMetadata(id: number, title: string | null, artist: string | null, album: string | null, track: number, year: number, lengthMS: number, positionS: number): void;
 	cleanUpMediaSession?(): void;
 }
 
@@ -86,18 +86,45 @@ class HostMediaSession {
 				let _paused = true;
 				let _loading = false;
 
+				const setPositionState: (lengthMS: number, positionS: number) => void = (("setPositionState" in mediaSession) ?
+					function (lengthMS, positionS) {
+						try {
+							// https://developer.mozilla.org/en-US/docs/Web/API/MediaSession/setPositionState
+							if (lengthMS >= 0) {
+								const lengthS = lengthMS / 1000;
+								mediaSession.setPositionState({
+									duration: lengthS,
+									position: Math.min((positionS >= 0) ? positionS : 0, lengthS),
+									playbackRate: 1
+								});
+							} else {
+								mediaSession.setPositionState({
+									duration: Infinity,
+									position: ((positionS >= 0) ? positionS : 0),
+									playbackRate: 1
+								});
+							}
+						} catch (ex: any) {
+							// Just ignore...
+						}
+					} :
+					function () { }
+				);
+
 				HostMediaSession.browserWrapper = {
-					setPaused: function (paused) {
+					setPaused: function (paused, lengthMS, positionS) {
 						_paused = paused;
 						mediaSession.playbackState = ((_paused || _loading) ? "paused" : "playing");
+						setPositionState(lengthMS, positionS);
 					},
 
-					setLoading: function (loading) {
+					setLoading: function (loading, lengthMS, positionS) {
 						_loading = loading;
 						mediaSession.playbackState = ((_paused || _loading) ? "paused" : "playing");
+						setPositionState(lengthMS, positionS);
 					},
 
-					setMetadata: function (id, title, artist, album, track, lengthMS, year) {
+					setMetadata: function (id, title, artist, album, track, year, lengthMS, positionS) {
 						if (id > 0) {
 							mediaSession.metadata = new (window as any).MediaMetadata({
 								title: title,
@@ -111,14 +138,9 @@ class HostMediaSession {
 									{ src: "assets/images/albumArts/512x512.png", sizes: "512x512", type: "image/png" }
 								]
 							});
-							if ("setPositionState" in mediaSession)
-								mediaSession.setPositionState({
-									duration: ((lengthMS > 0) ? (lengthMS / 1000) : 0),
-									position: 0,
-									playbackRate: 1
-								});
 							if (mediaSession.playbackState == "none")
 								mediaSession.playbackState = "paused";
+							setPositionState(lengthMS, positionS);
 						} else {
 							mediaSession.metadata = null;
 							mediaSession.playbackState = "none";

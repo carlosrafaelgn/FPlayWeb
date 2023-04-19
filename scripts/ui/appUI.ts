@@ -510,14 +510,7 @@ class AppUI {
 
 			AppUI.preparePlaylist();
 
-			if (App.player.currentIndexResumeTimeS > 0 && App.player.playlist && App.player.playlist.currentItem) {
-				AppUI.playerSongChange(App.player.playlist.currentItem);
-				AppUI.playerCurrentTimeSChange(App.player.currentIndexResumeTimeS);
-				App.player.refreshMediaSession(App.player.playlist.currentItem);
-			} else {
-				AppUI.playerSongChange(App.player.currentSong);
-				App.player.refreshMediaSession(App.player.currentSong);
-			}
+			AppUI.playerSongChange(App.player.currentSong, App.player.currentTimeMS / 1000);
 
 			AppUI.centerCurrentSongIntoView();
 
@@ -631,7 +624,7 @@ class AppUI {
 		return px / AppUI._1remInPX;
 	}
 
-	private static playerSongChange(song: Song | null): void {
+	private static playerSongChange(song: Song | null, currentTimeS: number): void {
 		if (!App.player || !AppUI.playlistControl)
 			return;
 
@@ -644,7 +637,9 @@ class AppUI {
 		if (App.player.playlist && App.player.playlist.currentIndex >= 0 && !AppUI.playlistControl.deleteMode && song)
 			AppUI.playlistControl.bringItemIntoView(App.player.playlist.currentIndex);
 
-		AppUI.currentTimeS = 0;
+		if (currentTimeS < 0)
+			currentTimeS = 0;
+		AppUI.currentTimeS = currentTimeS | 0;
 
 		if (!song) {
 			Strings.changeText(AppUI.songLengthLabel, Formatter.none);
@@ -659,14 +654,14 @@ class AppUI {
 			Strings.changeText(AppUI.assistiveSongLengthLabel, song.length);
 
 			if (AppUI.seekSlider) {
-				AppUI.seekSlider.manuallyChangeAll(0, Formatter.zero, SliderControlValueChild.LeftChild);
-
 				if (song.lengthMS > 0) {
 					AppUI.seekSlider.disabled = false;
 					AppUI.seekSlider.max = song.lengthMS;
 				} else {
 					AppUI.seekSlider.disabled = true;
 				}
+
+				AppUI.seekSlider.manuallyChangeAll(currentTimeS * 1000, Formatter.formatTimeS(AppUI.currentTimeS), SliderControlValueChild.LeftChild);
 			}
 		}
 	}
@@ -690,6 +685,9 @@ class AppUI {
 	private static playerCurrentTimeSChange(currentTimeS: number): void {
 		if (!AppUI.seekSlider || AppUI.seekSlider.dragging)
 			return;
+
+		if (currentTimeS < 0)
+			currentTimeS = 0;
 
 		const s = currentTimeS | 0;
 		if (AppUI.currentTimeS !== s) {
@@ -739,15 +737,12 @@ class AppUI {
 		if (AppUI.currentTimeS !== s) {
 			AppUI.currentTimeS = s;
 
-			if (App.player && !App.player.currentSong)
-				App.player.currentIndexResumeTimeS = s;
-
 			AppUI.seekSlider.manuallyChangeAria(Formatter.formatTimeS(s), SliderControlValueChild.LeftChild);
 		}
 	}
 
 	private static seekSliderDragEnd(value: number): void {
-		if (!App.player || !App.player.currentSong)
+		if (!App.player)
 			return;
 
 		App.player.seekTo(value);

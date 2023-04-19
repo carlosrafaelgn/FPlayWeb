@@ -80,7 +80,7 @@ class FLACMetadataExtractor extends MetadataExtractor {
 		// https://xiph.org/flac/format.html#metadata_block_header
 		// https://xiph.org/flac/format.html#metadata_block_vorbis_comment
 		// https://www.xiph.org/vorbis/doc/v-comment.html
-debugger;
+
 		let p = f.fillBuffer(1024);
 		if (p)
 			await p;

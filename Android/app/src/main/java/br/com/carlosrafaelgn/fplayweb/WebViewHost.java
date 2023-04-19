@@ -143,7 +143,7 @@ public class WebViewHost {
 		}
 
 		@JavascriptInterface
-		public void setPaused(final boolean paused) {
+		public void setPaused(final boolean paused, final long lengthMS, final double positionS) {
 			handler.post(() -> {
 				synchronized (lock) {
 					if (!alive || this.paused == paused)
@@ -152,31 +152,31 @@ public class WebViewHost {
 					this.paused = paused;
 				}
 
-				hostMediaSession.setPaused(paused);
+				hostMediaSession.setPaused(paused, lengthMS, positionS);
 			});
 		}
 
 		@JavascriptInterface
-		public void setLoading(final boolean loading) {
+		public void setLoading(final boolean loading, final long lengthMS, final double positionS) {
 			handler.post(() -> {
 				synchronized (lock) {
 					if (!alive)
 						return;
 				}
 
-				hostMediaSession.setLoading(loading);
+				hostMediaSession.setLoading(loading, lengthMS, positionS);
 			});
 		}
 
 		@JavascriptInterface
-		public void setMetadata(final long id, final String title, final String artist, final String album, final int track, final long lengthMS, final int year) {
+		public void setMetadata(final long id, final String title, final String artist, final String album, final int track, final int year, final long lengthMS, final double positionS) {
 			handler.post(() -> {
 				synchronized (lock) {
 					if (!alive)
 						return;
 				}
 
-				hostMediaSession.setMetadata(id, title, artist, album, track, lengthMS, year);
+				hostMediaSession.setMetadata(id, title, artist, album, track, year, lengthMS, positionS);
 			});
 		}
 

@@ -47,12 +47,13 @@ class Player {
 	private _paused: boolean;
 	private _volume: number;
 	private _playlist: Playlist | null;
-	private _currentSong: Song | null;
+	private currentPlaylistSong: Song | null;
+	private loadedSong: Song | null;
+	private songToResumeTime: Song | null;
 	private lastObjectURL: string | null;
 	private lastTimeS: number;
-	private songStartedAutomatically: boolean;
-	private songToResumeTime: Song | null;
 	private resumeTimeS: number;
+	private songStartedAutomatically: boolean;
 
 	private readonly mediaSession: HostMediaSession | null;
 
@@ -65,7 +66,7 @@ class Player {
 
 	public haltOnAllErrors: boolean;
 
-	public onsongchange: ((song: Song | null) => void) | null;
+	public onsongchange: ((song: Song | null, currentTimeS: number) => void) | null;
 	public onloadingchange: ((loading: boolean) => void) | null;
 	public onpausedchange: ((paused: boolean) => void) | null;
 	public oncurrenttimeschange: ((currentTimeS: number) => void) | null;
@@ -118,14 +119,15 @@ class Player {
 		this._loading = false;
 		this._paused = true;
 		this._playlist = null;
-		this._currentSong = null;
+		this.currentPlaylistSong = null;
+		this.loadedSong = null;
+		this.songToResumeTime = null;
 		this._volume = 0;
 
 		this.lastObjectURL = null;
 		this.lastTimeS = -1;
+		this.resumeTimeS = -1;
 		this.songStartedAutomatically = true;
-		this.songToResumeTime = null;
-		this.resumeTimeS = 0;
 		this.haltOnAllErrors = false;
 
 		this.volume = volume || 0;
@@ -272,53 +274,41 @@ class Player {
 		if (!this._alive)
 			return;
 
+		const oldPlaylistSong = this.currentPlaylistSong;
+
 		this.stop();
 		this._playlist = playlist;
 
-		// stop() only resets these when _currentSong is not null
-		this.songToResumeTime = null;
-		this.resumeTimeS = 0;
+		if (playlist) {
+			this.currentPlaylistSong = playlist.currentItem;
 
-		if (playlist && playlist.currentIndexResumeTimeS > 0 && (this.songToResumeTime = playlist.currentItem))
-			this.resumeTimeS = playlist.currentIndexResumeTimeS;
+			if (playlist.currentIndexResumeTimeS > 0 && this.currentPlaylistSong) {
+				this.songToResumeTime = this.currentPlaylistSong;
+				this.lastTimeS = playlist.currentIndexResumeTimeS;
+			} else {
+				this.lastTimeS = 0;
+			}
+		}
+
+		if (oldPlaylistSong !== this.currentPlaylistSong)
+			this.notifySongChange();
 	}
 
 	public get currentSong(): Song | null {
-		return this._currentSong;
+		return this.currentPlaylistSong;
 	}
 
 	public get currentTimeMS(): number {
-		if (this._currentSong && this.audio) {
-			const t = this.audio.currentTime;
-			this.lastTimeS = t;
-			return (t * 1000) | 0;
-		}
-		return -1;
-	}
-
-	public get currentIndexResumeTimeS(): number {
-		if (this.songToResumeTime)
-			return this.resumeTimeS;
-
-		let t = 0;
-
-		if (this._currentSong && this._currentSong.isSeekable && this._playlist && this._playlist.currentItem === this._currentSong) {
+		if (this.loadedSong && this.audio) {
 			try {
-				if (this.audio)
-					t = this.audio.currentTime || 0;
+				const t = this.audio.currentTime || 0;
+				this.lastTimeS = t;
+				return (t * 1000) | 0;
 			} catch (ex: any) {
 				// Just ignore...
 			}
-			if (t <= 0)
-				t = this.lastTimeS;
 		}
-
-		return t;
-	}
-
-	public set currentIndexResumeTimeS(currentIndexResumeTimeS: number) {
-		if (this.songToResumeTime)
-			this.resumeTimeS = currentIndexResumeTimeS;
+		return (this.lastTimeS * 1000) | 0;
 	}
 
 	private handleError(message: string): void {
@@ -369,7 +359,7 @@ class Player {
 		if (this.onloadingchange)
 			this.onloadingchange(true);
 		if (this.mediaSession)
-			this.mediaSession.setLoading(true);
+			this.mediaSession.setLoading(true, this.currentPlaylistSong ? this.currentPlaylistSong.lengthMS : 0, this.lastTimeS);
 	}
 
 	private playbackLoadEnd(): void {
@@ -379,8 +369,7 @@ class Player {
 		this._loading = false;
 
 		if (this.songToResumeTime) {
-			if (this.audio && this.songToResumeTime === this._currentSong && this.resumeTimeS > 0) {
-				this.lastTimeS = this.resumeTimeS;
+			if (this.audio && this.songToResumeTime === this.loadedSong && this.resumeTimeS > 0) {
 				try {
 					this.audio.currentTime = this.resumeTimeS;
 				} catch (ex: any) {
@@ -391,14 +380,13 @@ class Player {
 					playPromise.catch(Player.nop);
 			}
 			this.songToResumeTime = null;
-			this.resumeTimeS = 0;
 		}
 
 		//queueMicrotask(this.boundNotifyLoadingChange);
 		if (this.onloadingchange)
 			this.onloadingchange(false);
 		if (this.mediaSession)
-			this.mediaSession.setLoading(false);
+			this.mediaSession.setLoading(false, this.currentPlaylistSong ? this.currentPlaylistSong.lengthMS : 0, this.lastTimeS);
 	}
 
 	private playbackEnd(): void {
@@ -469,10 +457,17 @@ class Player {
 		this._paused = true;
 		this.suspendAudioContext(true);
 		//queueMicrotask(this.boundNotifyPausedChange);
+		if (this.audio) {
+			try {
+				this.lastTimeS = this.audio.currentTime || 0;
+			} catch (ex: any) {
+				// Just ignore...
+			}
+		}
 		if (this.onpausedchange)
 			this.onpausedchange(true);
 		if (this.mediaSession)
-			this.mediaSession.setPaused(true);
+			this.mediaSession.setPaused(true, this.currentPlaylistSong ? this.currentPlaylistSong.lengthMS : 0, this.lastTimeS);
 	}
 
 	private playbackStarted(): void {
@@ -482,10 +477,17 @@ class Player {
 		this._paused = false;
 		this.resumeAudioContext();
 		//queueMicrotask(this.boundNotifyPausedChange);
+		if (this.audio) {
+			try {
+				this.lastTimeS = this.audio.currentTime || 0;
+			} catch (ex: any) {
+				// Just ignore...
+			}
+		}
 		if (this.onpausedchange)
 			this.onpausedchange(false);
 		if (this.mediaSession)
-			this.mediaSession.setPaused(false);
+			this.mediaSession.setPaused(false, this.currentPlaylistSong ? this.currentPlaylistSong.lengthMS : 0, this.lastTimeS);
 	}
 
 	private playbackAborted(): void {
@@ -498,7 +500,7 @@ class Player {
 			if (this.onloadingchange)
 				this.onloadingchange(false);
 			if (this.mediaSession)
-				this.mediaSession.setLoading(false);
+				this.mediaSession.setLoading(false, this.currentPlaylistSong ? this.currentPlaylistSong.lengthMS : 0, 0);
 		}
 
 		if (!this._paused) {
@@ -508,31 +510,53 @@ class Player {
 			if (this.onpausedchange)
 				this.onpausedchange(true);
 			if (this.mediaSession)
-				this.mediaSession.setPaused(true);
+				this.mediaSession.setPaused(true, this.currentPlaylistSong ? this.currentPlaylistSong.lengthMS : 0, 0);
 		}
 	}
 
 	private playbackLengthChange(): void {
-		if (!this._alive || !this.audio || !this._playlist || !this._currentSong)
+		if (!this._alive || !this.audio || !this._playlist || !this.loadedSong)
 			return;
 
-		if (this._playlist.updateSongLength(this._currentSong, this.audio.duration))
-			this.notifyMediaSessionChange();
+		if (this._playlist.updateSongLength(this.loadedSong, this.audio.duration))
+			this.notifySongChange();
 	}
 
 	private currentTimeChange(): void {
-		if (!this._alive || !this.audio || !this._currentSong)
+		if (!this._alive || !this.audio || !this.loadedSong)
 			return;
 
-		const t = this.audio.currentTime;
-		this.lastTimeS = t;
+		try {
+			this.lastTimeS = this.audio.currentTime || 0;
+		} catch (ex: any) {
+			// Just ignore...
+		}
 
+		// Do not call notifyCurrentTimeSChange(), because this will
+		// unnecessarily forward the notification to the media session.
 		if (this.oncurrenttimeschange)
-			this.oncurrenttimeschange(t);
+			this.oncurrenttimeschange(this.lastTimeS);
 	}
 
 	private notifyMediaSessionChange(): void {
-		this.refreshMediaSession(this._currentSong);
+		if (!this.mediaSession)
+			return;
+
+		const currentPlaylistSong = this.currentPlaylistSong;
+		if (currentPlaylistSong)
+			this.mediaSession.setMetadata(currentPlaylistSong.id, currentPlaylistSong.title, currentPlaylistSong.artist, currentPlaylistSong.album, currentPlaylistSong.track, currentPlaylistSong.year, currentPlaylistSong.lengthMS, this.lastTimeS);
+		else
+			this.mediaSession.setMetadata(0, null, null, null, 0, 0, 0, 0);
+	}
+
+	private notifyCurrentTimeSChange(): void {
+		if (!this._alive)
+			return;
+
+		if (this.oncurrenttimeschange)
+			this.oncurrenttimeschange(this.lastTimeS);
+
+		this.notifyMediaSessionChange();
 	}
 
 	private notifySongChange(): void {
@@ -540,19 +564,9 @@ class Player {
 			return;
 
 		if (this.onsongchange)
-			this.onsongchange(this._currentSong);
+			this.onsongchange(this.currentPlaylistSong, this.lastTimeS);
 
 		this.notifyMediaSessionChange();
-	}
-
-	public refreshMediaSession(currentSong: Song | null): void {
-		if (!this._alive || !this.mediaSession)
-			return;
-
-		if (currentSong)
-			this.mediaSession.setMetadata(currentSong.id, currentSong.title, currentSong.artist, currentSong.album, currentSong.track, currentSong.lengthMS, currentSong.year);
-		else
-			this.mediaSession.setMetadata(0, null, null, null, 0, 0, 0);
 	}
 
 	/*private notifyLoadingChange(): void {
@@ -571,7 +585,7 @@ class Player {
 		if (!playlist)
 			return;
 
-		playlist.currentIndexResumeTimeS = this.currentIndexResumeTimeS;
+		playlist.currentIndexResumeTimeS = this.lastTimeS;
 	}
 
 	public previous(automaticCall?: boolean): void {
@@ -598,7 +612,7 @@ class Player {
 		// when the browser goes to the background.
 		this.suspendAudioContext(false);
 
-		if (this._currentSong && this.audio)
+		if (this.loadedSong && this.audio)
 			this.audio.pause();
 	}
 
@@ -608,7 +622,7 @@ class Player {
 
 		let playPromise: Promise<void> | undefined;
 
-		if (this._currentSong && index === undefined) {
+		if (this.loadedSong && index === undefined) {
 			this.resumeAudioContext();
 
 			playPromise = this.audio.play();
@@ -616,22 +630,24 @@ class Player {
 			if (index !== undefined && index >= 0)
 				this._playlist.currentIndex = index;
 
-			let currentSong = this._playlist.currentItem;
+			let currentPlaylistSong = this._playlist.currentItem;
 
-			if (!currentSong && this._playlist.length) {
+			if (!currentPlaylistSong && this._playlist.length) {
 				this._playlist.moveCurrentToNext();
-				currentSong = this._playlist.currentItem;
+				currentPlaylistSong = this._playlist.currentItem;
 			}
 
-			if (!currentSong) {
+			if (!currentPlaylistSong) {
 				this.stop();
 				return;
 			}
 
+			this.loadedSong = currentPlaylistSong;
+			this.resumeTimeS = this.lastTimeS;
 			this.lastTimeS = -1;
 			this.songStartedAutomatically = !!automaticCall;
-			if (this._currentSong !== currentSong) {
-				this._currentSong = currentSong;
+			if (this.currentPlaylistSong !== currentPlaylistSong) {
+				this.currentPlaylistSong = currentPlaylistSong;
 				queueMicrotask(this.boundNotifySongChange);
 			}
 
@@ -641,32 +657,35 @@ class Player {
 				this.audio.removeChild(this.audio.firstChild);
 
 			const source = document.createElement("source");
-			if (currentSong.url && !currentSong.url.startsWith(FileUtils.localURLPrefix)) {
-				source.src = currentSong.url;
-			} else if (currentSong.file) {
+			if (currentPlaylistSong.url && !currentPlaylistSong.url.startsWith(FileUtils.localURLPrefix)) {
+				source.src = currentPlaylistSong.url;
+			} else if (currentPlaylistSong.file) {
 				if (this.lastObjectURL)
 					URL.revokeObjectURL(this.lastObjectURL);
-				this.lastObjectURL = URL.createObjectURL(currentSong.file);
+				this.lastObjectURL = URL.createObjectURL(currentPlaylistSong.file);
 				source.src = this.lastObjectURL;
-			} else if (currentSong.url) {
+			} else if (currentPlaylistSong.url) {
 				this.pause();
 
 				const lastCurrentIndex = this._playlist.currentIndex,
-					lastCurrentSong = this._playlist.currentItem;
+					lastCurrentPlaylistSong = this._playlist.currentItem;
 
-				FileSystemAPI.getFile(currentSong.url.substring(FileUtils.localURLPrefix.length)).then((file) => {
-					if (lastCurrentSong && !lastCurrentSong.file && file)
-						lastCurrentSong.file = file;
+				FileSystemAPI.getFile(currentPlaylistSong.url.substring(FileUtils.localURLPrefix.length)).then((file) => {
+					if (lastCurrentPlaylistSong && !lastCurrentPlaylistSong.file && file)
+						lastCurrentPlaylistSong.file = file;
 
-					if (!this._playlist || lastCurrentIndex !== this._playlist.currentIndex || lastCurrentSong !== this._playlist.currentItem)
+					if (!this._playlist || lastCurrentIndex !== this._playlist.currentIndex || lastCurrentPlaylistSong !== this._playlist.currentItem)
 						return;
 
-					if (!file)
+					if (!file) {
 						this.handleError(Strings.FileNotFoundOrNoPermissionError);
-					else
+					} else {
+						// Restore the value because play() is about to be called again, and this.lastTimeS is -1 now
+						this.lastTimeS = this.resumeTimeS;
 						this.play(lastCurrentIndex, automaticCall);
+					}
 				}, () => {
-					if (!this._playlist || lastCurrentIndex !== this._playlist.currentIndex || lastCurrentSong !== this._playlist.currentItem)
+					if (!this._playlist || lastCurrentIndex !== this._playlist.currentIndex || lastCurrentPlaylistSong !== this._playlist.currentItem)
 						return;
 
 					this.handleError(Strings.FileNotFoundOrNoPermissionError);
@@ -682,7 +701,7 @@ class Player {
 			this.audio.appendChild(source);
 			this.audio.load();
 
-			if (this.songToResumeTime !== currentSong || !this.resumeTimeS || this.resumeTimeS <= 0)
+			if (this.songToResumeTime !== currentPlaylistSong || !this.resumeTimeS || this.resumeTimeS <= 0)
 				playPromise = this.audio.play();
 		}
 
@@ -712,7 +731,7 @@ class Player {
 		if (!this._alive || !this.audio)
 			return;
 
-		if (!this._currentSong || this.audio.paused)
+		if (!this.loadedSong || this.audio.paused)
 			this.play();
 		else
 			this.pause();
@@ -722,7 +741,11 @@ class Player {
 		if (!this._alive || !this.audio)
 			return;
 
-		if (this._currentSong) {
+		this.loadedSong = null;
+		this.songToResumeTime = null;
+		this.lastTimeS = -1;
+
+		if (this.currentPlaylistSong) {
 			// Try to force a kWebMediaPlayerDestroyed event without causing onerror
 			// and other undesirable events.
 			//this.audio.removeAttribute("src");
@@ -742,7 +765,7 @@ class Player {
 				if (this.onloadingchange)
 					this.onloadingchange(false);
 				if (this.mediaSession)
-					this.mediaSession.setLoading(false);
+					this.mediaSession.setLoading(false, 0, 0);
 			}
 
 			if (!this._paused) {
@@ -751,16 +774,17 @@ class Player {
 				if (this.onpausedchange)
 					this.onpausedchange(true);
 				if (this.mediaSession)
-					this.mediaSession.setPaused(true);
+					this.mediaSession.setPaused(true, 0, 0);
 			}
 
-			this._currentSong = null;
-			this.lastTimeS = -1;
-			this.songToResumeTime = null;
-			this.resumeTimeS = 0;
+			this.currentPlaylistSong = null;
 			//queueMicrotask(this.boundNotifySongChange);
 			this.notifySongChange();
 		}
+
+		this.loadedSong = null;
+		this.songToResumeTime = null;
+		this.lastTimeS = -1;
 
 		this.suspendAudioContext(false);
 	}
@@ -781,11 +805,37 @@ class Player {
 	}
 
 	public seekTo(timeMS: number, relative?: boolean): void {
-		if (!this._alive || !this.audio || !this._currentSong || !this._currentSong.isSeekable || this._currentSong.lengthMS <= 0 || !this.audio.seekable || !this.audio.seekable.length)
+		if (!this._alive || !this.currentPlaylistSong || !this.currentPlaylistSong.isSeekable || this.currentPlaylistSong.lengthMS <= 0)
 			return;
 
-		const timeS = Math.min(this.audio.duration || 0, Math.max(0, (timeMS / 1000) + (relative ? this.audio.currentTime : 0)));
-		this.lastTimeS = timeS;
-		this.audio.currentTime = timeS;
+		if (!this.loadedSong) {
+			if (!this.songToResumeTime)
+				this.songToResumeTime = this.currentPlaylistSong;
+
+			if (this.songToResumeTime === this.currentPlaylistSong) {
+				this.lastTimeS = Math.min(
+					Math.max(0, this.currentPlaylistSong.lengthMS),
+					Math.max(0, timeMS + (relative ? ((Math.max(0, this.lastTimeS) * 1000) | 0) : 0))
+				) / 1000;
+				this.notifyCurrentTimeSChange();
+			}
+			return;
+		}
+
+		if (!this.audio || !this.audio.seekable || !this.audio.seekable.length)
+			return;
+
+		try {
+			const timeS = Math.min(
+				this.audio.duration || 0,
+				Math.max(0, (timeMS / 1000) + (relative ? (this.audio.currentTime || 0) : 0))
+			);
+			this.lastTimeS = timeS;
+			this.audio.currentTime = timeS;
+		} catch (ex: any) {
+			// Just ignore...
+		}
+
+		this.notifyCurrentTimeSChange();
 	}
 }

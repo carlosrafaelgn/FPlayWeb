@@ -318,12 +318,12 @@ public final class HostMediaSession {
 		}
 	}
 
-	private void setPlaybackState() {
+	private void setPlaybackState(long lengthMS, double positionS) {
 		if (mediaSession == null)
 			return;
 
 		try {
-			mediaSession.setPlaybackState(mediaSessionPlaybackStateBuilder.setState(hasSong ? (loading ? PlaybackState.STATE_BUFFERING : (paused ? PlaybackState.STATE_PAUSED : PlaybackState.STATE_PLAYING)) : PlaybackState.STATE_STOPPED, 0, 1, SystemClock.elapsedRealtime()).build());
+			mediaSession.setPlaybackState(mediaSessionPlaybackStateBuilder.setState(hasSong ? (loading ? PlaybackState.STATE_BUFFERING : (paused ? PlaybackState.STATE_PAUSED : PlaybackState.STATE_PLAYING)) : PlaybackState.STATE_STOPPED, Math.max(0, Math.min(lengthMS, positionS > 0 ? (long)(positionS * 1000.0) : 0)), 1, SystemClock.elapsedRealtime()).build());
 		} catch (Throwable ex) {
 			ex.printStackTrace();
 		}
@@ -331,17 +331,17 @@ public final class HostMediaSession {
 		refreshNotification();
 	}
 
-	public void setPaused(boolean paused) {
+	public void setPaused(boolean paused, long lengthMS, double positionS) {
 		this.paused = paused;
-		setPlaybackState();
+		setPlaybackState(lengthMS, positionS);
 	}
 
-	public void setLoading(boolean loading) {
+	public void setLoading(boolean loading, long lengthMS, double positionS) {
 		this.loading = loading;
-		setPlaybackState();
+		setPlaybackState(lengthMS, positionS);
 	}
 
-	public void setMetadata(long id, String title, String artist, String album, int track, long lengthMS, int year) {
+	public void setMetadata(long id, String title, String artist, String album, int track, int year, long lengthMS, double positionS) {
 		if (mediaSession == null)
 			return;
 
@@ -356,7 +356,7 @@ public final class HostMediaSession {
 				mediaSessionMetadataBuilder.putString(MediaMetadata.METADATA_KEY_ARTIST, artist);
 				mediaSessionMetadataBuilder.putString(MediaMetadata.METADATA_KEY_ALBUM, album);
 				mediaSessionMetadataBuilder.putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, track);
-				mediaSessionMetadataBuilder.putLong(MediaMetadata.METADATA_KEY_DURATION, lengthMS);
+				mediaSessionMetadataBuilder.putLong(MediaMetadata.METADATA_KEY_DURATION, lengthMS >= 0 ? lengthMS : 0);
 				mediaSessionMetadataBuilder.putLong(MediaMetadata.METADATA_KEY_YEAR, year);
 			} else {
 				lastTitle = NONE;
@@ -374,7 +374,7 @@ public final class HostMediaSession {
 		} catch (Throwable ex) {
 			ex.printStackTrace();
 		}
-		setPlaybackState();
+		setPlaybackState(lengthMS, positionS);
 	}
 
 	private void handleMediaButton(int keyCode) {
