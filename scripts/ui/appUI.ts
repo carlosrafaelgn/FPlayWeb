@@ -537,8 +537,13 @@ class AppUI {
 
 	private static adjustCover(): void {
 		if (AppUI.cover) {
+			// Having a 1px x 1px black rectangle that is scaled by a large amount makes
+			// an area of the rectangle transparent, like a regular scaling "artifact"
+			// that appears when scaling regular images. Therefore, I decided to keep the
+			// rectangle with a size of 2px x 2px, scaling it twice as needed, in order to
+			// try to reduce this "artifact".
 			const rect = document.body.getBoundingClientRect();
-			AppUI.cover.style.transform = `scale(${Math.ceil(rect.right * 0.5)}, ${Math.ceil(rect.bottom * 0.5)})`;
+			AppUI.cover.style.transform = `scale(${rect.right}, ${rect.bottom})`;
 		}
 	}
 

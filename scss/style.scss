@@ -18,6 +18,8 @@ html {
 	padding: 0;
 	min-height: 100%;
 	height: 100%;
+	max-height: 100%;
+	overflow: hidden;
 	font-size: $base-size;
 	-webkit-tap-highlight-color: rgba(0,0,0,0);
 }
@@ -41,6 +43,7 @@ body {
 	padding: 0 $s2;
 	min-height: 100%;
 	height: 100%;
+	max-height: 100%;
 	overflow: hidden;
 	-webkit-user-select: none;
 	user-select: none;
@@ -621,8 +624,11 @@ input[type="checkbox"]:checked + .icon + .icon {
 }
 
 .list {
+	position: relative;
 	width: 100%;
 	text-align: left;
+	font-size: $small-font-size;
+	line-height: $small-contents-size;
 }
 
 .scrollable {
@@ -637,16 +643,13 @@ input[type="checkbox"]:checked + .icon + .icon {
 }
 
 .list-container {
-	position: relative;
-	width: 100%;
 	padding: 0;
-	font-size: $small-font-size;
-	line-height: $small-contents-size;
-	overflow: hidden;
+	width: 1px;
+	height: 1px;
+	visibility: hidden;
 }
 
 .list-item {
-	width: 100%;
 	height: var(--button-size);
 	line-height: var(--button-size);
 	white-space: nowrap;
@@ -667,15 +670,26 @@ input[type="checkbox"]:checked + .icon + .icon {
 	position: absolute;
 	left: 0;
 	top: 0;
+	right: 0;
+}
+
+.list.virtual-padding > .list-item.virtual {
+	right: var(--thick-border);
 }
 
 .list-item.real {
 	position: relative;
 	margin-bottom: var(--thick-border);
+	width: 100%;
 }
 
 #cover {
-	position: absolute;
+	/*
+		Even though html and body have overflow: hidden, a few mobile devices still
+		show the scroll bars, for a brief moment, when the cover is added. The only
+		way to prevent them from appearing was by making the cover fixed!
+	*/
+	position: fixed;
 	z-index: 99999;
 	left: 0;
 	top: 0;

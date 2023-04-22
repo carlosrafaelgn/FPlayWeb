@@ -125,13 +125,19 @@ class ListControl<T> {
 		if (!this.element.getAttribute("tabindex"))
 			this.element.setAttribute("tabindex", "0");
 
+		// Not using virtual items makes mobile devices create a large
+		// layer for the items if they actually overflow. Also, now that
+		// the items are a child of the element, not the container, the
+		// margin of the last item becomes noticeable, because it can be
+		// seen when scrolling to the bottom of the list.
 		this.useVirtualItems = useVirtualItems;
 
 		const container = document.createElement("div");
 		container.className = "list-container";
-		container.setAttribute("role", "rowgroup");
+		//container.setAttribute("role", "rowgroup");
 		this.container = container;
-		this.element.appendChild(container);
+		if (useVirtualItems)
+			this.element.appendChild(container);
 
 		this._adapter = null;
 
@@ -275,7 +281,15 @@ class ListControl<T> {
 
 		if (this.scrollbarPadding !== scrollbarPadding) {
 			this.scrollbarPadding = scrollbarPadding;
-			this.element.style.padding = (this.scrollbarPadding ? "" : "0");
+			const element = this.element;
+			if (this.useVirtualItems) {
+				if (scrollbarPadding)
+					element.classList.add("virtual-padding");
+				else
+					element.classList.remove("virtual-padding");
+			} else {
+				element.style.padding = (scrollbarPadding ? "" : "0");
+			}
 		}
 	}
 
@@ -306,10 +320,15 @@ class ListControl<T> {
 		if (!container)
 			return;
 
-		while (container.firstChild)
-			container.removeChild(container.firstChild);
-
 		const items = this.items;
+		for (let i = items.length - 1; i >= 0; i--) {
+			if (items[i].element) {
+				const parentNode = items[i].element.parentNode;
+				if (parentNode)
+					parentNode.removeChild(items[i].element);
+			}
+		}
+
 		if (this.useVirtualItems) {
 			for (let i = items.length - 1; i >= 0; i--)
 				items[i].reset();
@@ -406,8 +425,7 @@ class ListControl<T> {
 		const list = adapter.list,
 			length = list.length,
 			currentListItem = adapter.list.currentItem,
-			keyboardIndex = this.keyboardIndex,
-			container = this.container;
+			keyboardIndex = this.keyboardIndex;
 
 		let i = 0;
 
@@ -445,7 +463,7 @@ class ListControl<T> {
 				item.element.setAttribute("aria-rowindex", firstIndex.toString());
 
 				if (!item.item)
-					container.appendChild(item.element);
+					element.appendChild(item.element);
 				item.item = listItem;
 			}
 
@@ -461,7 +479,7 @@ class ListControl<T> {
 
 			if (item.item) {
 				item.item = null;
-				container.removeChild(item.element);
+				element.removeChild(item.element);
 			}
 		}
 
@@ -485,8 +503,7 @@ class ListControl<T> {
 			list = adapter.list,
 			length = list.length,
 			currentListItem = adapter.list.currentItem,
-			keyboardIndex = this.keyboardIndex,
-			container = this.container;
+			keyboardIndex = this.keyboardIndex;
 
 		if (!this.useVirtualItems) {
 			const visibleCount = this.visibleCount,
@@ -566,7 +583,7 @@ class ListControl<T> {
 			item.element.setAttribute("aria-rowindex", firstIndex.toString());
 
 			if (!item.item)
-				container.appendChild(item.element);
+				element.appendChild(item.element);
 			item.item = listItem;
 
 			if (item.index !== firstIndex) {
@@ -581,7 +598,7 @@ class ListControl<T> {
 
 			if (item.item) {
 				item.item = null;
-				container.removeChild(item.element);
+				element.removeChild(item.element);
 			}
 		}
 	}
@@ -902,13 +919,13 @@ class ListControl<T> {
 			this.refreshVisibleItems();
 		} else {
 			const adapter = this._adapter,
-				count = lastIndex - firstIndex + 1;
+				count = lastIndex - firstIndex + 1,
+				element = this.element;
 
-			if (!adapter || count <= 0)
+			if (!adapter || count <= 0 || !element)
 				return;
 
-			const container = this.container,
-				items = this.items,
+			const items = this.items,
 				list = adapter.list,
 				length = list.length,
 				currentListItem = list.currentItem,
@@ -947,7 +964,7 @@ class ListControl<T> {
 			this.adjustContainerHeight();
 
 			for (let i = 0; i < count; i++)
-				container.insertBefore(newItems[i].element, insertBeforeReference);
+				element.insertBefore(newItems[i].element, insertBeforeReference);
 
 			for (let i = items.length - 1; i > lastIndex; i--) {
 				const element = items[i].element;
@@ -971,13 +988,13 @@ class ListControl<T> {
 			this.refreshVisibleItems();
 		} else {
 			const adapter = this._adapter,
-				count = lastIndex - firstIndex + 1;
+				count = lastIndex - firstIndex + 1,
+				element = this.element;
 
-			if (!adapter || count <= 0)
+			if (!adapter || count <= 0 || !element)
 				return;
 
-			const container = this.container,
-				items = this.items,
+			const items = this.items,
 				list = adapter.list,
 				length = list.length,
 				removedItems = items.splice(firstIndex, count);
@@ -988,7 +1005,7 @@ class ListControl<T> {
 				if (item.current)
 					this.currentItem = null;
 
-				container.removeChild(item.element);
+				element.removeChild(item.element);
 				item.zero();
 			}
 
