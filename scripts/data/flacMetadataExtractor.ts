@@ -24,8 +24,8 @@
 // https://github.com/carlosrafaelgn/FPlayWeb
 //
 
-class FLACMetadataExtractor extends MetadataExtractor {
-	private static readHeaderAndStreamInfo(metadata: Metadata, f: BufferedFileHandle, tmp: Uint8Array): number {
+class FLACMetadataExtractor extends VorbisCommentExtractor {
+	private static readHeaderAndStreamInfo(metadata: Metadata, f: BufferedReader, tmp: Uint8Array): number {
 		// https://xiph.org/flac/format.html#stream
 
 		if (f.readUInt32BE() !== 0x664c6143) // fLaC
@@ -76,140 +76,7 @@ class FLACMetadataExtractor extends MetadataExtractor {
 		return (lastBlock ? -1 : 1);
 	}
 
-	private static async extractVorbisComment(blockLength: number, metadata: Metadata, f: BufferedFileHandle, tmpPtr: Uint8Array[]): Promise<number> {
-		// https://xiph.org/flac/format.html#metadata_block_header
-		// https://xiph.org/flac/format.html#metadata_block_vorbis_comment
-		// https://www.xiph.org/vorbis/doc/v-comment.html
-
-		let p = f.fillBuffer(1024);
-		if (p)
-			await p;
-
-		const vendorLength = f.readUInt32LE();
-		blockLength -= 4;
-		if (!vendorLength || vendorLength > blockLength)
-			return 0;
-
-		f.skip(vendorLength);
-		blockLength -= vendorLength;
-		if (!blockLength)
-			return 1;
-
-		p = f.fillBuffer(1024);
-		if (p)
-			await p;
-
-		let userCommentListLength = f.readUInt32LE();
-		blockLength -= 4;
-		if (userCommentListLength === null || blockLength < 0 || userCommentListLength > blockLength)
-			return 0;
-
-		let performer: string | null = null;
-		let albumArtist: string | null = null;
-		let composer: string | null = null;
-
-		while (userCommentListLength > 0) {
-			userCommentListLength--;
-
-			p = f.fillBuffer(4);
-			if (p)
-				await p;
-
-			const length = f.readUInt32LE();
-			blockLength -= 4;
-			if (length === null || blockLength < 0 || length > blockLength)
-				return 0;
-
-			const bytesToRead = Math.min(2048, length);
-
-			let tmp = tmpPtr[0];
-			if (tmp.length < bytesToRead) {
-				tmp = new Uint8Array(bytesToRead);
-				tmpPtr[0] = tmp;
-			}
-
-			p = f.fillBuffer(bytesToRead + 4);
-			if (p)
-				await p;
-
-			f.read(tmp, 0, bytesToRead);
-
-			if (length > bytesToRead)
-				f.skip(length - bytesToRead);
-			blockLength -= length;
-
-			try {
-				let i: number;
-				for (i = 0; i < bytesToRead; i++) {
-					if (tmp[i] === 0x3d) { // =
-						if (i && i < (bytesToRead - 1)) {
-							const name = MetadataExtractor.textDecoderUtf8.decode(tmp.subarray(0, i)).normalize().trim();
-							const value = MetadataExtractor.textDecoderUtf8.decode(tmp.subarray(i + 1, bytesToRead)).normalize().trim();
-
-							if (!value)
-								break;
-
-							switch (name.toUpperCase()) {
-								case "TITLE":
-									metadata.title = value;
-									break;
-
-								case "ARTIST":
-									if (metadata.artist)
-										metadata.artist += ", " + value;
-									else
-										metadata.artist = value;
-									break;
-
-								case "PERFORMER":
-									performer = value;
-									break;
-
-								case "ALBUMARTIST":
-									albumArtist = value;
-									break;
-
-								case "COMPOSER":
-									composer = value;
-									break;
-
-								case "ALBUM":
-									metadata.album = value;
-									break;
-
-								case "TRACKNUMBER":
-									metadata.track = parseInt(value) || 0;
-									break;
-
-								case "DATE":
-									metadata.year = parseInt(value) || 0;
-									break;
-							}
-						}
-						break;
-					}
-				}
-			} catch (ex: any) {
-				// Just ignore...
-			}
-		}
-
-		if (!metadata.artist) {
-			if (performer)
-				metadata.artist = performer;
-			else if (albumArtist)
-				metadata.artist = albumArtist;
-			else if (composer)
-				metadata.artist = composer;
-		}
-
-		if (blockLength > 0)
-			f.skip(blockLength);
-
-		return 1;
-	}
-
-	private static async readMetadataBlock(metadata: Metadata, f: BufferedFileHandle, tmpPtr: Uint8Array[]): Promise<number> {
+	private static async readMetadataBlock(metadata: Metadata, f: BufferedReader, tmpPtr: Uint8Array[]): Promise<number> {
 		// https://xiph.org/flac/format.html#metadata_block_header
 		// https://xiph.org/flac/format.html#metadata_block_vorbis_comment
 		// https://www.xiph.org/vorbis/doc/v-comment.html
@@ -229,25 +96,20 @@ class FLACMetadataExtractor extends MetadataExtractor {
 		// typeAndLength is the length now
 		typeAndLength &= 0x00ffffff;
 
-		if (type === 127 || (typeAndLength + f.filePosition) > f.fileLength)
+		if (type === 127 || (typeAndLength + f.readPosition) > f.totalLength)
 			return 0;
 
-		if (type === 4) { // VORBIS_COMMENT
-			if (!await FLACMetadataExtractor.extractVorbisComment(typeAndLength, metadata, f, tmpPtr))
-				return 0;
-		} else {
-			f.skip(typeAndLength);
-		}
+		if (type === 4) // VORBIS_COMMENT
+			return (await VorbisCommentExtractor.extractVorbisComment(typeAndLength, metadata, f, tmpPtr) ? -1 : 0);
+
+		f.skip(typeAndLength);
 
 		return (lastBlock ? -1 : 1);
 	}
 
 	public static async extract(file: File, buffer: Uint8Array, tmpPtr: Uint8Array[]): Promise<Metadata | null> {
-		// This method should not be directly called. Instead, it should only be
-		// called from within FLACMetadataExtractor.extract().
-
 		try {
-			const f = new BufferedFileHandle(file, buffer);
+			const f = new BufferedFileReader(file, buffer);
 
 			await f.fillBuffer(-1);
 

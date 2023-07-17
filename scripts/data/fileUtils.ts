@@ -37,6 +37,7 @@ class FileUtils {
 		".aac": true,
 		".flac": true,
 		".mp3": true,
+		".ogg": true,
 		".wav": true
 	};
 

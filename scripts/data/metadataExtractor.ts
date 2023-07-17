@@ -43,11 +43,37 @@ interface Metadata {
 	fileSize?: number;
 }
 
-class BufferedFileHandle {
-	public static readonly minBufferLength = 32768;
+abstract class BufferedReader {
+	// https://en.wikipedia.org/wiki/Ogg#Page_structure
+	// Basic page structure = 27 bytes
+	// Maximum segment table = 255 bytes
+	// Maximum amount of data = 255 pages * 255 bytes per page = 65025
+	// Maximum page size = 27 + 255 + 65025 = 65307
+	public static readonly minBufferLength = 65536;
 
+	public readonly totalLength: number;
+
+	public constructor(totalLength: number) {
+		this.totalLength = totalLength;
+	}
+
+	public abstract get bufferAvailable(): number;
+	public abstract get readPosition(): number;
+	public abstract get eof(): boolean;
+
+	public abstract seekTo(position: number): void;
+	public abstract skip(bytes: number): void;
+	public abstract fillBuffer(length: number): Promise<void | null> | null;
+	public abstract readByte(): number;
+	public abstract readUInt32BE(): number | null;
+	public abstract readUInt32LE(): number | null;
+	public abstract readUInt16BE(): number | null;
+	public abstract readUInt16LE(): number | null;
+	public abstract read(buffer: Uint8Array, offset: number, length: number): Promise<number> | number;
+}
+
+class BufferedFileReader extends BufferedReader {
 	private readonly file: File;
-	public readonly fileLength: number;
 
 	private readonly buffer: Uint8Array;
 	private position: number;
@@ -59,7 +85,11 @@ class BufferedFileHandle {
 		return this._bufferAvailable;
 	}
 
-	public get filePosition(): number {
+	public get bufferLength(): number {
+		return this.buffer.length;
+	}
+
+	public get readPosition(): number {
 		return this.position - this._bufferAvailable;
 	}
 
@@ -68,10 +98,12 @@ class BufferedFileHandle {
 	}
 
 	public constructor(file: File, buffer: Uint8Array) {
-		if (buffer.length < BufferedFileHandle.minBufferLength)
+		super(file.size);
+
+		if (buffer.length < BufferedReader.minBufferLength)
 			throw new Error("Buffer length too small: " + buffer.length);
+
 		this.file = file;
-		this.fileLength = file.size;
 		this.buffer = buffer;
 		this.position = 0;
 		this.bufferPosition = 0;
@@ -86,8 +118,8 @@ class BufferedFileHandle {
 		this.bufferPosition = 0;
 		this._bufferAvailable = 0;
 
-		if (position >= this.fileLength) {
-			this.position = this.fileLength;
+		if (position >= this.totalLength) {
+			this.position = this.totalLength;
 			this._eof = true;
 		} else {
 			this.position = position;
@@ -104,8 +136,8 @@ class BufferedFileHandle {
 
 			this.position += bytes;
 
-			if (this.position >= this.fileLength) {
-				this.position = this.fileLength;
+			if (this.position >= this.totalLength) {
+				this.position = this.totalLength;
 				this._eof = true;
 			}
 
@@ -117,7 +149,7 @@ class BufferedFileHandle {
 		}
 	}
 
-	public fillBuffer(length: number): Promise<void> | null {
+	public fillBuffer(length: number): Promise<void | null> | null {
 		if (length <= 0)
 			length = this.buffer.length;
 		else if (length < 0 || length > this.buffer.length)
@@ -142,8 +174,8 @@ class BufferedFileHandle {
 					this._eof = true;
 				} else {
 					this.position += value.byteLength;
-					if (this.position >= this.fileLength) {
-						this.position = this.fileLength;
+					if (this.position >= this.totalLength) {
+						this.position = this.totalLength;
 						this._eof = true;
 					}
 
@@ -239,8 +271,8 @@ class BufferedFileHandle {
 					this._eof = true;
 				} else {
 					this.position += value.byteLength;
-					if (this.position >= this.fileLength) {
-						this.position = this.fileLength;
+					if (this.position >= this.totalLength) {
+						this.position = this.totalLength;
 						this._eof = true;
 					}
 				}
@@ -268,22 +300,22 @@ class MetadataExtractor {
 	protected static readonly textDecoderUtf16be = new TextDecoder("utf-16be");
 	protected static readonly textDecoderUtf8 = new TextDecoder("utf-8");
 
-	private static async extractRIFF(metadata: Metadata, f: BufferedFileHandle, tmp: Uint8Array): Promise<[Metadata, boolean] | null> {
+	private static async extractRIFF(metadata: Metadata, f: BufferedReader, tmp: Uint8Array): Promise<[Metadata, boolean] | null> {
 		// When entering extractRIFF() the first four bytes have already been consumed
-		if (f.fileLength < 44)
+		if (f.totalLength < 44)
 			return null;
 
 		const riffLength = f.readUInt32LE();
 		if (riffLength === null)
 			return null;
-		if (f.fileLength < (8 + riffLength))
+		if (f.totalLength < (8 + riffLength))
 			return null;
 
 		let bytesLeftInFile = riffLength, fmtOk = false, dataOk = false, id3Position = 0, dataLength = 0, avgBytesPerSec = 0;
 
 		_mainLoop:
 		while (bytesLeftInFile > 0) {
-			let isWave = false, bytesLeftInChunk = 0, tmpChunkLength: number | null, p: Promise<void> | null;
+			let isWave = false, bytesLeftInChunk = 0, tmpChunkLength: number | null, p: Promise<void | null> | null;
 
 			switch (f.readUInt32BE()) {
 				case null:
@@ -332,7 +364,7 @@ class MetadataExtractor {
 						tmpChunkLength -= 3;
 
 						if (b0 === 0x49 || b1 === 0x44 || b2 === 0x33) {
-							id3Position = f.fileLength - bytesLeftInFile;
+							id3Position = f.totalLength - bytesLeftInFile;
 							if (fmtOk && dataOk) {
 								id3Position = -1;
 								break _mainLoop;
@@ -636,7 +668,7 @@ class MetadataExtractor {
 		return ((!ret || !ret.length) ? null : ret);
 	}
 
-	private static readV2Frame(f: BufferedFileHandle, frameSize: number, tmpPtr: Uint8Array[]): Promise<string | null> | string | null {
+	private static readV2Frame(f: BufferedReader, frameSize: number, tmpPtr: Uint8Array[]): Promise<string | null> | string | null {
 		if (frameSize < 2) {
 			f.skip(frameSize);
 			return null;
@@ -667,9 +699,9 @@ class MetadataExtractor {
 		});
 	}
 
-	private static async extractID3v1(metadata: Metadata, f: BufferedFileHandle, found: number, tmp: Uint8Array): Promise<void> {
+	private static async extractID3v1(metadata: Metadata, f: BufferedReader, found: number, tmp: Uint8Array): Promise<void> {
 		try {
-			f.seekTo(f.fileLength - 128);
+			f.seekTo(f.totalLength - 128);
 			const p = f.read(tmp, 0, 128);
 			if ((typeof p) !== "number")
 				await p;
@@ -745,7 +777,7 @@ class MetadataExtractor {
 		}
 	}
 
-	private static async extractID3v2Andv1(file: File, f: BufferedFileHandle, tmpPtr: Uint8Array[]): Promise<Metadata | null> {
+	private static async extractID3v2Andv1(file: File, f: BufferedReader, tmpPtr: Uint8Array[]): Promise<Metadata | null> {
 		const metadata = MetadataExtractor.createBasicMetadata(file);
 
 		if (!metadata.url) {
@@ -943,7 +975,7 @@ class MetadataExtractor {
 			return null;
 
 		if (!buffer)
-			buffer = new Uint8Array(BufferedFileHandle.minBufferLength);
+			buffer = new Uint8Array(BufferedReader.minBufferLength);
 
 		if (!tempBuffer)
 			tempBuffer = [new Uint8Array(256)];
@@ -954,6 +986,8 @@ class MetadataExtractor {
 
 			if (file.name.endsWith(".flac"))
 				return FLACMetadataExtractor.extract(file, buffer, tempBuffer);
+			if (file.name.endsWith(".ogg"))
+				return OggMetadataExtractor.extract(file, buffer, tempBuffer);
 
 			const lcase = file.name.toLowerCase();
 			if (!lcase.endsWith(".mp3") &&
@@ -962,13 +996,15 @@ class MetadataExtractor {
 
 				if (lcase.endsWith(".flac"))
 					return FLACMetadataExtractor.extract(file, buffer, tempBuffer);
+				if (lcase.endsWith(".ogg"))
+					return OggMetadataExtractor.extract(file, buffer, tempBuffer);
 
 				return null;
 			}
 		}
 
 		try {
-			const f = new BufferedFileHandle(file, buffer);
+			const f = new BufferedFileReader(file, buffer);
 
 			await f.fillBuffer(-1);
 

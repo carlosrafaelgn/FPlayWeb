@@ -897,8 +897,8 @@ class AppUI {
 			}
 
 			const playlist = App.player.playlist,
-				buffer = (electron ? null : new Uint8Array(BufferedFileHandle.minBufferLength << 1)),
-				tempBuffer = (electron ? null : [new Uint8Array(256)]);
+				buffer = (electron ? null : new Uint8Array(BufferedReader.minBufferLength)),
+				tempBuffer = (electron ? null : [new Uint8Array(2048)]);
 
 			let missingSongWasAdded = false;
 

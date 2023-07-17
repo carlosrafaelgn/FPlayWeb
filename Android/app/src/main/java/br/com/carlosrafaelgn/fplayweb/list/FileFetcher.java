@@ -110,6 +110,7 @@ public final class FileFetcher implements Runnable, ArraySorter.Comparer<FileSt>
 		supportedTypes.put(".mp3", "audio/mpeg");
 		supportedTypes.put(".wav", "audio/wav"); //audio/vnd.wave ?
 		supportedTypes.put(".flac", "audio/flac");
+		supportedTypes.put(".ogg", "audio/ogg");
 	}
 
 	private static boolean accept(File file) {
