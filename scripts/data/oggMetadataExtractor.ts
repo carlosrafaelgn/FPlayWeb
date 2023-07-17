@@ -312,8 +312,12 @@ class OggBufferedReader extends BufferedFileReader {
 	}
 
 	private async readAsync(p: Promise<number> | number, buffer: Uint8Array, offset: number, length: number, totalRead: number): Promise<number> {
-		if ((typeof p) !== "number")
+		if ((typeof p) !== "number") {
 			p = await p;
+
+			if (p <= 0)
+				return totalRead;
+		}
 
 		length -= p as number;
 		this.currentPageLength -= p as number;
@@ -332,6 +336,9 @@ class OggBufferedReader extends BufferedFileReader {
 			p = super.read(buffer, offset, Math.min(length, this.currentPageLength));
 			if ((typeof p) !== "number")
 				p = await p;
+
+			if (p <= 0)
+				break;
 
 			length -= p as number;
 			this.currentPageLength -= p as number;
@@ -353,11 +360,6 @@ class OggBufferedReader extends BufferedFileReader {
 		if (this.additionalSkipLength > 0)
 			return this.skipAdditionalSkipLength().then(() => this.read(buffer, offset, length));
 
-		if (length <= this.currentPageLength) {
-			this.currentPageLength -= length;
-			return super.read(buffer, offset, length);
-		}
-
 		let totalRead = 0;
 
 		while (length > 0 && !super.eof) {
@@ -369,9 +371,12 @@ class OggBufferedReader extends BufferedFileReader {
 					return totalRead;
 			}
 
-			let p = super.read(buffer, offset, Math.min(length, this.currentPageLength));
+			const p = super.read(buffer, offset, Math.min(length, this.currentPageLength));
 			if ((typeof p) !== "number")
 				return this.readAsync(p, buffer, offset, length, totalRead);
+
+			if (p <= 0)
+				break;
 
 			length -= p as number;
 			this.currentPageLength -= p as number;
