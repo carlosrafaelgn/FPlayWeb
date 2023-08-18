@@ -25,7 +25,7 @@
 //
 
 class VorbisCommentExtractor extends MetadataExtractor {
-	protected static async extractVorbisComment(blockLength: number, metadata: Metadata, f: BufferedReader, tmpPtr: Uint8Array[]): Promise<number> {
+	protected static async extractVorbisComment(blockLength: number, metadata: Metadata, f: BufferedReader, tmpPtr: Uint8Array[]): Promise<boolean> {
 		// https://xiph.org/flac/format.html#metadata_block_header
 		// https://xiph.org/flac/format.html#metadata_block_vorbis_comment
 		// https://www.xiph.org/vorbis/doc/v-comment.html
@@ -37,12 +37,12 @@ class VorbisCommentExtractor extends MetadataExtractor {
 		const vendorLength = f.readUInt32LE();
 		blockLength -= 4;
 		if (!vendorLength || vendorLength > blockLength)
-			return 0;
+			return false;
 
 		f.skip(vendorLength);
 		blockLength -= vendorLength;
 		if (!blockLength)
-			return 1;
+			return true;
 
 		p = f.fillBuffer(1024);
 		if (p)
@@ -51,7 +51,7 @@ class VorbisCommentExtractor extends MetadataExtractor {
 		let userCommentListLength = f.readUInt32LE();
 		blockLength -= 4;
 		if (userCommentListLength === null || blockLength < 0 || userCommentListLength > blockLength)
-			return 0;
+			return false;
 
 		let performer: string | null = null;
 		let albumArtist: string | null = null;
@@ -67,7 +67,7 @@ class VorbisCommentExtractor extends MetadataExtractor {
 			const length = f.readUInt32LE();
 			blockLength -= 4;
 			if (length === null || blockLength < 0 || length > blockLength)
-				return 0;
+				return false;
 
 			const bytesToRead = Math.min(2048, length);
 
@@ -159,6 +159,6 @@ class VorbisCommentExtractor extends MetadataExtractor {
 				metadata.artist = composer;
 		}
 
-		return 1;
+		return true;
 	}
 }

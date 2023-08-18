@@ -306,9 +306,7 @@ class MetadataExtractor {
 			return null;
 
 		const riffLength = f.readUInt32LE();
-		if (riffLength === null)
-			return null;
-		if (f.totalLength < (8 + riffLength))
+		if (riffLength === null || f.totalLength < (8 + riffLength))
 			return null;
 
 		let bytesLeftInFile = riffLength, fmtOk = false, dataOk = false, id3Position = 0, dataLength = 0, avgBytesPerSec = 0;
@@ -368,7 +366,6 @@ class MetadataExtractor {
 							if (fmtOk && dataOk) {
 								id3Position = -1;
 								break _mainLoop;
-							} else {
 							}
 						}
 					}
@@ -488,6 +485,14 @@ class MetadataExtractor {
 						// https://www.robotplanet.dk/audio/wav_meta_data/
 						// https://www.robotplanet.dk/audio/wav_meta_data/riff_mci.pdf
 						while (bytesLeftInChunk > 0) {
+							if (bytesLeftInChunk < 4) {
+								f.skip(bytesLeftInChunk);
+								p = f.fillBuffer(8);
+								if (p)
+									await p;
+								break;
+							}
+
 							p = f.fillBuffer(8);
 							if (p)
 								await p;
@@ -503,11 +508,17 @@ class MetadataExtractor {
 							bytesLeftInFile -= 4;
 							bytesLeftInChunk -= 4;
 
-							if (nullTerminatedStrLen === null || nullTerminatedStrLen < 0 || nullTerminatedStrLen > bytesLeftInChunk)
-								break _mainLoop;
+							if (nullTerminatedStrLen === null || nullTerminatedStrLen < 0 || nullTerminatedStrLen > bytesLeftInChunk) {
+								f.skip(bytesLeftInChunk);
+								bytesLeftInFile -= bytesLeftInChunk;
+								bytesLeftInChunk = 0;
+								continue;
+							}
 
 							if (nullTerminatedStrLen <= 1) {
 								f.skip(nullTerminatedStrLen);
+								bytesLeftInFile -= nullTerminatedStrLen;
+								bytesLeftInChunk -= nullTerminatedStrLen;
 								continue;
 							}
 
@@ -796,7 +807,7 @@ class MetadataExtractor {
 		//	unsigned char sizeBytes[4];
 		//} tagV2Hdr;
 
-		// readInt() reads a big-endian 32-bit integer
+		let found = 0;
 		let hdr = (f.readByte() << 24) | (f.readByte() << 16) | (f.readByte() << 8);
 		if (hdr !== 0x49443300) { // ID3x
 			hdr |= f.readByte();
@@ -808,6 +819,8 @@ class MetadataExtractor {
 				// When extractRIFF()[1] === true, f points to a possible ID3 tag, with the first 3 bytes already consumed
 				if (!riffResult[1])
 					return metadata;
+				if (metadata.lengthMS)
+					found |= MetadataExtractor.LENGTH_B;
 			} else {
 				await MetadataExtractor.extractID3v1(metadata, f, 0, tmpPtr[0]);
 				return metadata;
@@ -835,8 +848,6 @@ class MetadataExtractor {
 			// http://id3.org/id3v2.4.0-structure
 			// http://id3.org/id3v2.4.0-frames
 
-			let found = 0;
-
 			while (size > 0 && found !== MetadataExtractor.ALL_B) {
 				const p = f.fillBuffer(1024);
 				if (p)
@@ -848,8 +859,8 @@ class MetadataExtractor {
 				// 	unsigned int size;
 				// 	unsigned short flags;
 				// } frame;
-				const frameId = (f.readByte() << 24) | (f.readByte() << 16) | (f.readByte() << 8) | f.readByte();
-				const frameSize = (f.readByte() << 24) | (f.readByte() << 16) | (f.readByte() << 8) | f.readByte();
+				const frameId = f.readUInt32BE() as number;
+				const frameSize = f.readUInt32BE() as number;
 				// Skip the flags
 				f.skip(2);
 				if (!frameId || frameSize <= 0 || frameSize > size)
