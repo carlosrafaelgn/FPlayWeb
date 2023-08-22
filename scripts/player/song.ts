@@ -33,6 +33,8 @@ interface SongInfo {
 	track: number;
 	lengthMS: number;
 	year: number;
+	sampleRate: number;
+	channels: number;
 
 	fileName: string | null;
 	fileSize: number;
@@ -48,7 +50,7 @@ class Song implements SerializableListItem, SongInfo {
 	public static deserialize(reader: DataReader): Song {
 		// NEVER change this order! (changing will destroy existing playlists)
 		reader.readUint8(); // version
-		return new Song(reader.readString(), reader.readInt32(), reader.readString(), reader.readString(), reader.readString(), reader.readInt16(), reader.readInt32(), reader.readInt16(), reader.readString(), reader.readInt32());
+		return new Song(reader.readString(), reader.readInt32(), reader.readString(), reader.readString(), reader.readString(), reader.readInt16(), reader.readInt32(), reader.readInt16(), reader.readInt32(), reader.readInt8(), reader.readString(), reader.readInt32());
 	}
 
 	public readonly id: number;
@@ -61,13 +63,15 @@ class Song implements SerializableListItem, SongInfo {
 	public readonly track: number;
 	public lengthMS: number;
 	public readonly year: number;
+	public readonly sampleRate: number;
+	public readonly channels: number;
 	public length: string;
 
 	public file?: File;
 	public readonly fileName: string | null;
 	public readonly fileSize: number;
 
-	public constructor(urlOrMetadata: string | Metadata, flags?: MetadataFlags, title?: string | null, artist?: string | null, album?: string | null, track?: number, lengthMS?: number, year?: number, fileName?: string | null, fileSize?: number) {
+	public constructor(urlOrMetadata: string | Metadata, flags?: MetadataFlags, title?: string | null, artist?: string | null, album?: string | null, track?: number, lengthMS?: number, year?: number, sampleRate?: number | null, channels?: number | null, fileName?: string | null, fileSize?: number) {
 		if ((typeof urlOrMetadata) !== "string") {
 			const metadata = urlOrMetadata as Metadata;
 			urlOrMetadata = metadata.url;
@@ -78,6 +82,8 @@ class Song implements SerializableListItem, SongInfo {
 			track = metadata.track;
 			lengthMS = metadata.lengthMS;
 			year = metadata.year;
+			sampleRate = metadata.sampleRate;
+			channels = metadata.channels;
 			if (metadata.file) {
 				if (!urlOrMetadata || urlOrMetadata.startsWith(FileUtils.localURLPrefix))
 					this.file = metadata.file;
@@ -113,6 +119,8 @@ class Song implements SerializableListItem, SongInfo {
 		this.track = ((track && track > 0) ? track : Formatter.noneInt);
 		this.lengthMS = ((lengthMS && lengthMS > 0) ? lengthMS : Formatter.noneInt);
 		this.year = ((year && year > 0) ? year : Formatter.noneInt);
+		this.sampleRate = ((sampleRate && sampleRate > 0) ? sampleRate : Formatter.noneInt);
+		this.channels = ((channels && channels > 0) ? channels : Formatter.noneInt);
 		this.length = Formatter.formatTimeMS(this.lengthMS);
 		this.fileName = fileName || null;
 		this.fileSize = fileSize || 0;
@@ -141,6 +149,8 @@ class Song implements SerializableListItem, SongInfo {
 			.writeInt16(this.track)
 			.writeInt32(this.lengthMS)
 			.writeInt16(this.year)
+			.writeInt32(this.sampleRate)
+			.writeInt8(this.channels)
 			.writeString(this.fileName || null)
 			.writeInt32(this.fileSize || 0);
 	}
@@ -155,6 +165,8 @@ class Song implements SerializableListItem, SongInfo {
 			track: this.track,
 			lengthMS: this.lengthMS,
 			year: this.year,
+			sampleRate: this.sampleRate,
+			channels: this.channels,
 			fileName: this.fileName,
 			fileSize: this.fileSize
 		};

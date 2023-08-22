@@ -37,6 +37,8 @@ interface Metadata {
 	track?: number;
 	lengthMS?: number;
 	year?: number;
+	sampleRate?: number;
+	channels?: number;
 
 	file?: File;
 	fileName?: string;
@@ -465,6 +467,9 @@ class MetadataExtractor {
 
 						if (!avgBytesPerSec)
 							avgBytesPerSec = nAvgBytesPerSec;
+
+						metadata.sampleRate = nSamplesPerSec;
+						metadata.channels = nChannels;
 						break;
 
 					case 0x64617461: // data
@@ -788,7 +793,188 @@ class MetadataExtractor {
 		}
 	}
 
-	private static async extractID3v2Andv1(file: File, f: BufferedReader, tmpPtr: Uint8Array[]): Promise<Metadata | null> {
+	private static async extractSampleRateAndChannels(metadata: Metadata, f: BufferedReader, firstFramePosition: number, aac: boolean): Promise<void> {
+		try {
+			f.seekTo(firstFramePosition);
+
+			const p = f.fillBuffer(4);
+			if (p)
+				await p;
+
+			const hdr = f.readUInt32BE();
+
+			if (aac) {
+				// https://wiki.multimedia.cx/index.php?title=ADTS
+				//
+				// AAAAAAAA AAAABCCD EEFFFFGH HHIJKLMM MMMMMMMM MMMOOOOO OOOOOOPP (QQQQQQQQ QQQQQQQQ)
+				//
+				// Header consists of 7 or 9 bytes (without or with CRC).
+				//
+				// A = Syncword, all bits must be set to 1.
+				// B = MPEG Version, set to 0 for MPEG-4 and 1 for MPEG-2.
+				// C = Layer, always set to 0.
+				// D = Protection absence, set to 1 if there is no CRC and 0 if there is CRC.
+				// E = Profile, the MPEG-4 Audio Object Type minus 1.
+				// F = MPEG-4 Sampling Frequency Index (15 is forbidden).
+				// G = Private bit, guaranteed never to be used by MPEG, set to 0 when encoding, ignore when decoding.
+				// H = MPEG-4 Channel Configuration (in the case of 0, the channel configuration is sent via an inband PCE (Program Config Element)).
+
+				if (!hdr || ((hdr >> 20) & 0xfff) !== 0xfff)
+					return;
+
+				// https://wiki.multimedia.cx/index.php?title=MPEG-4_Audio
+				const frequencyIndex = (hdr >> 10) & 15;
+				if (frequencyIndex >= 13)
+					return;
+
+				switch (frequencyIndex) {
+					case 0:
+						metadata.sampleRate = 96000;
+						break;
+					case 1:
+						metadata.sampleRate = 88200;
+						break;
+					case 2:
+						metadata.sampleRate = 64000;
+						break;
+					case 3:
+						metadata.sampleRate = 48000;
+						break;
+					case 4:
+						metadata.sampleRate = 44100;
+						break;
+					case 5:
+						metadata.sampleRate = 32000;
+						break;
+					case 6:
+						metadata.sampleRate = 24000;
+						break;
+					case 7:
+						metadata.sampleRate = 22050;
+						break;
+					case 8:
+						metadata.sampleRate = 16000;
+						break;
+					case 9:
+						metadata.sampleRate = 12000;
+						break;
+					case 10:
+						metadata.sampleRate = 11025;
+						break;
+					case 11:
+						metadata.sampleRate = 8000;
+						break;
+					default:
+						metadata.sampleRate = 7350;
+						break;
+				}
+
+				const channelIndex = (hdr >> 6) & 7;
+
+				switch (channelIndex) {
+					case 0:
+						metadata.channels = 2; // Assumed :)
+						break;
+					case 7:
+						metadata.channels = 8;
+						break;
+					default:
+						metadata.channels = channelIndex;
+						break;
+				}
+			} else {
+				// http://www.mp3-tech.org/programmer/frame_header.html
+				//
+				// AAAAAAAA AAABBCCD EEEEFFGH IIJJKLMM
+				//
+				// A = Frame sync (all bits must be set)
+				// B = MPEG Audio version ID
+				//     00 - MPEG Version 2.5 (later extension of MPEG 2)
+				//     01 - reserved
+				//     10 - MPEG Version 2 (ISO/IEC 13818-3)
+				//     11 - MPEG Version 1 (ISO/IEC 11172-3)
+				// C = Layer description
+				//     00 - reserved
+				//     01 - Layer III
+				//     10 - Layer II
+				//     11 - Layer I
+				// D = Protection bit
+				// E = Bitrate index
+				// F = Sampling rate frequency index
+				//     bits	MPEG1    MPEG2    MPEG2.5
+				//     00   44100 Hz 22050 Hz 11025 Hz
+				//     01   48000 Hz 24000 Hz 12000 Hz
+				//     10   32000 Hz 16000 Hz 8000 Hz
+				//     11   reserv.  reserv.  reserv.
+				// G = Padding bit
+				// H = Private bit
+				// I = Channel Mode
+				//     00 - Stereo
+				//     01 - Joint stereo (Stereo)
+				//     10 - Dual channel (2 mono channels)
+				//     11 - Single channel (Mono)
+
+				if (!hdr || ((hdr >> 21) & 0x7ff) !== 0x7ff)
+					return;
+
+				const version = (hdr >> 19) & 3;
+				if (version === 1)
+					return;
+
+				const frequencyIndex = (hdr >> 10) & 3;
+				if (frequencyIndex === 3)
+					return;
+
+				switch (version) {
+					case 0: // MPEG Version 2.5 (later extension of MPEG 2)
+						switch (frequencyIndex) {
+							case 0:
+								metadata.sampleRate = 11025;
+								break;
+							case 1:
+								metadata.sampleRate = 12000;
+								break;
+							case 2:
+								metadata.sampleRate = 8000;
+								break;
+						}
+						break;
+					case 2: // MPEG Version 2 (ISO/IEC 13818-3)
+						switch (frequencyIndex) {
+							case 0:
+								metadata.sampleRate = 22050;
+								break;
+							case 1:
+								metadata.sampleRate = 24000;
+								break;
+							case 2:
+								metadata.sampleRate = 16000;
+								break;
+						}
+						break;
+					case 3: // MPEG Version 1 (ISO/IEC 11172-3)
+						switch (frequencyIndex) {
+							case 0:
+								metadata.sampleRate = 44100;
+								break;
+							case 1:
+								metadata.sampleRate = 48000;
+								break;
+							case 2:
+								metadata.sampleRate = 32000;
+								break;
+						}
+						break;
+				}
+
+				metadata.channels = ((((hdr >> 6) & 3) === 3) ? 1 : 2);
+			}
+		} catch (ex: any) {
+			// Just ignore, in favor of everything that has been extracted so far
+		}
+	}
+
+	private static async extractID3v2Andv1(file: File, f: BufferedReader, tmpPtr: Uint8Array[], aac: boolean, fetchSampleRateAndChannels: boolean): Promise<Metadata | null> {
 		const metadata = MetadataExtractor.createBasicMetadata(file);
 
 		if (!metadata.url) {
@@ -812,6 +998,7 @@ class MetadataExtractor {
 		if (hdr !== 0x49443300) { // ID3x
 			hdr |= f.readByte();
 			if (hdr === 0x52494646) { // RIFF
+				fetchSampleRateAndChannels = false;
 				const riffResult = await MetadataExtractor.extractRIFF(metadata, f, tmpPtr[0]);
 				// Codec/file type not supported
 				if (!riffResult)
@@ -822,6 +1009,8 @@ class MetadataExtractor {
 				if (metadata.lengthMS)
 					found |= MetadataExtractor.LENGTH_B;
 			} else {
+				if (fetchSampleRateAndChannels)
+					await MetadataExtractor.extractSampleRateAndChannels(metadata, f, 0, aac);
 				await MetadataExtractor.extractID3v1(metadata, f, 0, tmpPtr[0]);
 				return metadata;
 			}
@@ -842,6 +1031,8 @@ class MetadataExtractor {
 			((sizeBytes1 & 0x7f) << 14) |
 			((sizeBytes0 & 0x7f) << 21)
 		);
+
+		const id3TotalLength = 10 + size;
 
 		if ((hdrRevLo & 0xff) > 2 || hdrRevHi) { // Only rev 3 or greater supported
 			// http://id3.org/id3v2.3.0
@@ -966,6 +1157,9 @@ class MetadataExtractor {
 				size -= (10 + frameSize);
 			}
 
+			if (fetchSampleRateAndChannels)
+				await MetadataExtractor.extractSampleRateAndChannels(metadata, f, id3TotalLength, aac);
+
 			// Try to extract ID3v1 only if there are any blank fields
 			if ((found & MetadataExtractor.ALL_BUT_LENGTH_B) !== MetadataExtractor.ALL_BUT_LENGTH_B)
 				await MetadataExtractor.extractID3v1(metadata, f, found, tmpPtr[0]);
@@ -991,8 +1185,10 @@ class MetadataExtractor {
 		if (!tempBuffer)
 			tempBuffer = [new Uint8Array(256)];
 
+		let aac = false;
+
 		if (!file.name.endsWith(".mp3") &&
-			!file.name.endsWith(".aac") &&
+			!(aac = file.name.endsWith(".aac")) &&
 			!file.name.endsWith(".wav")) {
 
 			if (file.name.endsWith(".flac"))
@@ -1002,7 +1198,7 @@ class MetadataExtractor {
 
 			const lcase = file.name.toLowerCase();
 			if (!lcase.endsWith(".mp3") &&
-				!lcase.endsWith(".aac") &&
+				!(aac = lcase.endsWith(".aac")) &&
 				!lcase.endsWith(".wav")) {
 
 				if (lcase.endsWith(".flac"))
@@ -1026,7 +1222,7 @@ class MetadataExtractor {
 			// stream.cancel() is called inside finally, which could happen before
 			// MetadataExtractor.extractID3v2Andv1() has had a chance to actually read
 			// the metadata...
-			return await MetadataExtractor.extractID3v2Andv1(file, f, tempBuffer);
+			return await MetadataExtractor.extractID3v2Andv1(file, f, tempBuffer, aac, true);
 		} catch (ex) {
 			return null;
 		}

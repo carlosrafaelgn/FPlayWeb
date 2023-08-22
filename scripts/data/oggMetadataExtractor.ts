@@ -76,7 +76,8 @@ class OggBufferedReader extends BufferedFileReader {
 		return pageLength;
 	}
 
-	public async findInitialVorbisCommentPage(): Promise<boolean> {
+	public async findInitialVorbisCommentPage(metadata: Metadata): Promise<boolean> {
+		debugger;
 		for (; ; ) {
 			// Read one Ogg page + enough data to try to figure out its vorbis type
 			const tmpLength = OggBufferedReader.maximumOggPageHeaderLength + OggBufferedReader.vorbisIdentifierLength;
@@ -97,26 +98,84 @@ class OggBufferedReader extends BufferedFileReader {
 				if (super.bufferAvailable < OggBufferedReader.vorbisIdentifierLength)
 					return false;
 
-				if (super.readByte() === 0x03) {
-					const signature1 = super.readUInt32BE();
-					const signature2 = super.readUInt16BE();
-					if (signature1 === 0x766f7262 && // vorb
-						signature2 === 0x6973) { // is
+				const packtype = super.readByte();
+				if (packtype < 0)
+					return false;
 
-						this.currentPageLength = pageLength - 7;
+				let signature1: number | null;
+				let signature2: number | null;
 
-						const p = this.fillBuffer(this.currentPageLength);
-						if (p)
-							await p;
+				// https://xiph.org/vorbis/doc/Vorbis_I_spec.html
+				// A.2. Encapsulation
+				// Ogg encapsulation of a Vorbis packet stream is straightforward.
+				// The first Vorbis packet (the identification header), which uniquely identifies a stream as Vorbis audio,
+				// is placed alone in the first page of the logical Ogg stream. This results in a first Ogg page of exactly
+				// 58 bytes at the very beginning of the logical stream.
+				//
+				// Therefore the first page should be of type 1, and it should contain the sample rate and number of channels.
+				switch (packtype) {
+					case 1:
+						signature1 = super.readUInt32BE();
+						signature2 = super.readUInt16BE();
+						if (signature1 === 0x766f7262 && // vorb
+							signature2 === 0x6973) { // is
 
-						return true;
-					}
+							// https://wiki.xiph.org/OggVorbis
+							// packtype (1 byte)
+							// identifier char[6]: 'vorbis'
+							// version (4 bytes)
+							// channels (1 byte)
+							// rate (4 bytes)
 
-					// Not a comment page, just skip it
-					super.skip(pageLength - 7);
-				} else {
-					// Not a comment page, just skip it
-					super.skip(pageLength - 1);
+							this.currentPageLength = pageLength - 7;
+
+							const p = this.fillBuffer(9);
+							if (p)
+								await p;
+
+							super.skip(4); // version
+
+							const channels = super.readByte();
+							const sampleRate = super.readUInt32LE();
+							if (channels < 0 || !sampleRate)
+								return false;
+
+							metadata.channels = channels;
+							metadata.sampleRate = sampleRate;
+
+							this.currentPageLength = pageLength - 16;
+
+							super.skip(pageLength - 16);
+							continue;
+						}
+
+						// Not a valid page, just skip it
+						super.skip(pageLength - 7);
+						break;
+
+					case 3:
+						signature1 = super.readUInt32BE();
+						signature2 = super.readUInt16BE();
+						if (signature1 === 0x766f7262 && // vorb
+							signature2 === 0x6973) { // is
+
+							this.currentPageLength = pageLength - 7;
+
+							const p = this.fillBuffer(this.currentPageLength);
+							if (p)
+								await p;
+
+							return true;
+						}
+
+						// Not a comment page, just skip it
+						super.skip(pageLength - 7);
+						break;
+
+					default:
+						// Not a comment page, just skip it
+						super.skip(pageLength - 1);
+						break;
 				}
 			} else {
 				// Not a comment page, just skip it
@@ -396,10 +455,10 @@ class OggMetadataExtractor extends VorbisCommentExtractor {
 		try {
 			const f = new OggBufferedReader(file, buffer);
 
-			if (!await f.findInitialVorbisCommentPage())
-				return null;
-
 			const metadata = MetadataExtractor.createBasicMetadata(file);
+
+			if (!await f.findInitialVorbisCommentPage(metadata))
+				return null;
 
 			return (await VorbisCommentExtractor.extractVorbisComment(f.totalLength - f.readPosition, metadata, f, tmpPtr) ? metadata : null);
 		} catch (ex) {
