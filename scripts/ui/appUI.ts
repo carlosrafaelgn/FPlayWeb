@@ -1116,19 +1116,44 @@ class AppUI {
 		}
 	}
 
+	public static showSongInfo(song?: Song | null): void {
+		if (!song)
+			song = (App.player && App.player.currentSong);
+
+		if (!song) {
+			Alert.show(Strings.NoSongPlaying);
+			return;
+		}
+
+		Modal.show({
+			html: `<div class="selectable-text">
+				<p><b>${Strings.Title}</b><br/>${Strings.htmlEncode(song.title)}</p>
+				${(song.artist ? `<p><b>${Strings.Artist}</b><br/>${Strings.htmlEncode(song.artist)}</p>` : '')}
+				${(song.album ? `<p><b>${Strings.Album}</b><br/>${Strings.htmlEncode(song.album)}</p>` : '')}
+				${((song.track > 0) ? `<p><b>${Strings.Track}</b><br/>${song.track}</p>` : '')}
+				${((song.year > 0) ? `<p><b>${Strings.Year}</b><br/>${song.year}</p>` : '')}
+				${((song.lengthMS > 0) ? `<p><b>${Strings.Duration}</b><br/>${song.length}</p>` : '')}
+				${((song.sampleRate > 0) ? `<p><b>${Strings.SampleRate}</b><br/>${song.sampleRate} Hz</p>` : '')}
+				${((song.channels > 0) ? `<p><b>${Strings.Channels}</b><br/>${song.channels}</p>` : '')}
+				${(song.url ? `<p><b>${Strings.Path}</b><br/>${Strings.htmlEncode(song.url.startsWith(FileUtils.localURLPrefix) ? song.url.substring(FileUtils.localURLPrefix.length) : (song.url.startsWith(FileUtils.fileURLPrefix) ? song.url.substring(FileUtils.fileURLPrefix.length) : song.url))}</p>` : '')}
+			</div>`,
+			title: Strings.SongInfo,
+			returnFocusElement: AppUI.playlistControl.element
+		});
+	}
+
 	public static showAbout(): void {
 		Modal.show({
 			html: Strings.AboutHTML + ((App.player && App.player.audioContext) ? `
-				<br/><br/>
-				<small>
+				<p class="large-top-margin"><small>
 					Base latency: ${(App.player.audioContext.baseLatency || 0).toFixed(4)} s
-					<br/>
+				</small></p><p class="small-top-margin"><small>
 					Output latency: ${(isNaN((App.player.audioContext as any).outputLatency) ? "-" : ((App.player.audioContext as any).outputLatency.toFixed(4) + ' s'))}
-					<br/>
+				</small></p><p class="small-top-margin"><small>
 					Output sample rate: ${(isNaN(App.player.audioContext.sampleRate) ? "-" : App.player.audioContext.sampleRate)} Hz
-					<br/>
+				</small></p><p class="small-top-margin"><small>
 					User agent: ${Strings.htmlEncode(navigator.userAgent)}
-				</small>
+				</small></p>
 			` : ''),
 			title: Strings.About + " (v" + (window as any).CACHE_VERSION + ")",
 			returnFocusElement: AppUI.playlistControl.element

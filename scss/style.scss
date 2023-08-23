@@ -13,6 +13,10 @@ html,
 	background-color: $color-background;
 }
 
+html, body, .scrollable, .modal-container {
+	overscroll-behavior: none;
+}
+
 html {
 	margin: 0;
 	padding: 0;
@@ -47,6 +51,19 @@ body {
 	overflow: hidden;
 	-webkit-user-select: none;
 	user-select: none;
+}
+
+.selectable-text {
+	-webkit-user-select: text;
+	user-select: text;
+}
+
+p {
+	margin: 0;
+}
+
+p + p {
+	margin-top: $s2;
 }
 
 .icon {

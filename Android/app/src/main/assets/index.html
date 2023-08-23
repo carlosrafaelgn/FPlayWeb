@@ -53,8 +53,8 @@
 			--playlist-item-size: 56px;
 		}
 	</style>
-	<link rel="stylesheet" type="text/css" href="assets/css/graphicalFilterEditor.css?20230822" />
-	<link rel="stylesheet" type="text/css" href="assets/css/style.css?20230822" />
+	<link rel="stylesheet" type="text/css" href="assets/css/graphicalFilterEditor.css?20230823" />
+	<link rel="stylesheet" type="text/css" href="assets/css/style.css?20230823" />
 </head>
 <body>
 	<div id="ruler" style="position: absolute; z-index: -1; left: 0; top: 0; height: 8rem; visibility: hidden; pointer-events: none;"></div>
@@ -76,6 +76,7 @@
 		<symbol viewBox="0 0 12 12" id="icon-filter"><path d="m 1.5,8.5 v 1 h 3 v -1 z m 0,-6 v 1 h 5 v -1 z m 5,8 v -1 h 4 v -1 h -4 v -1 h -1 v 3 z m -3,-6 v 1 h -2 v 1 h 2 v 1 h 1 v -3 z m 7,2 v -1 h -5 v 1 z m -3,-2 h 1 v -1 h 2 v -1 h -2 v -1 h -1 z" /></symbol>
 		<symbol viewBox="0 0 12 12" id="icon-folder"><path d="M 5,2 H 1 v 8 H 11 V 3 H 6 Z" /></symbol>
 		<symbol viewBox="0 0 12 12" id="icon-folder-open"><path d="M 11,3 H 6 L 5,2 H 1 v 8 H 11 Z M 10,9 H 2 V 4 h 8 z" /></symbol>
+		<symbol viewBox="0 0 12 12" id="icon-info"><path d="m 5.5,8.5 h 1 v -3 h -1 z M 6,4.5 Q 6.2125,4.5 6.35625,4.35625 6.5,4.2125 6.5,4 6.5,3.7875 6.35625,3.64375 6.2125,3.5 6,3.5 5.7875,3.5 5.64375,3.64375 5.5,3.7875 5.5,4 5.5,4.2125 5.64375,4.35625 5.7875,4.5 6,4.5 Z M 6,11 Q 4.9625,11 4.05,10.60625 3.1375,10.2125 2.4625,9.5375 1.7875,8.8625 1.39375,7.95 1,7.0375 1,6 1,4.9625 1.39375,4.05 1.7875,3.1375 2.4625,2.4625 3.1375,1.7875 4.05,1.39375 4.9625,1 6,1 7.0375,1 7.95,1.39375 8.8625,1.7875 9.5375,2.4625 10.2125,3.1375 10.60625,4.05 11,4.9625 11,6 11,7.0375 10.60625,7.95 10.2125,8.8625 9.5375,9.5375 8.8625,10.2125 7.95,10.60625 7.0375,11 6,11 Z" /></symbol>
 		<symbol viewBox="0 0 12 12" id="icon-maximize"><path d="M 0 0 L 0 12 L 12 12 L 12 0 L 0 0 z M 1 1 L 11 1 L 11 11 L 1 11 L 1 1 z" /></symbol>
 		<symbol viewBox="0 0 12 12" id="icon-menu"><path d="m 1.5,9 h 9 V 8 h -9 z m 0,-2.5 h 9 v -1 h -9 z M 1.5,3 v 1 h 9 V 3 Z" /></symbol>
 		<symbol viewBox="0 0 12 12" id="icon-minimize"><path d="M 1,6 H 11 V 7 H 1 Z" /></symbol>
@@ -120,6 +121,8 @@
 					<i class="large icon-add-title green"></i>
 				</button><button id="add-folder-button" type="button" class="btn square orange transparent" onclick="AppUI.addFiles(true)" title="AddFolders">
 					<i class="large icon-add-folder orange"></i>
+				</button><button id="info-button" type="button" class="btn square gray transparent" onclick="AppUI.showSongInfo()" title="ShowInfo">
+					<i class="large icon-info gray"></i>
 				</button><button type="button" class="btn square red transparent" onclick="AppUI.toggleDeleteMode(true)" title="DeleteSongs">
 					<i class="large icon-clear red"></i>
 				</button><button type="button" class="btn square transparent toolbar-right" onclick="AppUI.showAbout()" title="Menu">
@@ -162,7 +165,7 @@
 		//<![CDATA[
 		"use strict";
 
-		var CACHE_VERSION = "20230822";
+		var CACHE_VERSION = "20230823";
 
 		(function () {
 			if (location.href.startsWith("file://")) {

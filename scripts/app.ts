@@ -393,8 +393,9 @@ class App {
 		if (directory) {
 			fileInput.setAttribute("webkitdirectory", "webkitdirectory");
 			fileInput.setAttribute("directory", "directory");
-		} else {
-			fileInput.setAttribute("accept", FileUtils.concatenatedSupportedExtensions);
+		// A few online browsers stopped allowing any kind of file selection after flac or ogg has been added...
+		//} else {
+		//	fileInput.setAttribute("accept", FileUtils.concatenatedSupportedExtensions);
 		}
 
 		fileInput.onchange = function () {

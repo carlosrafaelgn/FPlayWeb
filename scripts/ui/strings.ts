@@ -76,6 +76,8 @@ class Strings {
 	public static Stop = "Stop";
 	public static Next = "Next";
 	public static Seek = "Seek";
+	public static Path = "Path";
+	public static PathLabel = "Path: ";
 	public static Title = "Title";
 	public static TitleLabel = "Title: ";
 	public static CurrentTitleLabel = "Current title: ";
@@ -87,6 +89,17 @@ class Strings {
 	public static CurrentArtistLabel = "Current artist: ";
 	public static Duration = "Duration";
 	public static DurationLabel = "Duration: ";
+	public static Track = "Track";
+	public static TrackLabel = "Track: ";
+	public static Year = "Year";
+	public static YearLabel = "Year: ";
+	public static SampleRate = "Sample rate";
+	public static SampleRateLabel = "Sample rate: ";
+	public static Channels = "Channels";
+	public static ChannelsLabel = "Channels: ";
+	public static ShowInfo = "Show information";
+	public static SongInfo = "Song information";
+	public static NoSongPlaying = "No song playing! 😅";
 	public static Playlist = "Playlist";
 	public static FileList = "File list";
 	public static CurrentPathLabel = "Current path: ";
@@ -110,11 +123,9 @@ class Strings {
 	public static ShowPlaylist = "Show playlist";
 	public static UpdateAvailable = "Update available!";
 	public static PleaseRefresh = "Please, refresh the page to update the app. 😊";
-	public static AboutHTML = `FPlay Web is an experimental audio player. 😊<br />
-<br />
-For more information about the project, its source code and dependencies, check out its repository at <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb">github.com/carlosrafaelgn/FPlayWeb</a>.<br />
-<br />
-This project is licensed under the <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb/blob/master/LICENSE">MIT License</a>.`;
+	public static AboutHTML = `<p>FPlay Web is an experimental audio player. 😊</p>
+<p>For more information about the project, its source code and dependencies, check out its repository at <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb">github.com/carlosrafaelgn/FPlayWeb</a>.</p>
+<p>This project is licensed under the <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb/blob/master/LICENSE">MIT License</a>.</p>`;
 	// Click, press, tap, push, hit.... Which one to use for BOTH touch and non-touch devices!!! Ahhhhhhhhhhh!!!!!!!!!!
 	public static DeleteModeHTML = `Click songs to delete them.`;
 
@@ -168,6 +179,8 @@ This project is licensed under the <a target="_blank" href="https://github.com/c
 			Strings.Stop = "Parar";
 			Strings.Next = "Próxima";
 			Strings.Seek = "Buscar";
+			Strings.Path = "Caminho";
+			Strings.PathLabel = "Caminho: ";
 			Strings.Title = "Título";
 			Strings.TitleLabel = "Título: ";
 			Strings.CurrentTitleLabel = "Título atual: ";
@@ -179,6 +192,17 @@ This project is licensed under the <a target="_blank" href="https://github.com/c
 			Strings.CurrentArtistLabel = "Artista atual: ";
 			Strings.Duration = "Duração";
 			Strings.DurationLabel = "Duração: ";
+			Strings.Track = "Faixa";
+			Strings.TrackLabel = "Faixa: ";
+			Strings.Year = "Ano";
+			Strings.YearLabel = "Ano: ";
+			Strings.SampleRate = "Taxa de amostragem";
+			Strings.SampleRateLabel = "Taxa de amostragem: ";
+			Strings.Channels = "Canais";
+			Strings.ChannelsLabel = "Canais: ";
+			Strings.ShowInfo = "Exibir informações";
+			Strings.SongInfo = "Informações da música";
+			Strings.NoSongPlaying = "Nenhuma música tocando! 😅";
 			Strings.Playlist = "Playlist";
 			Strings.FileList = "Lista de arquivos";
 			Strings.CurrentPathLabel = "Caminho atual: ";
@@ -202,11 +226,9 @@ This project is licensed under the <a target="_blank" href="https://github.com/c
 			Strings.ShowPlaylist = "Exibir playlist";
 			Strings.UpdateAvailable = "Atualização disponível!";
 			Strings.PleaseRefresh = "Por favor, recarregue a página para atualizar a aplicação. 😊";
-			Strings.AboutHTML = `FPlay Web é um player de áudio experimental. 😊<br />
-<br />
-Para mais informações sobre o projeto, seu código-fonte e dependências, confira seu repositório em <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb">github.com/carlosrafaelgn/FPlayWeb</a>.<br />
-<br />
-Este projeto é licenciado sob a <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb/blob/master/LICENSE">MIT License</a>.`;
+			Strings.AboutHTML = `<p>FPlay Web é um player de áudio experimental. 😊</p>
+<p>Para mais informações sobre o projeto, seu código-fonte e dependências, confira seu repositório em <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb">github.com/carlosrafaelgn/FPlayWeb</a>.</p>
+<p>Este projeto é licenciado sob a <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb/blob/master/LICENSE">MIT License</a>.</p>`;
 			Strings.DeleteModeHTML = `Clique as músicas para excluí-las.`;
 		}
 

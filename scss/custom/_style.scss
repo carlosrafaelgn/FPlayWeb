@@ -90,7 +90,7 @@
 	width: 100%;
 	height: calc(100% - var(--button-size));
 	max-width: 2000px;
-	margin: 0;
+	margin: 0 auto;
 	display: flex;
 	flex-direction: row;
 	flex-wrap: nowrap;
@@ -98,7 +98,6 @@
 }
 
 #panel-container.web {
-	margin-top: 0;
 	height: 100%;
 }
 

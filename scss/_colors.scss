@@ -31,6 +31,11 @@ $color-text-on-pink: #000;
 $color-pink-hover: #f5f;
 $color-pink-active: #f6f;
 
+$color-gray: #aaa;
+$color-text-on-gray: #000;
+$color-gray-hover: #bbb;
+$color-gray-active: #ccc;
+
 $color-white: #fff;
 $color-text-on-white: #000;
 $color-white-hover: #fff;
@@ -61,6 +66,7 @@ $color-names: "blue",
 	"orange",
 	"red",
 	"pink",
+	"gray",
 	"white";
 
 $colors: $color-blue,
@@ -69,6 +75,7 @@ $colors: $color-blue,
 	$color-orange,
 	$color-red,
 	$color-pink,
+	$color-gray,
 	$color-white;
 
 $colors-on-text: $color-text-on-blue,
@@ -77,6 +84,7 @@ $colors-on-text: $color-text-on-blue,
 	$color-text-on-orange,
 	$color-text-on-red,
 	$color-text-on-pink,
+	$color-text-on-gray,
 	$color-text-on-white;
 
 $colors-hover: $color-blue-hover,
@@ -85,6 +93,7 @@ $colors-hover: $color-blue-hover,
 	$color-orange-hover,
 	$color-red-hover,
 	$color-pink-hover,
+	$color-gray-hover,
 	$color-white-hover;
 
 $colors-active: $color-blue-active,
@@ -93,4 +102,5 @@ $colors-active: $color-blue-active,
 	$color-orange-active,
 	$color-red-active,
 	$color-pink-active,
+	$color-gray-active,
 	$color-white-active;
