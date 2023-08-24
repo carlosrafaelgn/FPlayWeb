@@ -260,16 +260,17 @@ a:active {
 }
 
 .modal {
+	display: flex;
+	flex-direction: column;
+	flex-wrap: nowrap;
 	margin: var(--button-size) auto;
 	width: 512px;
 	max-width: 90%;
+	max-height: calc(100% - var(--button-size) - var(--button-size));
 	text-align: center;
 }
 
 .modal.full-height {
-	display: flex;
-	flex-direction: column;
-	flex-wrap: nowrap;
 	height: calc(100% - 32px);
 	max-height: calc(100% - 32px);
 	margin: 16px auto 0;
@@ -281,12 +282,11 @@ a:active {
 }
 
 .modal-body {
-	padding-top: $s8 !important;
-	padding-bottom: $s8 !important;
+	padding-top: $s6 !important;
+	padding-bottom: $s6 !important;
+	margin-top: $s2 !important;
+	margin-bottom: $s2 !important;
 	word-break: break-word;
-}
-
-.modal.full-height > .modal-body {
 	flex: 1 1 auto;
 }
 
@@ -297,7 +297,7 @@ a:active {
 }
 
 .alert {
-	position: fixed;
+	position: absolute;
 	z-index: 99998;
 	top: 0;
 	left: 25%;
@@ -956,6 +956,11 @@ input[type="checkbox"]:checked + .icon + .icon {
 		margin-bottom: $s2;
 	}
 
+	.modal-body {
+		margin-top: $s1 !important;
+		margin-bottom: $s1 !important;
+	}
+
 	@import "custom/responsive-max-511";
 }
 
@@ -1018,13 +1023,13 @@ input[type="checkbox"]:checked + .icon + .icon {
 }
 
 .modal-container {
-	position: fixed;
+	position: absolute;
 	z-index: 10000;
 	left: 0;
 	top: 0;
 	right: 0;
 	bottom: 0;
-	overflow: auto;
+	overflow: hidden;
 }
 
 .modal-container.background {

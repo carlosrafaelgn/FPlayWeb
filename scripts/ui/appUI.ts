@@ -1135,7 +1135,7 @@ class AppUI {
 				${((song.lengthMS > 0) ? `<p><b>${Strings.Duration}</b><br/>${song.length}</p>` : '')}
 				${((song.sampleRate > 0) ? `<p><b>${Strings.SampleRate}</b><br/>${song.sampleRate} Hz</p>` : '')}
 				${((song.channels > 0) ? `<p><b>${Strings.Channels}</b><br/>${song.channels}</p>` : '')}
-				${(song.url ? `<p><b>${Strings.Path}</b><br/>${Strings.htmlEncode(song.url.startsWith(FileUtils.localURLPrefix) ? song.url.substring(FileUtils.localURLPrefix.length) : (song.url.startsWith(FileUtils.fileURLPrefix) ? song.url.substring(FileUtils.fileURLPrefix.length) : song.url))}</p>` : '')}
+				${(song.url ? `<p><b>${Strings.Path}</b><br/>${Strings.htmlEncode(song.url.startsWith(FileUtils.localURLPrefix) ? song.url.substring(FileUtils.localURLPrefix.length) : (song.url.startsWith(FileUtils.fileURLPrefix) ? decodeURI(song.url.substring(FileUtils.fileURLPrefix.length)) : song.url))}</p>` : '')}
 			</div>`,
 			title: Strings.SongInfo,
 			returnFocusElement: AppUI.playlistControl.element

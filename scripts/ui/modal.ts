@@ -205,7 +205,7 @@ class Modal {
 
 		const modalBodyElement = document.createElement("div");
 		this.modalBodyElement = modalBodyElement;
-		modalBodyElement.className = "modal-body padding" + (options.leftBody ? " left" : "");
+		modalBodyElement.className = "modal-body scrollable padding" + (options.leftBody ? " left" : "");
 
 		if (!options.html) {
 			options.html = document.createElement("div");
