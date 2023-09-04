@@ -24,7 +24,7 @@ class LibMikMod {
 	// Due to both LibMikMod and AudioWorklet's nature we can
 	// have only one module loaded at a time...
 
-	public static readonly WEB_VERSION = 1;
+	public static readonly WEB_VERSION = 2;
 	public static LIB_VERSION: string | null = null;
 
 	public static readonly ERROR_FILE_READ = 1;
@@ -75,8 +75,8 @@ class LibMikMod {
 			await new Promise<void>(function (resolve, reject) {
 				const audioNode = new AudioWorkletNode(audioContext, "libmikmodprocessor");
 
-				audioNode.port.onmessage = function (e) {
-					const message = e.data as LibMikModResponse;
+				audioNode.port.onmessage = function (ev) {
+					const message = ev.data as LibMikModResponse;
 
 					if (!message || message.messageId !== LibMikModMessageId.INIT || !LibMikMod.initializing || LibMikMod.currentId)
 						return;
@@ -89,8 +89,8 @@ class LibMikMod {
 					}
 				};
 
-				audioNode.onprocessorerror = function (e) {
-					reject(e);
+				audioNode.onprocessorerror = function (ev) {
+					reject(ev);
 				};
 
 				LibMikMod.audioNode = audioNode;
@@ -188,11 +188,11 @@ class LibMikMod {
 				});
 			} else {
 				const reader = new FileReader();
-				reader.onerror = function (e) {
+				reader.onerror = function (ev) {
 					if (id !== LibMikMod.currentId)
 						return;
 
-					LibMikMod.notifyReaderError(e);
+					LibMikMod.notifyReaderError(ev);
 				};
 				reader.onload = function () {
 					if (id !== LibMikMod.currentId)
@@ -289,8 +289,8 @@ class LibMikMod {
 			onended();
 	}
 
-	private static handleResponse(e: MessageEvent): void {
-		const message = e.data as LibMikModResponse;
+	private static handleResponse(ev: MessageEvent): void {
+		const message = ev.data as LibMikModResponse;
 
 		if (!message)
 			return;
