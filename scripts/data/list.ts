@@ -30,7 +30,7 @@ interface SerializableListItem {
 	serializeWeb(): any;
 }
 
-abstract class ListAdapter<T> {
+abstract class ListAdapter<T extends Object> {
 	public readonly list: List<T>;
 
 	public control: ListControl<T> | null;
@@ -94,7 +94,7 @@ abstract class ListAdapter<T> {
 	public abstract prepareElementIndexOrLengthChanged(item: T, index: number, length: number, element: HTMLElement): void;
 }
 
-class List<T> {
+class List<T extends Object> {
 	protected items: T[];
 
 	private _currentIndex: number;

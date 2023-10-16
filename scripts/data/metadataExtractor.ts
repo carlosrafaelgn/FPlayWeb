@@ -25,6 +25,7 @@
 //
 
 enum MetadataFlags {
+	None = 0,
 	Seekable = 1
 };
 

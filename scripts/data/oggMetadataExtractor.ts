@@ -77,7 +77,6 @@ class OggBufferedReader extends BufferedFileReader {
 	}
 
 	public async findInitialVorbisCommentPage(metadata: Metadata): Promise<boolean> {
-		debugger;
 		for (; ; ) {
 			// Read one Ogg page + enough data to try to figure out its vorbis type
 			const tmpLength = OggBufferedReader.maximumOggPageHeaderLength + OggBufferedReader.vorbisIdentifierLength;
@@ -396,7 +395,7 @@ class OggBufferedReader extends BufferedFileReader {
 			if ((typeof p) !== "number")
 				p = await p;
 
-			if (p <= 0)
+			if ((p as number) <= 0)
 				break;
 
 			length -= p as number;
@@ -434,7 +433,7 @@ class OggBufferedReader extends BufferedFileReader {
 			if ((typeof p) !== "number")
 				return this.readAsync(p, buffer, offset, length, totalRead);
 
-			if (p <= 0)
+			if ((p as number) <= 0)
 				break;
 
 			length -= p as number;

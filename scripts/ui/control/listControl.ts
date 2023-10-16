@@ -71,7 +71,7 @@ class ListControlItem<T> {
 	}
 }
 
-class ListControl<T> {
+class ListControl<T extends Object> {
 	public readonly element: HTMLElement;
 
 	private readonly container: HTMLDivElement;
