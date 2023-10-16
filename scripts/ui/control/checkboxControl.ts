@@ -36,7 +36,9 @@ interface CheckboxControlOptions {
 	opaque?: boolean | null;
 	keyboardFocusable?: boolean | null;
 	className?: string | null;
+	checked?: boolean | null;
 	parent?: HTMLElement | null;
+	onclick?: (() => void) | null;
 }
 
 class CheckboxControl {
@@ -89,7 +91,7 @@ class CheckboxControl {
 
 		input.className = className;
 
-		const button = CheckboxControl.prepare(input, options.keyboardFocusable, options.icon, options.iconColor, options.checkbox0Color, options.checkbox1Color);
+		const button = CheckboxControl.prepare(input, options.keyboardFocusable, options.icon, options.iconColor, options.checkbox0Color, options.checkbox1Color, options.checked, options.onclick);
 
 		if (options.keyboardFocusable === false)
 			button.setAttribute("tabindex", "-1");
@@ -100,7 +102,7 @@ class CheckboxControl {
 		return button;
 	}
 
-	private static prepare(input: HTMLInputElement, keyboardFocusable?: boolean | null, icon?: string | null, iconColor?: string | null, checkbox0Color?: string | null, checkbox1Color?: string | null): HTMLLabelElement {
+	private static prepare(input: HTMLInputElement, keyboardFocusable?: boolean | null, icon?: string | null, iconColor?: string | null, checkbox0Color?: string | null, checkbox1Color?: string | null, checked?: boolean | null, onclick?: (() => void) | null): HTMLLabelElement {
 		const button = document.createElement("label"),
 			span = document.createElement("span"),
 			parent = input.parentNode as HTMLElement | null,
@@ -161,8 +163,14 @@ class CheckboxControl {
 
 		button.addEventListener("click", CheckboxControl.buttonClick);
 
-		if (keyboardFocusable)
+		if (keyboardFocusable || keyboardFocusable === undefined)
 			button.addEventListener("keydown", CheckboxControl.buttonKeyDown);
+
+		if (checked)
+			CheckboxControl.setChecked(button, checked);
+
+		if (onclick)
+			input.onclick = onclick;
 
 		return button;
 	}
@@ -173,9 +181,11 @@ class CheckboxControl {
 			(this as any).setAttribute("aria-pressed", input.checked ? "true" : "false");
 	}
 
-	private static buttonKeyDown(e: KeyboardEvent): void {
+	private static buttonKeyDown(e: KeyboardEvent): any {
 		if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.repeat || !(e.key === "Enter" || e.key === " "))
 			return;
+
+		cancelEvent(e);
 
 		(this as any).click();
 		try {
@@ -183,5 +193,7 @@ class CheckboxControl {
 		} catch (ex: any) {
 			// Just ignore...
 		}
+
+		return false;
 	}
 }

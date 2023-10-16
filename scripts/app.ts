@@ -63,6 +63,9 @@ interface AppSettings {
 	monoDownMixerControlEnabled?: boolean;
 	filePickerLastPath?: string | null;
 	filePickerRootLength?: number;
+	rgbMode?: boolean;
+	extraRGBMode?: boolean;
+	neonMode?: boolean;
 }
 
 interface HostInterface extends HostMediaSession {
@@ -104,11 +107,12 @@ class App {
 	public static stereoPannerControl: StereoPannerControl | null;
 	public static monoDownMixerControl: MonoDownMixerControl | null;
 
-	private static saveSettings(savePlaylist: boolean): void {
+	public static saveSettings(savePlaylist: boolean): void {
 		if (!App.player || !App.player.alive)
 			return;
 
-		App.player.setPlaylistData();
+		if (savePlaylist)
+			App.player.setPlaylistData();
 
 		InternalStorage.saveAppSettings({
 			devicePixelRatio: devicePixelRatio,
@@ -118,7 +122,10 @@ class App {
 			stereoPannerControlEnabled: (App.stereoPannerControl ? App.stereoPannerControl.enabled : false),
 			monoDownMixerControlEnabled: (App.monoDownMixerControl ? App.monoDownMixerControl.enabled : false),
 			filePickerLastPath: FilePicker.lastPath,
-			filePickerRootLength: FilePicker.lastRootLength
+			filePickerRootLength: FilePicker.lastRootLength,
+			rgbMode: AppUI.rgbMode,
+			extraRGBMode: AppUI.extraRGBMode,
+			neonMode: AppUI.neonMode
 		});
 
 		if (App.graphicalFilterControl)
@@ -306,6 +313,7 @@ class App {
 
 		if (App.frameless) {
 			App.titleBar = document.createElement("h1");
+			App.titleBar.className = "title-bar";
 			App.titleBar.innerHTML = `
 				<div></div>
 				<i id="icon-main"></i>

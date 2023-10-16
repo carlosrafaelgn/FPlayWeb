@@ -43,6 +43,7 @@ class Strings {
 	public static AppName = "FPlay";
 	public static Menu = "Menu";
 	public static About = "About";
+	public static Options = "Options";
 	public static Edit = "Edit";
 	public static Delete = "Delete";
 	public static DeleteSongs = "Delete songs";
@@ -123,6 +124,9 @@ class Strings {
 	public static ShowPlaylist = "Show playlist";
 	public static UpdateAvailable = "Update available!";
 	public static PleaseRefresh = "Please, refresh the page to update the app. 😊";
+	public static RGBMode = "RGB Mode";
+	public static ExtraRGBMode = "Extra RGB Mode";
+	public static NeonMode = "Neon Mode";
 	public static AboutHTML = `<p>FPlay Web is an experimental audio player. 😊</p>
 <p>For more information about the project, its source code and dependencies, check out its repository at <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb">github.com/carlosrafaelgn/FPlayWeb</a>.</p>
 <p>This project is licensed under the <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb/blob/master/LICENSE">MIT License</a>.</p>`;
@@ -146,6 +150,7 @@ class Strings {
 			Strings.oppositeDecimalSeparator = ".";
 			//Strings.Menu = "Menu";
 			Strings.About = "Sobre";
+			Strings.Options = "Opções";
 			Strings.Edit = "Edit";
 			Strings.Delete = "Excluir";
 			Strings.DeleteSongs = "Excluir músicas";
@@ -226,6 +231,9 @@ class Strings {
 			Strings.ShowPlaylist = "Exibir playlist";
 			Strings.UpdateAvailable = "Atualização disponível!";
 			Strings.PleaseRefresh = "Por favor, recarregue a página para atualizar a aplicação. 😊";
+			Strings.RGBMode = "Modo RGB";
+			Strings.ExtraRGBMode = "Modo RGB Extra";
+			Strings.NeonMode = "Modo Neon";
 			Strings.AboutHTML = `<p>FPlay Web é um player de áudio experimental. 😊</p>
 <p>Para mais informações sobre o projeto, seu código-fonte e dependências, confira seu repositório em <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb">github.com/carlosrafaelgn/FPlayWeb</a>.</p>
 <p>Este projeto é licenciado sob a <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb/blob/master/LICENSE">MIT License</a>.</p>`;

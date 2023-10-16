@@ -152,7 +152,7 @@ class Modal {
 	private readonly options: ModalOptions;
 	private readonly containerElement: HTMLDivElement;
 	private readonly modalElement: HTMLFormElement;
-	private readonly modalHeaderElement: HTMLDivElement;
+	private readonly modalHeaderElement: HTMLHeadingElement;
 	private readonly modalBodyElement: HTMLDivElement;
 	private readonly modalFooterElement: HTMLDivElement;
 	private readonly defaultCancelButton: HTMLButtonElement | null;
@@ -190,7 +190,7 @@ class Modal {
 		modalElement.className = "modal" + (options.fullHeight ? " full-height" : "");
 		modalElement.onsubmit = this.submit.bind(this);
 
-		const modalHeaderElement = document.createElement("div");
+		const modalHeaderElement = document.createElement("h1");
 		this.modalHeaderElement = modalHeaderElement;
 		(options.titleHeader || modalHeaderElement).setAttribute("id", headerId);
 		modalHeaderElement.className = "modal-header padding" + (options.rightHeader ? " right" : "");
@@ -205,7 +205,7 @@ class Modal {
 
 		const modalBodyElement = document.createElement("div");
 		this.modalBodyElement = modalBodyElement;
-		modalBodyElement.className = "modal-body scrollable padding" + (options.leftBody ? " left" : "");
+		modalBodyElement.className = "modal-body scrollable padding top-margin" + (options.leftBody ? " left" : "");
 
 		if (!options.html) {
 			options.html = document.createElement("div");
@@ -240,7 +240,7 @@ class Modal {
 
 		const modalFooterElement = document.createElement("div");
 		this.modalFooterElement = modalFooterElement;
-		modalFooterElement.className = "modal-footer padding left-margin right-margin";
+		modalFooterElement.className = "modal-footer padding top-border left-margin right-margin";
 
 		this.defaultCancelButton = null;
 		this.defaultSubmitButton = null;

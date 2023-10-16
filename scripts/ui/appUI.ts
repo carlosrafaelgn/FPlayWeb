@@ -99,6 +99,9 @@ class AppUI {
 	private static _buttonSizePX = 1;
 	private static _contentsSizePX = 1;
 	private static _playlistItemSizePX = 1;
+	private static _rgbMode = false;
+	private static _extraRGBMode = false;
+	private static _neonMode = false;
 
 	private static directoryCancelled = false;
 
@@ -495,6 +498,10 @@ class AppUI {
 
 		window.addEventListener("resize", AppUI.adjustWindow, { passive: true });
 
+		AppUI.rgbMode = appSettings.rgbMode || false;
+		AppUI.extraRGBMode = appSettings.extraRGBMode || false;
+		AppUI.neonMode = appSettings.neonMode || false;
+
 		AppUI.adjustWindow();
 	}
 
@@ -596,6 +603,60 @@ class AppUI {
 		return AppUI.playlistControl.element;
 	}
 
+	public static get rgbMode(): boolean {
+		return AppUI._rgbMode;
+	}
+
+	public static set rgbMode(rgbMode: boolean) {
+		if (AppUI._rgbMode === rgbMode)
+			return;
+
+		AppUI._rgbMode = rgbMode;
+
+		if (!rgbMode) {
+			AppUI._extraRGBMode = false;
+			document.body.classList.remove("rgb");
+			document.body.classList.remove("rgb-extra");
+		} else {
+			document.body.classList.add("rgb");
+		}
+	}
+
+	public static get extraRGBMode(): boolean {
+		return AppUI._extraRGBMode;
+	}
+
+	public static set extraRGBMode(extraRGBMode: boolean) {
+		if (AppUI._extraRGBMode === extraRGBMode)
+			return;
+
+		AppUI._extraRGBMode = extraRGBMode;
+
+		if (!extraRGBMode) {
+			document.body.classList.remove("rgb-extra");
+		} else {
+			AppUI._rgbMode = true;
+			document.body.classList.add("rgb");
+			document.body.classList.add("rgb-extra");
+		}
+	}
+
+	public static get neonMode(): boolean {
+		return AppUI._neonMode;
+	}
+
+	public static set neonMode(neonMode: boolean) {
+		if (AppUI._neonMode === neonMode)
+			return;
+
+		AppUI._neonMode = neonMode;
+
+		if (!neonMode)
+			document.body.classList.remove("neon");
+		else
+			document.body.classList.add("neon");
+	}
+
 	public static addZoomHandler(zoomHandler: AppUIZoomHandler | null): void {
 		if (zoomHandler)
 			AppUI.zoomHandlers.push(zoomHandler);
@@ -627,6 +688,21 @@ class AppUI {
 
 	public static pxToREM(px: number): number {
 		return px / AppUI._1remInPX;
+	}
+
+	public static appendHTML(parent: HTMLElement, html: string): void {
+		if (!parent || !html)
+			return;
+
+		const temp = document.createElement("div");
+		temp.innerHTML = html;
+
+		let child: Node | null;
+
+		while ((child = temp.firstChild)) {
+			temp.removeChild(child);
+			parent.appendChild(child);
+		}
 	}
 
 	private static playerSongChange(song: Song | null, currentTimeS: number): void {
@@ -1143,20 +1219,60 @@ class AppUI {
 	}
 
 	public static showAbout(): void {
+		const body = document.createElement("div");
+
+		const rgbModeCheckbox = CheckboxControl.create({
+			stringKey: Strings.RGBMode,
+			checked: AppUI.rgbMode,
+			parent: body,
+			onclick: function () {
+				AppUI.rgbMode = CheckboxControl.isChecked(rgbModeCheckbox);
+				CheckboxControl.setChecked(extraRGBModeCheckbox, AppUI.extraRGBMode);
+			}
+		});
+
+		const extraRGBModeCheckbox = CheckboxControl.create({
+			stringKey: Strings.ExtraRGBMode,
+			checked: AppUI.extraRGBMode,
+			parent: body,
+			onclick: function () {
+				AppUI.extraRGBMode = CheckboxControl.isChecked(extraRGBModeCheckbox);
+				CheckboxControl.setChecked(rgbModeCheckbox, AppUI.rgbMode);
+			}
+		});
+
+		const neonModeCheckbox = CheckboxControl.create({
+			stringKey: Strings.NeonMode,
+			checked: AppUI.neonMode,
+			parent: body,
+			onclick: function () {
+				AppUI.neonMode = CheckboxControl.isChecked(neonModeCheckbox);
+			}
+		});
+
+		AppUI.appendHTML(body, `
+			<h1 class="modal-header padding extra-large-top-margin extra-large-bottom-margin n-left-margin n-right-margin">
+				${(Strings.About + " (v" + (window as any).CACHE_VERSION + ")")}
+			</h1>
+			${Strings.AboutHTML} ${((App.player && App.player.audioContext) ? `
+			<p class="large-top-margin"><small>
+				Base latency: ${(App.player.audioContext.baseLatency || 0).toFixed(4)} s
+			</small></p><p class="small-top-margin"><small>
+				Output latency: ${(isNaN((App.player.audioContext as any).outputLatency) ? "-" : ((App.player.audioContext as any).outputLatency.toFixed(4) + ' s'))}
+			</small></p><p class="small-top-margin"><small>
+				Output sample rate: ${(isNaN(App.player.audioContext.sampleRate) ? "-" : App.player.audioContext.sampleRate)} Hz
+			</small></p><p class="small-top-margin"><small>
+				User agent: ${Strings.htmlEncode(navigator.userAgent)}
+			</small></p>
+		` : '')}`);
+
 		Modal.show({
-			html: Strings.AboutHTML + ((App.player && App.player.audioContext) ? `
-				<p class="large-top-margin"><small>
-					Base latency: ${(App.player.audioContext.baseLatency || 0).toFixed(4)} s
-				</small></p><p class="small-top-margin"><small>
-					Output latency: ${(isNaN((App.player.audioContext as any).outputLatency) ? "-" : ((App.player.audioContext as any).outputLatency.toFixed(4) + ' s'))}
-				</small></p><p class="small-top-margin"><small>
-					Output sample rate: ${(isNaN(App.player.audioContext.sampleRate) ? "-" : App.player.audioContext.sampleRate)} Hz
-				</small></p><p class="small-top-margin"><small>
-					User agent: ${Strings.htmlEncode(navigator.userAgent)}
-				</small></p>
-			` : ''),
-			title: Strings.About + " (v" + (window as any).CACHE_VERSION + ")",
-			returnFocusElement: AppUI.playlistControl.element
+			html: body,
+			title: Strings.Options,
+			returnFocusElement: AppUI.playlistControl.element,
+			onhidden: function () {
+				App.saveSettings(false);
+			}
 		});
 	}
 }

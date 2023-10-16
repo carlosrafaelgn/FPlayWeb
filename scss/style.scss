@@ -28,21 +28,12 @@ html {
 	-webkit-tap-highlight-color: rgba(0,0,0,0);
 }
 
-body, .modal, .alert, .btn, input, textarea, select, h1, h2, h3, h4, h5, h6 {
+body {
 	font-weight: 400;
 	font-family: 'Open Sans', sans-serif;
-	line-height: $contents-size;
-}
-
-body, .modal, .alert, input, textarea, select, h1, h2, h3, h4, h5, h6 {
-	color: $color-text;
-}
-
-body, .modal, .alert, .btn, input, textarea, select, h1, h2, h3, h4, h5, h6 {
 	font-size: $font-size;
-}
-
-body {
+	line-height: $contents-size;
+	color: $color-text;
 	margin: 0;
 	padding: 0 $s2;
 	min-height: 100%;
@@ -53,12 +44,21 @@ body {
 	user-select: none;
 }
 
+.modal, .alert, .btn, input, textarea, select, h1, h2, h3, h4, h5, h6 {
+	color: inherit;
+	font-weight: 400;
+	font-family: inherit;
+	font-size: inherit;
+	line-height: inherit;
+	text-shadow: inherit;
+}
+
 .selectable-text {
 	-webkit-user-select: text;
 	user-select: text;
 }
 
-p {
+p, h1, h2, h3, h4, h5, h6 {
 	margin: 0;
 }
 
@@ -100,7 +100,7 @@ p + p {
 	padding-left: 0;
 }
 
-h1 {
+.title-bar {
 	position: relative;
 	margin: 0 -#{$s2};
 	padding: var(--button-padding);
@@ -108,14 +108,14 @@ h1 {
 	text-align: center;
 }
 
-h1,
+.title-bar,
 .modal-header,
 .slider-control-ruler,
 .list-item {
 	background-color: $color-highlight;
 }
 
-h1 > div {
+.title-bar > div {
 	position: absolute;
 	z-index: -1;
 	-webkit-app-region: drag;
@@ -125,13 +125,13 @@ h1 > div {
 	bottom: 0;
 }
 
-h1.maximized > div {
+.title-bar.maximized > div {
 	left: 0;
 	top: 0;
 	right: 0;
 }
 
-h1 > span {
+.title-bar > span {
 	display: block;
 	position: absolute;
 	right: 0;
@@ -142,7 +142,7 @@ h1 > span {
 	-webkit-app-region: no-drag;
 }
 
-h1 > span > span {
+.title-bar > span > span {
 	display: inline-block;
 	width: var(--button-size);
 	height: var(--button-size);
@@ -151,20 +151,20 @@ h1 > span > span {
 	cursor: pointer;
 }
 
-h1 > span > span:hover {
+.title-bar > span > span:hover {
 	background-color: $color-highlight-hover;
 }
 
-h1 > span > span:active,
+.title-bar > span > span:active,
 .list-item:active {
 	background-color: $color-highlight-active;
 }
 
-h1 > span > span.close:hover {
+.title-bar > span > span.close:hover {
 	background-color: $color-close-hover;
 }
 
-h1 > span > span.close:active {
+.title-bar > span > span.close:active {
 	background-color: $color-close-active;
 }
 
@@ -284,8 +284,6 @@ a:active {
 .modal-body {
 	padding-top: $s6 !important;
 	padding-bottom: $s6 !important;
-	margin-top: $s2 !important;
-	margin-bottom: $s2 !important;
 	word-break: break-word;
 	flex: 1 1 auto;
 }
@@ -293,7 +291,6 @@ a:active {
 .modal-footer {
 	padding-left: 0 !important;
 	padding-right: 0 !important;
-    border-top: var(--thin-border) solid $color-border;
 }
 
 .alert {
@@ -594,11 +591,11 @@ input[type="checkbox"]:checked + .icon + .icon {
 }
 
 .slider-control-ruler:not(.vertical) {
-	right: -$slider-internal-unit;
+	right: -#{$slider-internal-unit};
 }
 
 .slider-control-ruler.vertical {
-	top: -$slider-internal-unit;
+	top: -#{$slider-internal-unit};
 }
 
 .slider-control-thumb {
@@ -762,18 +759,18 @@ input[type="checkbox"]:checked + .icon + .icon {
 
 @import "custom/style";
 
-.border-top {
+.top-border {
 	margin-top: $s2;
 	padding-top: $s2;
 	border-top: var(--thin-border) solid $color-border;
 }
 
-.toolbar.border-top > .toolbar-left,
-.toolbar.border-top > .toolbar-right {
+.toolbar.top-border > .toolbar-left,
+.toolbar.top-border > .toolbar-right {
 	top: $s2;
 }
 
-.border-bottom {
+.bottom-border {
 	margin-bottom: $s2;
 	padding-bottom: $s2;
 	border-bottom: var(--thin-border) solid $color-border;
@@ -823,8 +820,16 @@ input[type="checkbox"]:checked + .icon + .icon {
 	margin-left: $s2;
 }
 
+.n-left-margin {
+	margin-left: -#{$s2};
+}
+
 .large-left-margin {
 	margin-left: $s4;
+}
+
+.extra-large-left-margin {
+	margin-left: $s6;
 }
 
 .button-left-margin {
@@ -839,8 +844,16 @@ input[type="checkbox"]:checked + .icon + .icon {
 	margin-top: $s2;
 }
 
+.n-top-margin {
+	margin-top: -#{$s2};
+}
+
 .large-top-margin {
 	margin-top: $s4;
+}
+
+.extra-large-top-margin {
+	margin-top: $s6;
 }
 
 .button-top-margin {
@@ -856,8 +869,16 @@ input[type="checkbox"]:checked + .icon + .icon {
 	margin-right: $s2;
 }
 
+.n-right-margin {
+	margin-right: -#{$s2};
+}
+
 .large-right-margin {
 	margin-right: $s4;
+}
+
+.extra-large-right-margin {
+	margin-right: $s6;
 }
 
 .button-right-margin {
@@ -872,12 +893,36 @@ input[type="checkbox"]:checked + .icon + .icon {
 	margin-bottom: $s2;
 }
 
+.n-bottom-margin {
+	margin-bottom: -#{$s2};
+}
+
 .large-bottom-margin {
 	margin-bottom: $s4;
 }
 
+.extra-large-bottom-margin {
+	margin-bottom: $s6;
+}
+
 .button-bottom-margin {
 	margin-bottom: var(--button-padding);
+}
+
+body.neon {
+	text-shadow: 0 0 0.5rem;
+}
+
+body.rgb .top-border, body.rgb .bottom-border, body.rgb .modal-header {
+	border-image: url(../images/rgb.gif) 1;
+}
+
+body.rgb-extra .top-border {
+	border-top-width: var(--thick-border);
+}
+
+body.rgb-extra .bottom-border, body.rgb-extra .modal-header {
+	border-bottom-width: var(--thick-border);
 }
 
 @media (max-width: 511px) {
@@ -909,23 +954,27 @@ input[type="checkbox"]:checked + .icon + .icon {
 		padding-right: $s2;
 	}
 
-	.border-top {
+	.top-border {
 		margin-top: $s1;
 		padding-top: $s1;
 	}
 
-	.toolbar.border-top > .toolbar-left,
-	.toolbar.border-top > .toolbar-right {
+	.toolbar.top-border > .toolbar-left,
+	.toolbar.top-border > .toolbar-right {
 		top: $s1;
 	}
 
-	.border-bottom {
+	.bottom-border {
 		margin-bottom: $s1;
 		padding-bottom: $s1;
 	}
 
 	.left-margin {
 		margin-left: $s1;
+	}
+
+	.n-left-margin {
+		margin-left: -#{$s1};
 	}
 
 	.large-left-margin {
@@ -936,12 +985,20 @@ input[type="checkbox"]:checked + .icon + .icon {
 		margin-top: $s1;
 	}
 
+	.n-top-margin {
+		margin-top: -#{$s1};
+	}
+
 	.large-top-margin {
 		margin-top: $s2;
 	}
 
 	.right-margin {
 		margin-right: $s1;
+	}
+
+	.n-right-margin {
+		margin-right: -#{$s1};
 	}
 
 	.large-right-margin {
@@ -952,13 +1009,12 @@ input[type="checkbox"]:checked + .icon + .icon {
 		margin-bottom: $s1;
 	}
 
-	.large-bottom-margin {
-		margin-bottom: $s2;
+	.n-bottom-margin {
+		margin-bottom: -#{$s1};
 	}
 
-	.modal-body {
-		margin-top: $s1 !important;
-		margin-bottom: $s1 !important;
+	.large-bottom-margin {
+		margin-bottom: $s2;
 	}
 
 	@import "custom/responsive-max-511";
@@ -1012,7 +1068,7 @@ input[type="checkbox"]:checked + .icon + .icon {
 }
 
 .slide {
-	transform: translate(0, -$s5);
+	transform: translate(0, -#{$s5});
 	opacity: 0;
 	transition: transform ease-in-out 0.3s, opacity ease-in-out 0.3s;
 }

@@ -213,7 +213,7 @@ class FilePicker {
 		});
 
 		const pathDiv = document.createElement("div");
-		pathDiv.className = "file-picker-path padding border-bottom left";
+		pathDiv.className = "file-picker-path padding bottom-border left";
 		pathDiv.setAttribute("aria-atomic", "true");
 		pathDiv.setAttribute("aria-live", "assertive");
 		pathDiv.setAttribute("aria-relevant", "all");
@@ -232,7 +232,7 @@ class FilePicker {
 		pathDiv.appendChild(pathElement);
 
 		const listElement = document.createElement("div");
-		listElement.className = "file-picker-list fade bottom-margin";
+		listElement.className = "file-picker-list fade";
 
 		this.callback = callback || null;
 		this.resolve = resolve;
