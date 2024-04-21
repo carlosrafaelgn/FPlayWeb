@@ -13,7 +13,7 @@ Both the graphic filter editor and the visualizations used by the player come fr
 
 Support for module files (such as mod, s3m, it, xm and so on) is based on my port of [libmikmod](https://github.com/sezero/mikmod) to WebAssembly, licensed under the [GNU Lesser General Public License v2.1](https://github.com/sezero/mikmod/blob/master/libmikmod/COPYING.LESSER). (The integration is still under development... 😅)
 
-The font used by the UI is [Open Sans](https://github.com/google/fonts/blob/main/apache/opensans), licensed under the [Apache License](https://github.com/google/fonts/blob/main/apache/opensans/LICENSE.txt).
+The secondary font used by the UI is [Open Sans](https://github.com/google/fonts/blob/main/apache/opensans), licensed under the [Apache License](https://github.com/google/fonts/blob/main/apache/opensans/LICENSE.txt).
 
 Some of the icons used by the UI came from the project [Material design icons](https://github.com/google/material-design-icons), licensed under the [Apache License](https://github.com/google/material-design-icons/blob/master/LICENSE).
 
