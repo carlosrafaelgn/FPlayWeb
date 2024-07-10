@@ -46,6 +46,7 @@ public final class IntentReceiver extends BroadcastReceiver {
 		filter.addAction(WebViewHost.ACTION_PLAY);
 		filter.addAction(WebViewHost.ACTION_PLAY_PAUSE);
 		filter.addAction(WebViewHost.ACTION_NEXT);
+		filter.addAction(WebViewHost.ACTION_EXIT);
 
 		webViewHost.application.registerReceiver(this, filter);
 	}
@@ -81,6 +82,9 @@ public final class IntentReceiver extends BroadcastReceiver {
 			break;
 		case WebViewHost.ACTION_NEXT:
 			webView.evaluateJavascript("App.player && App.player.next()", null);
+			break;
+		case WebViewHost.ACTION_EXIT:
+			webView.evaluateJavascript("App.player && App.exit()", null);
 			break;
 		}
 	}

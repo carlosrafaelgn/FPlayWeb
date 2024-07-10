@@ -1206,12 +1206,16 @@ class AppUI {
 				<p><b>${Strings.Title}</b><br/>${Strings.htmlEncode(song.title)}</p>
 				${(song.artist ? `<p><b>${Strings.Artist}</b><br/>${Strings.htmlEncode(song.artist)}</p>` : '')}
 				${(song.album ? `<p><b>${Strings.Album}</b><br/>${Strings.htmlEncode(song.album)}</p>` : '')}
-				${((song.track > 0) ? `<p><b>${Strings.Track}</b><br/>${song.track}</p>` : '')}
-				${((song.year > 0) ? `<p><b>${Strings.Year}</b><br/>${song.year}</p>` : '')}
-				${((song.lengthMS > 0) ? `<p><b>${Strings.Duration}</b><br/>${song.length}</p>` : '')}
-				${((song.sampleRate > 0) ? `<p><b>${Strings.SampleRate}</b><br/>${song.sampleRate} Hz</p>` : '')}
-				${((song.channels > 0) ? `<p><b>${Strings.Channels}</b><br/>${song.channels}</p>` : '')}
-				${(song.url ? `<p><b>${Strings.Path}</b><br/>${Strings.htmlEncode(song.url.startsWith(FileUtils.localURLPrefix) ? song.url.substring(FileUtils.localURLPrefix.length) : (song.url.startsWith(FileUtils.fileURLPrefix) ? decodeURI(song.url.substring(FileUtils.fileURLPrefix.length)) : song.url))}</p>` : '')}
+				<div class="top-margin" style="display: flex; flex-direction: row; justify-content: center;">
+					<p class="no-top-margin"><b>${Strings.Track}</b><br/>${((song.track > 0) ? song.track : Formatter.none)}</p>
+					<p class="no-top-margin large-left-margin"><b>${Strings.Year}</b><br/>${((song.year > 0) ? song.year : Formatter.none)}</p>
+					<p class="no-top-margin large-left-margin"><b>${Strings.Duration}</b><br/>${((song.lengthMS > 0) ? song.length : Formatter.none)}</p>
+				</div>
+				<div class="top-margin" style="display: flex; flex-direction: row; justify-content: center;">
+					<p class="no-top-margin"><b>${Strings.SampleRate}</b><br/>${((song.sampleRate > 0) ? (song.sampleRate + " Hz") : Formatter.none)}</p>
+					<p class="no-top-margin large-left-margin"><b>${Strings.Channels}</b><br/>${((song.channels > 0) ? song.channels : Formatter.none)}</p>
+				</div>
+				${(song.url ? `<p class="top-margin"><b>${Strings.Path}</b><br/>${Strings.htmlEncode(song.url.startsWith(FileUtils.localURLPrefix) ? song.url.substring(FileUtils.localURLPrefix.length) : (song.url.startsWith(FileUtils.fileURLPrefix) ? decodeURI(song.url.substring(FileUtils.fileURLPrefix.length)) : song.url))}</p>` : '')}
 			</div>`,
 			title: Strings.SongInfo,
 			returnFocusElement: AppUI.playlistControl.element

@@ -77,6 +77,7 @@ interface HostInterface extends HostMediaSession {
 	setFileURLs(fileURLs: string[]): void;
 	enumerateFiles(enumerationVersion: number, path: string | null): void;
 	cancelFileEnumeration(enumerationVersion: number): void;
+	exit(): void;
 }
 
 class App {
@@ -101,6 +102,7 @@ class App {
 	private static _loading = true;
 	private static isMinimized = false;
 	private static isMaximized = false;
+	private static exitOnDestroy = false;
 
 	public static player: Player | null;
 	public static graphicalFilterControl: GraphicalFilterControl | null;
@@ -189,11 +191,15 @@ class App {
 		AppUI.destroy();
 
 		const ipcRenderer = App.ipcRenderer;
+		const hostInterface = (App.exitOnDestroy ? App.hostInterface : null);
 
 		zeroObject(App);
 
 		if (ipcRenderer)
 			ipcRenderer.invoke("mainWindowFinalClose");
+
+		if (hostInterface)
+			hostInterface.exit();
 	}
 
 	public static updateLoadingIcon(): void {
@@ -441,6 +447,12 @@ class App {
 			resolve(null);
 
 		return promise;
+	}
+
+	public static exit(): void {
+		// Called only by the host interface
+		App.exitOnDestroy = true;
+		App.mainWindowClosing();
 	}
 }
 

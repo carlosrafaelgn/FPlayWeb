@@ -35,6 +35,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Icon;
+import android.media.AudioManager;
 import android.media.MediaMetadata;
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
@@ -76,8 +77,8 @@ public final class HostMediaSession {
 	private MediaMetadata.Builder mediaSessionMetadataBuilder;
 	private PlaybackState.Builder mediaSessionPlaybackStateBuilder;
 	private NotificationManager notificationManager;
-	private PendingIntent intentPrev, intentPlayPause, intentNext;
-	private Notification.Action actionPrev, actionPause, actionPlay, actionNext;
+	private PendingIntent intentPrev, intentPlayPause, intentNext, intentExit;
+	private Notification.Action actionPrev, actionPause, actionPlay, actionNext, actionExit;
 
 	public HostMediaSession(WebViewHost webViewHost) {
 		this.webViewHost = webViewHost;
@@ -106,6 +107,10 @@ public final class HostMediaSession {
 				PlaybackState.ACTION_SKIP_TO_NEXT |
 				PlaybackState.ACTION_SEEK_TO
 			);
+
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+				mediaSessionPlaybackStateBuilder.addCustomAction(WebViewHost.ACTION_EXIT, webViewHost.application.getText(R.string.exit).toString(), R.drawable.ic_exit);
+
 			mediaSession = new MediaSession(webViewHost.application, "FPlayWeb");
 			mediaSession.setCallback(new MediaSession.Callback() {
 				@Override
@@ -173,6 +178,19 @@ public final class HostMediaSession {
 				public void onSeekTo(long pos) {
 					seekTo(pos);
 				}
+
+				@Override
+				public void onCustomAction(@NonNull String action, Bundle extras) {
+					// https://developer.android.com/media/implement/surfaces/mobile#responding_to_playbackstate_actions
+					if (action.equals(WebViewHost.ACTION_EXIT)) {
+						final WebView webView = webViewHost.webView;
+
+						if (webView == null)
+							return;
+
+						webView.evaluateJavascript("App.player && App.exit()", null);
+					}
+				}
 			});
 			final Intent intent = new Intent(webViewHost.application, MainActivity.class);
 			intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -202,10 +220,15 @@ public final class HostMediaSession {
 			intent.setAction(WebViewHost.ACTION_NEXT);
 			intentNext = PendingIntent.getBroadcast(webViewHost.application, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
 
+			intent = new Intent(webViewHost.application, IntentReceiver.class);
+			intent.setAction(WebViewHost.ACTION_EXIT);
+			intentExit = PendingIntent.getBroadcast(webViewHost.application, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+
 			actionPrev = new Notification.Action.Builder(Icon.createWithResource(webViewHost.application, R.drawable.ic_prev), webViewHost.application.getText(R.string.previous), intentPrev).build();
 			actionPause = new Notification.Action.Builder(Icon.createWithResource(webViewHost.application, R.drawable.ic_pause), webViewHost.application.getText(R.string.pause), intentPlayPause).build();
 			actionPlay = new Notification.Action.Builder(Icon.createWithResource(webViewHost.application, R.drawable.ic_play), webViewHost.application.getText(R.string.play), intentPlayPause).build();
 			actionNext = new Notification.Action.Builder(Icon.createWithResource(webViewHost.application, R.drawable.ic_next), webViewHost.application.getText(R.string.next), intentNext).build();
+			actionExit = new Notification.Action.Builder(Icon.createWithResource(webViewHost.application, R.drawable.ic_exit), webViewHost.application.getText(R.string.exit), intentExit).build();
 		}
 
 		notificationManager = (NotificationManager)webViewHost.application.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -250,7 +273,8 @@ public final class HostMediaSession {
 			builder
 				.addAction(actionPrev)
 				.addAction(paused ? actionPlay : actionPause)
-				.addAction(actionNext);
+				.addAction(actionNext)
+				.addAction(actionExit);
 
 			mediaStyle.setShowActionsInCompactView(0, 1, 2);
 		}
@@ -284,11 +308,13 @@ public final class HostMediaSession {
 		intentPrev = null;
 		intentPlayPause = null;
 		intentNext = null;
+		intentExit = null;
 
 		actionPrev = null;
 		actionPause = null;
 		actionPlay = null;
 		actionNext = null;
+		actionExit = null;
 	}
 
 	private void resetHeadsetHook() {

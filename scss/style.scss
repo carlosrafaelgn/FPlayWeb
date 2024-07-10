@@ -530,6 +530,7 @@ input[type="checkbox"]:checked + .icon + .icon {
 	display: inline-block;
 	position: relative;
 	flex: 1 1 auto;
+	z-index: 0;
 }
 
 .slider-control-container:not(.vertical) {

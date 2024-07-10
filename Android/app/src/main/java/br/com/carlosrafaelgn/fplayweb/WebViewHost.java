@@ -86,6 +86,7 @@ public class WebViewHost {
 	public static final String ACTION_PLAY = "br.com.carlosrafaelgn.fplayweb.PLAY";
 	public static final String ACTION_PLAY_PAUSE = "br.com.carlosrafaelgn.fplayweb.PLAY_PAUSE";
 	public static final String ACTION_NEXT = "br.com.carlosrafaelgn.fplayweb.NEXT";
+	public static final String ACTION_EXIT = "br.com.carlosrafaelgn.fplayweb.EXIT";
 
 	public static final int BACK_KEY_DESTROY = 0;
 	public static final int BACK_KEY_PREVENT = 1;
@@ -378,6 +379,20 @@ public class WebViewHost {
 
 				intentReceiver.destroy();
 			}
+		}
+
+		@JavascriptInterface
+		public void exit() {
+			handler.post(() -> {
+				synchronized (lock) {
+					if (!alive)
+						return;
+
+					paused = true;
+
+					onExit();
+				}
+			});
 		}
 	}
 
@@ -874,5 +889,34 @@ public class WebViewHost {
 
 	public void onRequestPermissionsResult(int[] grantResults) {
 		postCallbackPermissionResult((grantResults == null || grantResults[0] != PackageManager.PERMISSION_GRANTED) ? 0 : 1);
+	}
+
+	private void onExit() {
+		final WebView webView = this.webView;
+
+		if (webView != null) {
+			this.webView = null;
+			webView.onPause();
+			webView.pauseTimers();
+		}
+
+		if (floatView != null) {
+			floatView.removeAllViews();
+
+			final WindowManager windowManager = (WindowManager)application.getSystemService(Context.WINDOW_SERVICE);
+			windowManager.removeView(floatView);
+
+			floatView = null;
+		}
+
+		final Activity activity = this.activity;
+
+		if (application != null)
+			((MainApplication)application).webViewHost = null;
+
+		onDestroy();
+
+		if (activity != null)
+			activity.finish();
 	}
 }
