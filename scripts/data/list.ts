@@ -188,6 +188,16 @@ class List<T extends Object> {
 		return this._currentItem;
 	}
 
+	public get nextItem(): T | null {
+		let nextIndex = this._currentIndex + 1;
+		if (nextIndex >= this.items.length)
+			nextIndex = this.items.length - 1;
+		if (nextIndex < 0)
+			nextIndex = 0;
+
+		return ((nextIndex < this.items.length) ? this.items[nextIndex] : null);
+	}
+
 	public item(index: number): T {
 		return this.items[index];
 	}
