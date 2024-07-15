@@ -764,7 +764,7 @@ class AppUI {
 	}
 
 	private static playerCurrentTimeSChange(currentTimeS: number): void {
-		if (!AppUI.seekSlider || AppUI.seekSlider.dragging)
+		if (!AppUI.seekSlider || AppUI.seekSlider.dragging || !App.player)
 			return;
 
 		if (currentTimeS < 0)
@@ -774,7 +774,14 @@ class AppUI {
 		if (AppUI.currentTimeS !== s) {
 			AppUI.currentTimeS = s;
 
-			AppUI.seekSlider.manuallyChangeAll(currentTimeS * 1000, Formatter.formatTimeS(s), SliderControlValueChild.LeftChild);
+			const currentTimeMS = s * 1000;
+			if (App.player.currentSong) {
+				const delta = App.player.currentSong.lengthMS - currentTimeMS;
+				if (delta < 5500 && delta > 2500)
+					App.player.preloadNextSong();
+			}
+
+			AppUI.seekSlider.manuallyChangeAll(currentTimeMS, Formatter.formatTimeS(s), SliderControlValueChild.LeftChild);
 		} else {
 			AppUI.seekSlider.value = currentTimeS * 1000;
 		}

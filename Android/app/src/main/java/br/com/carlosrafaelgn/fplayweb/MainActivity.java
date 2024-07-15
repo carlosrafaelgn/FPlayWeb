@@ -73,7 +73,7 @@ public class MainActivity extends Activity {
 		onBackInvokedCallbackRegistered = false;
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-			OnBackInvokedDispatcher dispatcher = getOnBackInvokedDispatcher();
+			final OnBackInvokedDispatcher dispatcher = getOnBackInvokedDispatcher();
 			if (dispatcher != null) {
 				dispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, () -> {
 					if (handleBackPressed())

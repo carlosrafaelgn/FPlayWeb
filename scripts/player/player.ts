@@ -28,6 +28,13 @@ interface IntermediateNodeFactory {
 	(audioContext: AudioContext): ConnectableNode;
 }
 
+interface AudioBundle {
+	audio: HTMLAudioElement;
+	sourceNode: SourceNode;
+	nextSong: Song | null;
+	boundPlaybackError: (e: Event | string, source?: string, lineno?: number, colno?: number, error?: Error) => void,
+}
+
 class Player {
 	public static readonly minVolume = -40;
 
@@ -54,6 +61,14 @@ class Player {
 	private lastTimeS: number;
 	private resumeTimeS: number;
 	private songStartedAutomatically: boolean;
+
+	private nextSongVersion: number;
+	private nextSongObjectURL: string | null;
+	private nextSongLoading: boolean;
+	private nextSongLoadedWithError: boolean;
+	private nextSongToPlayAfterLoading: Song | null;
+	private nextSongAlreadyChecked: Song | null;
+	private nextAudioBundle: AudioBundle | null;
 
 	private readonly mediaSession: HostMediaSession | null;
 
@@ -130,6 +145,14 @@ class Player {
 		this.songStartedAutomatically = true;
 		this.haltOnAllErrors = false;
 
+		this.nextSongVersion = 0;
+		this.nextSongObjectURL = null;
+		this.nextSongLoading = false;
+		this.nextSongLoadedWithError = false;
+		this.nextSongToPlayAfterLoading = null;
+		this.nextSongAlreadyChecked = null;
+		this.nextAudioBundle = null;
+
 		this.volume = volume || 0;
 
 		this.audio = null;
@@ -143,21 +166,32 @@ class Player {
 			this.playlist = playlist;
 	}
 
-	private recreateAudioPath(): void {
-		const intermediateNodes = this.intermediateNodes;
-
-		if (this.sourceNode)
-			this.sourceNode.disconnectFromDestination();
-
-		for (let i = intermediateNodes.length - 1; i >= 0; i--)
-			intermediateNodes[i].disconnectFromDestination();
-
-		if (this.audio)
-			document.body.removeChild(this.audio);
-
+	private createAudioBundle(nextSong: Song | null): AudioBundle {
 		const audio = document.createElement("audio"), // new Audio(),
 			source = this.audioContext.createMediaElementSource(audio),
-			sourceNode = new SourceNode(source);
+			sourceNode = new SourceNode(source),
+			boundPlaybackError = (nextSong ?
+				(e: Event | string, source?: string, lineno?: number, colno?: number, error?: Error) => {
+					if (this.audio === audio) {
+						// The next song became the current one
+						this.playbackError(e, source, lineno, colno, error);
+						return;
+					}
+
+					// The next song has not become the current one yet, so, just mark the end of the loading process and the error
+					if (this.nextAudioBundle && this.nextAudioBundle.audio && this.nextAudioBundle.audio === audio && this.nextAudioBundle.nextSong === nextSong) {
+						this.nextSongLoading = false;
+						this.nextSongLoadedWithError = true;
+					}
+				} :
+				(e: Event | string, source?: string, lineno?: number, colno?: number, error?: Error) => { if (this.audio === audio) this.playbackError(e, source, lineno, colno, error); }
+			),
+			audioBundle: AudioBundle = {
+				audio,
+				sourceNode,
+				nextSong,
+				boundPlaybackError
+			};
 
 		// The audio element is being added to the document now to try to fix the
 		// integration between web audio and media session API's in a few browsers
@@ -171,18 +205,37 @@ class Player {
 		audio.autoplay = false;
 		document.body.appendChild(audio);
 
-		this.audio = audio;
-		this.sourceNode = sourceNode;
-
 		const boundPlaybackLoadStart = () => { if (this.audio === audio) this.playbackLoadStart(); };
 		audio.onwaiting = boundPlaybackLoadStart;
 		audio.onloadstart = boundPlaybackLoadStart;
 
-		audio.oncanplay = () => { if (this.audio === audio) this.playbackLoadEnd(); };
+		audio.oncanplay = (nextSong ?
+			() => {
+				if (this.audio === audio) {
+					// The next song became the current one
+					this.playbackLoadEnd();
+
+					if (this.nextSongToPlayAfterLoading) {
+						if (this.nextSongToPlayAfterLoading === nextSong) {
+							this.nextSongLoading = false;
+							this.nextSongLoadedWithError = false;
+							this.nextSongPerformFinalPlaybackSteps();
+						}
+						this.nextSongToPlayAfterLoading = null;
+					}
+					return;
+				}
+
+				// The next song has not become the current one yet, so, just mark the end of the loading process
+				if (this._playlist && this.nextAudioBundle && this.nextAudioBundle.audio && this.nextAudioBundle.audio === audio && this.nextAudioBundle.nextSong === nextSong) {
+					this.nextSongLoading = false;
+					this.nextSongLoadedWithError = false;
+				}
+			} :
+			() => { if (this.audio === audio) this.playbackLoadEnd(); }
+		);
 
 		audio.onended = () => { if (this.audio === audio) this.playbackEnd(); };
-		const boundPlaybackError = (e: Event | string, source?: string, lineno?: number, colno?: number, error?: Error) => { if (this.audio === audio) this.playbackError(e, source, lineno, colno, error); };
-		this.boundPlaybackError = boundPlaybackError;
 		audio.onerror = boundPlaybackError;
 
 		audio.onpause = () => { if (this.audio === audio) this.playbackPaused(); };
@@ -200,6 +253,27 @@ class Player {
 		audio.ontimeupdate = () => { if (this.audio === audio) this.currentTimeChange(); };
 
 		sourceNode.enabled = true;
+
+		return audioBundle;
+	}
+
+	private recreateAudioPath(): void {
+		const intermediateNodes = this.intermediateNodes;
+
+		if (this.sourceNode)
+			this.sourceNode.disconnectFromDestination();
+
+		for (let i = intermediateNodes.length - 1; i >= 0; i--)
+			intermediateNodes[i].disconnectFromDestination();
+
+		if (this.audio)
+			document.body.removeChild(this.audio);
+
+		const { audio, sourceNode, boundPlaybackError } = this.createAudioBundle(null);
+
+		this.audio = audio;
+		this.sourceNode = sourceNode;
+		this.boundPlaybackError = boundPlaybackError;
 
 		if (intermediateNodes.length) {
 			sourceNode.connectToDestination(intermediateNodes[0]);
@@ -579,6 +653,129 @@ class Player {
 			this.onpausedchange(this._paused);
 	}*/
 
+	private destroyNextAudioBundle(): void {
+		this.nextSongVersion++;
+
+		if (this.nextSongObjectURL) {
+			URL.revokeObjectURL(this.nextSongObjectURL);
+			this.nextSongObjectURL = null;
+		}
+
+		if (this.nextAudioBundle) {
+			const audioBundle = this.nextAudioBundle;
+			this.nextAudioBundle = null;
+
+			if (audioBundle.audio) {
+				while (audioBundle.audio.firstChild)
+					audioBundle.audio.removeChild(audioBundle.audio.firstChild);
+				audioBundle.audio.load();
+
+				if (audioBundle.audio.parentNode)
+					audioBundle.audio.parentNode.removeChild(audioBundle.audio);
+			}
+
+			zeroObject(audioBundle, true);
+		}
+
+		this.nextSongLoading = false;
+		this.nextSongLoadedWithError = false;
+		this.nextSongToPlayAfterLoading = null;
+		this.nextSongAlreadyChecked = null;
+	}
+
+	public preloadNextSong(): void {
+		if (!this._alive || !this._playlist)
+			return;
+
+		const nextSong = this._playlist.nextItem;
+		if (this.nextSongAlreadyChecked === nextSong)
+			return;
+
+		this.destroyNextAudioBundle();
+
+		this.nextSongAlreadyChecked = nextSong;
+
+		if (!nextSong || !nextSong.url || (!nextSong.url.startsWith(FileUtils.localURLPrefix) && !nextSong.url.startsWith(FileUtils.fileURLPrefix)))
+			return;
+
+		try {
+			const currentVersion = this.nextSongVersion;
+			const audioBundle = this.createAudioBundle(nextSong);
+			const boundPlaybackError = audioBundle.boundPlaybackError;
+			this.nextAudioBundle = audioBundle;
+
+			this.nextSongLoading = true;
+			this.nextSongToPlayAfterLoading = null;
+
+			const finishSourceSetup = (src: string | null) => {
+				if (currentVersion !== this.nextSongVersion)
+					return;
+
+				// If the process takes a long time, audioBundle.audio might be set to null inside play()
+				if (!audioBundle.audio) {
+					if (this.audio) {
+						if (!src)
+							this.lastObjectURL = URL.createObjectURL(nextSong.file as File);
+
+						const source = document.createElement("source");
+						source.src = (src || this.lastObjectURL as string);
+						source.onerror = boundPlaybackError;
+
+						this.audio.appendChild(source);
+						this.audio.load();
+					}
+				} else {
+					if (!src)
+						this.nextSongObjectURL = URL.createObjectURL(nextSong.file as File);
+
+					const source = document.createElement("source");
+					source.src = (src || this.nextSongObjectURL as string);
+					source.onerror = boundPlaybackError;
+
+					audioBundle.audio.appendChild(source);
+					audioBundle.audio.load();
+				}
+			};
+
+			const fileURL = (nextSong.url.startsWith(FileUtils.fileURLPrefix) ? nextSong.url : null);
+
+			if (nextSong.file || fileURL) {
+				finishSourceSetup(nextSong.file ? null : fileURL);
+			} else {
+				FileSystemAPI.getFile(nextSong.url.substring(FileUtils.localURLPrefix.length)).then((file) => {
+					if (!this._playlist || currentVersion !== this.nextSongVersion)
+						return;
+
+					if (!this.nextAudioBundle) {
+						// If the process takes a long time, this.nextAudioBundle might be set to null inside play()
+						if (!this.nextSongLoading || this.nextSongToPlayAfterLoading !== nextSong)
+							return;
+					} else if (this.nextAudioBundle !== audioBundle || this.nextAudioBundle.nextSong !== nextSong) {
+						return;
+					}
+
+					if (!file) {
+						boundPlaybackError(Strings.FileNotFoundOrNoPermissionError);
+					} else {
+						nextSong.file = file;
+						finishSourceSetup(null);
+					}
+				}, (reason) => {
+					boundPlaybackError(Strings.UnknownError, undefined, undefined, undefined, reason);
+				});
+			}
+		} catch (ex: any) {
+			this.destroyNextAudioBundle();
+		}
+	}
+
+	private nextSongPerformFinalPlaybackSteps(): void {
+		this.resumeAudioContext();
+		(this.audio as HTMLAudioElement).play().catch(Player.nop);
+		// If this callback has actually been called, it was suppressed while the song was pre loading
+		this.playbackLengthChange();
+	}
+
 	public setPlaylistData(): void {
 		const playlist = this._playlist;
 
@@ -650,6 +847,65 @@ class Player {
 				this.currentPlaylistSong = currentPlaylistSong;
 				queueMicrotask(this.boundNotifySongChange);
 			}
+
+			this.nextSongToPlayAfterLoading = null;
+
+			if (this.nextAudioBundle) {
+				const audioBundle = this.nextAudioBundle;
+
+				if (audioBundle.nextSong === currentPlaylistSong) {
+					if (!this.nextSongLoadedWithError) {
+						const oldAudio = this.audio;
+
+						this.resumeTimeS = -1;
+						this.songToResumeTime = null;
+
+						if (this.lastObjectURL)
+							URL.revokeObjectURL(this.lastObjectURL);
+						this.lastObjectURL = this.nextSongObjectURL;
+						this.nextSongObjectURL = null;
+						this.nextAudioBundle = null;
+
+						if (this.nextSongLoading) {
+							// If the next song is still loading, just indicate it is now the current one and trigger onloadingchange
+							// Call pause() to suspend the audio context
+							this.pause();
+							this.playbackLoadStart();
+							this.nextSongToPlayAfterLoading = currentPlaylistSong;
+						} else {
+							// The next song has already been successfully loaded
+							// Do not call this.pause() in order not to Simply pause current audio
+							this.audio.pause();
+						}
+
+						if (this.sourceNode)
+							this.sourceNode.disconnectFromDestination();
+
+						this.sourceNode = audioBundle.sourceNode;
+						this.sourceNode.connectToDestination(this.intermediateNodes.length ? this.intermediateNodes[0] : this.destinationNode);
+
+						this.audio = audioBundle.audio;
+
+						this.volume = this._volume;
+
+						if (!this.nextSongLoading)
+							this.nextSongPerformFinalPlaybackSteps();
+
+						zeroObject(audioBundle, true);
+
+						while (oldAudio.firstChild)
+							oldAudio.removeChild(oldAudio.firstChild);
+						oldAudio.load();
+
+						if (oldAudio.parentNode)
+							oldAudio.parentNode.removeChild(oldAudio);
+
+						return;
+					}
+				}
+			}
+
+			this.destroyNextAudioBundle();
 
 			this.resumeAudioContext();
 
@@ -744,6 +1000,8 @@ class Player {
 		this.loadedSong = null;
 		this.songToResumeTime = null;
 		this.lastTimeS = -1;
+
+		this.destroyNextAudioBundle();
 
 		if (this.currentPlaylistSong) {
 			// Try to force a kWebMediaPlayerDestroyed event without causing onerror
