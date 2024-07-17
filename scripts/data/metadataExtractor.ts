@@ -798,11 +798,32 @@ class MetadataExtractor {
 		try {
 			f.seekTo(firstFramePosition);
 
-			const p = f.fillBuffer(4);
+			// Sometimes, there are a few zeroed bytes after the ID3
+			let paddingBytes = 4092;
+
+			const p = f.fillBuffer(paddingBytes + 4);
 			if (p)
 				await p;
 
-			const hdr = f.readUInt32BE();
+			let hdr = 0;
+
+			while (paddingBytes >= 0) {
+				const firstHeaderByte = f.readByte();
+				if (firstHeaderByte < 0)
+					break;
+
+				if (firstHeaderByte) {
+					if (firstHeaderByte === 0xFF) {
+						hdr = ((firstHeaderByte << 24) |
+							(f.readByte() << 16) |
+							(f.readByte() << 8) |
+							f.readByte());
+					}
+					break;
+				}
+
+				paddingBytes--;
+			}
 
 			if (aac) {
 				// https://wiki.multimedia.cx/index.php?title=ADTS
