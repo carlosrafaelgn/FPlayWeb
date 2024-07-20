@@ -35,7 +35,6 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Icon;
-import android.media.AudioManager;
 import android.media.MediaMetadata;
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
@@ -91,6 +90,15 @@ public final class HostMediaSession {
 		paused = true;
 		lastTitle = NONE;
 		lastArtist = NONE;
+
+		// These intents are used regardless of the version
+		Intent intent = new Intent(webViewHost.application, MainActivity.class);
+		intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+		intentActivity = PendingIntent.getActivity(webViewHost.application, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+
+		intent = new Intent(webViewHost.application, IntentReceiver.class);
+		intent.setAction(WebViewHost.ACTION_EXIT);
+		intentExit = PendingIntent.getBroadcast(webViewHost.application, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
 
 		try {
 			mediaSessionMetadataBuilder = new MediaMetadata.Builder();
@@ -192,9 +200,6 @@ public final class HostMediaSession {
 					}
 				}
 			});
-			final Intent intent = new Intent(webViewHost.application, MainActivity.class);
-			intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-			intentActivity = PendingIntent.getActivity(webViewHost.application, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 			mediaSession.setSessionActivity(intentActivity);
 			mediaSession.setPlaybackState(mediaSessionPlaybackStateBuilder.setState(PlaybackState.STATE_STOPPED, 0, 1, SystemClock.elapsedRealtime()).build());
 			mediaSession.setActive(true);
@@ -202,17 +207,7 @@ public final class HostMediaSession {
 			ex.printStackTrace();
 		}
 
-		prepareNotification();
-	}
-
-	private void prepareNotification() {
-		Intent intent;
-
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-			intent = new Intent(webViewHost.application, MainActivity.class);
-			intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-			intentActivity = PendingIntent.getActivity(webViewHost.application, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-
 			intent = new Intent(webViewHost.application, IntentReceiver.class);
 			intent.setAction(WebViewHost.ACTION_PREV);
 			intentPrev = PendingIntent.getBroadcast(webViewHost.application, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
@@ -224,10 +219,6 @@ public final class HostMediaSession {
 			intent = new Intent(webViewHost.application, IntentReceiver.class);
 			intent.setAction(WebViewHost.ACTION_NEXT);
 			intentNext = PendingIntent.getBroadcast(webViewHost.application, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-
-			intent = new Intent(webViewHost.application, IntentReceiver.class);
-			intent.setAction(WebViewHost.ACTION_EXIT);
-			intentExit = PendingIntent.getBroadcast(webViewHost.application, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
 
 			actionPrev = new Notification.Action.Builder(Icon.createWithResource(webViewHost.application, R.drawable.ic_prev), webViewHost.application.getText(R.string.previous), intentPrev).build();
 			actionPause = new Notification.Action.Builder(Icon.createWithResource(webViewHost.application, R.drawable.ic_pause), webViewHost.application.getText(R.string.pause), intentPlayPause).build();
@@ -292,36 +283,6 @@ public final class HostMediaSession {
 			// Why the *rare* android.os.TransactionTooLargeException?
 			// What to do?!?!
 		}
-	}
-
-	private void destroyNotification() {
-		if (notificationManager == null)
-			return;
-
-		try {
-			notificationManager.deleteNotificationChannel(CHANNEL_ID);
-		} catch (Throwable ex) {
-			//just ignore
-		}
-
-		try {
-			notificationManager.deleteNotificationChannelGroup(CHANNEL_GROUP_ID);
-		} catch (Throwable ex) {
-			//just ignore
-		}
-
-		notificationManager = null;
-
-		intentPrev = null;
-		intentPlayPause = null;
-		intentNext = null;
-		intentExit = null;
-
-		actionPrev = null;
-		actionPause = null;
-		actionPlay = null;
-		actionNext = null;
-		actionExit = null;
 	}
 
 	private void resetHeadsetHook() {
@@ -470,7 +431,34 @@ public final class HostMediaSession {
 	}
 
 	public void destroy() {
-		destroyNotification();
+		if (notificationManager == null)
+			return;
+
+		try {
+			notificationManager.deleteNotificationChannel(CHANNEL_ID);
+		} catch (Throwable ex) {
+			// Just ignore...
+		}
+
+		try {
+			notificationManager.deleteNotificationChannelGroup(CHANNEL_GROUP_ID);
+		} catch (Throwable ex) {
+			// Just ignore...
+		}
+
+		notificationManager = null;
+
+		intentActivity = null;
+		intentPrev = null;
+		intentPlayPause = null;
+		intentNext = null;
+		intentExit = null;
+
+		actionPrev = null;
+		actionPause = null;
+		actionPlay = null;
+		actionNext = null;
+		actionExit = null;
 
 		resetHeadsetHook();
 

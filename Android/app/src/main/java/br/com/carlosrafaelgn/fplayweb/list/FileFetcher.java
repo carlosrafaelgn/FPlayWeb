@@ -640,7 +640,7 @@ public final class FileFetcher implements Runnable, ArraySorter.Comparer<FileSt>
 			try {
 				thread.interrupt();
 			} catch (Throwable ex) {
-				//just ignore
+				// Just ignore...
 			}
 		}
 	}
