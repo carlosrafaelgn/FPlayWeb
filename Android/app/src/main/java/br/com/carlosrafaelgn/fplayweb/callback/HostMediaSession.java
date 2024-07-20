@@ -77,7 +77,7 @@ public final class HostMediaSession {
 	private MediaMetadata.Builder mediaSessionMetadataBuilder;
 	private PlaybackState.Builder mediaSessionPlaybackStateBuilder;
 	private NotificationManager notificationManager;
-	private PendingIntent intentPrev, intentPlayPause, intentNext, intentExit;
+	private PendingIntent intentActivity, intentPrev, intentPlayPause, intentNext, intentExit;
 	private Notification.Action actionPrev, actionPause, actionPlay, actionNext, actionExit;
 
 	public HostMediaSession(WebViewHost webViewHost) {
@@ -194,7 +194,8 @@ public final class HostMediaSession {
 			});
 			final Intent intent = new Intent(webViewHost.application, MainActivity.class);
 			intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-			mediaSession.setSessionActivity(PendingIntent.getActivity(webViewHost.application, 0, intent, PendingIntent.FLAG_IMMUTABLE));
+			intentActivity = PendingIntent.getActivity(webViewHost.application, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+			mediaSession.setSessionActivity(intentActivity);
 			mediaSession.setPlaybackState(mediaSessionPlaybackStateBuilder.setState(PlaybackState.STATE_STOPPED, 0, 1, SystemClock.elapsedRealtime()).build());
 			mediaSession.setActive(true);
 		} catch (Throwable ex) {
@@ -208,6 +209,10 @@ public final class HostMediaSession {
 		Intent intent;
 
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+			intent = new Intent(webViewHost.application, MainActivity.class);
+			intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+			intentActivity = PendingIntent.getActivity(webViewHost.application, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+
 			intent = new Intent(webViewHost.application, IntentReceiver.class);
 			intent.setAction(WebViewHost.ACTION_PREV);
 			intentPrev = PendingIntent.getBroadcast(webViewHost.application, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
@@ -262,9 +267,11 @@ public final class HostMediaSession {
 			.setContentTitle(lastTitle)
 			.setSubText(lastArtist)
 			.setColorized(false)
-			// Apparently, the ongoing flag shoudl be set to false for the delete intent to the send
+			// Apparently, the ongoing flag should be set to false for the delete intent to the send
 			// https://stackoverflow.com/q/74808095/3569421
-			.setOngoing(false);
+			.setOngoing(false)
+			.setContentIntent(intentActivity)
+			.setDeleteIntent(intentExit);
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
 			builder.setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE);

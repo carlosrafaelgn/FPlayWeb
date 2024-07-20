@@ -114,6 +114,11 @@
 
         </activity>
 
+        <receiver
+            android:name=".callback.IntentReceiver"
+            android:exported="true" >
+        </receiver>
+
     </application>
 
 </manifest>

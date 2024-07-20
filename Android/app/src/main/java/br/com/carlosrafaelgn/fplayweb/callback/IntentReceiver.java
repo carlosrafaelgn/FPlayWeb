@@ -32,10 +32,17 @@ import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.webkit.WebView;
 
+import br.com.carlosrafaelgn.fplayweb.MainApplication;
 import br.com.carlosrafaelgn.fplayweb.WebViewHost;
 
 public final class IntentReceiver extends BroadcastReceiver {
 	private final WebViewHost webViewHost;
+
+	@SuppressWarnings("unused")
+	public IntentReceiver() {
+		// Used by Android itself to dispatch notification actions when Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
+		webViewHost = null;
+	}
 
 	public IntentReceiver(WebViewHost webViewHost) {
 		this.webViewHost = webViewHost;
@@ -57,7 +64,19 @@ public final class IntentReceiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		final WebView webView = webViewHost.webView;
+		WebView webView = null;
+
+		if (webViewHost == null) {
+			final Context applicationContext = context.getApplicationContext();
+			if (applicationContext instanceof MainApplication) {
+				final MainApplication application = (MainApplication)applicationContext;
+				final WebViewHost webViewHost = application.webViewHost;
+				if (webViewHost != null)
+					webView = webViewHost.webView;
+			}
+		} else {
+			webView = webViewHost.webView;
+		}
 
 		if (intent == null || webView == null)
 			return;
