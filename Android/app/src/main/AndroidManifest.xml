@@ -116,7 +116,10 @@
 
         <receiver
             android:name=".callback.IntentReceiver"
-            android:exported="true" >
+            android:exported="true">
+            <intent-filter>
+                <action android:name="br.com.carlosrafaelgn.fplayweb.EXIT" />
+            </intent-filter>
         </receiver>
 
     </application>
