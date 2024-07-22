@@ -87,6 +87,8 @@ public final class IntentReceiver extends BroadcastReceiver {
 
 		switch (action) {
 		case AudioManager.ACTION_AUDIO_BECOMING_NOISY:
+			webView.evaluateJavascript("App.player && App.player.headsetRemoved()", null);
+			break;
 		case WebViewHost.ACTION_PAUSE:
 			webView.evaluateJavascript("App.player && App.player.pause()", null);
 			break;

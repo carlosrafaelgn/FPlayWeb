@@ -61,6 +61,8 @@ class Player {
 	private lastTimeS: number;
 	private resumeTimeS: number;
 	private songStartedAutomatically: boolean;
+	private mutedByHeadsetRemoval: boolean;
+	private firstFailedSongIndex: number;
 
 	private nextSongVersion: number;
 	private nextSongObjectURL: string | null;
@@ -138,6 +140,8 @@ class Player {
 		this.loadedSong = null;
 		this.songToResumeTime = null;
 		this._volume = 0;
+		this.mutedByHeadsetRemoval = false;
+		this.firstFailedSongIndex = -1;
 
 		this.lastObjectURL = null;
 		this.lastTimeS = -1;
@@ -403,10 +407,19 @@ class Player {
 
 		let notifyError = false;
 
-		if (!this._playlist || !this._playlist.length)
+		if (!this._playlist || !this._playlist.length) {
 			notifyError = true;
-		else if (lastTimeS < 0)
+		} else if (lastTimeS < 0) {
 			notifyError = !this.songStartedAutomatically;
+			if (notifyError) {
+				this.firstFailedSongIndex = -1;
+			} else if (this.firstFailedSongIndex < 0 || this.firstFailedSongIndex >= this._playlist.length) {
+				this.firstFailedSongIndex = this._playlist.currentIndex;
+			} else if (this.firstFailedSongIndex === this._playlist.currentIndex) {
+				this.firstFailedSongIndex = -1;
+				notifyError = true;
+			}
+		}
 
 		if (notifyError && this.onerror)
 			this.onerror(message);
@@ -548,6 +561,17 @@ class Player {
 		if (!this._alive || !this._paused)
 			return;
 
+		// Prevent resuming the playback in the case explained in headsetRemoved()
+		if (this.mutedByHeadsetRemoval) {
+			this.mutedByHeadsetRemoval = false;
+			if (this.audio) {
+				this.audio.pause();
+				this.audio.muted = false;
+				return;
+			}
+		}
+
+		this.firstFailedSongIndex = -1;
 		this._paused = false;
 		this.resumeAudioContext();
 		//queueMicrotask(this.boundNotifyPausedChange);
@@ -816,6 +840,11 @@ class Player {
 	public play(index?: number, automaticCall?: boolean): void {
 		if (!this._alive || !this.audio)
 			return;
+
+		if (this.mutedByHeadsetRemoval && this.audio) {
+			this.mutedByHeadsetRemoval = false;
+			this.audio.muted = false;
+		}
 
 		let playPromise: Promise<void> | undefined;
 
@@ -1095,5 +1124,25 @@ class Player {
 		}
 
 		this.notifyCurrentTimeSChange();
+	}
+
+	public headsetRemoved(): void {
+		if (!this._alive || !this.audio)
+			return;
+
+		if (this.audio.paused) {
+			if (this.loadedSong) {
+				// This is an unusual case where the playback was paused before
+				// the removal of the headset. We must keep track of this in order
+				// to try to prevent the song from restarting automatically in cases
+				// like when the playback was happening through the headset, the user
+				// starts/receives a call without pausing the song, removes the headset
+				// and then ends the call.
+				this.audio.muted = true;
+				this.mutedByHeadsetRemoval = true;
+			}
+		} else {
+			this.pause();
+		}
 	}
 }
