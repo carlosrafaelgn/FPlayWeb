@@ -40,7 +40,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Message;
 import android.provider.Settings;
 import android.text.InputType;
 import android.view.Gravity;
@@ -242,7 +241,7 @@ public class WebViewHost {
 				// cancelFilePathCallback() cannot be called here, because enumerateFiles()
 				// is called several times between setFilePathCallback() and setFileURLs() calls
 
-				fileFetcher = new FileFetcher(activity, (path != null && path.length() > 0 && !path.startsWith("/")) ? ("/" + path) : path, enumerationVersion, (fetcher, e) -> {
+				fileFetcher = new FileFetcher(activity, (path != null && !path.isEmpty() && !path.startsWith("/")) ? ("/" + path) : path, enumerationVersion, (fetcher, e) -> {
 					synchronized (lock) {
 						if (!alive || fileFetcher == null || fileFetcher.version != enumerationVersion)
 							return;
@@ -255,7 +254,7 @@ public class WebViewHost {
 						.array();
 
 					// File paths should start with "/", but not directory paths!
-					if (path == null || path.length() == 0) {
+					if (path == null || path.isEmpty()) {
 						for (int i = 0; i < fetcher.count; i++) {
 							final FileSt file = fetcher.files[i];
 							jsonBuilder.value(file.name + "\u0004" + file.path.substring(1), false);
@@ -421,13 +420,8 @@ public class WebViewHost {
 
 	private final class LibWebChromeClient extends WebChromeClient {
 		@Override
-		public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
-			return false;
-		}
-
-		@Override
 		public boolean onJsAlert(WebView view, String url, String message, final JsResult result) {
-			if (message == null || message.length() == 0 || activity == null)
+			if (message == null || message.isEmpty() || activity == null)
 				return false;
 
 			final AlertDialog alertDialog = new AlertDialog.Builder(activity)
@@ -473,7 +467,7 @@ public class WebViewHost {
 
 		@Override
 		public boolean onJsConfirm(WebView view, String url, String message, final JsResult result) {
-			if (message == null || message.length() == 0 || activity == null)
+			if (message == null || message.isEmpty() || activity == null)
 				return false;
 
 			final boolean[] ok = new boolean[1];
@@ -509,7 +503,7 @@ public class WebViewHost {
 			final int padding = dpToPxI(16);
 			linearLayout.setPadding(padding, padding, padding, padding);
 
-			if (message != null && message.length() > 0) {
+			if (message != null && !message.isEmpty()) {
 				final TextView lbl = new TextView(activity);
 				lbl.setText(message);
 				final LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -520,7 +514,7 @@ public class WebViewHost {
 			final EditText txt = new EditText(activity);
 			txt.setMaxLines(1);
 			txt.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
-			if (defaultValue != null && defaultValue.length() > 0)
+			if (defaultValue != null && !defaultValue.isEmpty())
 				txt.setText(defaultValue);
 			linearLayout.addView(txt, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
@@ -568,10 +562,6 @@ public class WebViewHost {
 		}
 
 		@Override
-		public void onGeolocationPermissionsHidePrompt() {
-		}
-
-		@Override
 		public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
 			callback.invoke(origin, true, true);
 		}
@@ -583,10 +573,6 @@ public class WebViewHost {
 			} catch (Throwable th) {
 				// Just ignore...
 			}
-		}
-
-		@Override
-		public void onPermissionRequestCanceled(PermissionRequest request) {
 		}
 	}
 

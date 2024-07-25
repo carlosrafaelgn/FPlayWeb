@@ -25,11 +25,13 @@
 //
 package br.com.carlosrafaelgn.fplayweb.callback;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
+import android.os.Build;
 import android.webkit.WebView;
 
 import br.com.carlosrafaelgn.fplayweb.MainApplication;
@@ -44,6 +46,7 @@ public final class IntentReceiver extends BroadcastReceiver {
 		webViewHost = null;
 	}
 
+	@SuppressLint("UnspecifiedRegisterReceiverFlag")
 	public IntentReceiver(WebViewHost webViewHost) {
 		this.webViewHost = webViewHost;
 
@@ -55,7 +58,10 @@ public final class IntentReceiver extends BroadcastReceiver {
 		filter.addAction(WebViewHost.ACTION_NEXT);
 		filter.addAction(WebViewHost.ACTION_EXIT);
 
-		webViewHost.application.registerReceiver(this, filter);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+			webViewHost.application.registerReceiver(this, filter, Context.RECEIVER_EXPORTED);
+		else
+			webViewHost.application.registerReceiver(this, filter);
 	}
 
 	public void destroy() {

@@ -194,7 +194,7 @@ public final class FileFetcher implements Runnable, ArraySorter.Comparer<FileSt>
 		if (isExternal) {
 			if (canonicalPathLC.contains("usb")) {
 				c = usbCount[0] + 1;
-				files[count] = new FileSt(canonicalPath, context.getText(R.string.usb_storage).toString() + ((c <= 1) ? "" : (" " + c)), FileSt.TYPE_EXTERNAL_STORAGE_USB);
+				files[count] = new FileSt(canonicalPath, context.getText(R.string.usb_storage) + ((c <= 1) ? "" : (" " + c)), FileSt.TYPE_EXTERNAL_STORAGE_USB);
 				usbCount[0] = c;
 			} else {
 				//try to avoid duplication of internal sdcard on a few phones...
@@ -205,7 +205,7 @@ public final class FileFetcher implements Runnable, ArraySorter.Comparer<FileSt>
 					return;
 				}
 				c = externalCount[0] + 1;
-				files[count] = new FileSt(canonicalPath, context.getText(R.string.external_storage).toString() + ((c <= 1) ? "" : (" " + c)), FileSt.TYPE_EXTERNAL_STORAGE);
+				files[count] = new FileSt(canonicalPath, context.getText(R.string.external_storage) + ((c <= 1) ? "" : (" " + c)), FileSt.TYPE_EXTERNAL_STORAGE);
 				externalCount[0] = c;
 			}
 		} else {
@@ -265,7 +265,7 @@ public final class FileFetcher implements Runnable, ArraySorter.Comparer<FileSt>
 
 				//skip secure storages (accessing them usually result in
 				//a permission denied error)
-				if (line.length() == 0 ||
+				if (line.isEmpty() ||
 					line.contains("secure") ||
 					line.contains("asec")) continue;
 
@@ -363,7 +363,7 @@ public final class FileFetcher implements Runnable, ArraySorter.Comparer<FileSt>
 	}
 
 	private void fetchArtists() {
-		final String fakeRoot = FileSt.FAKE_PATH_ROOT + context.getText(R.string.artists).toString() + FileSt.FAKE_PATH_SEPARATOR;
+		final String fakeRoot = FileSt.FAKE_PATH_ROOT + context.getText(R.string.artists) + FileSt.FAKE_PATH_SEPARATOR;
 		final String root = FileSt.ARTIST_ROOT + File.separator;
 		//apparently a few devices don't like these members, so I converted them to the hardcoded version!
 		final String[] proj = { "_id", "artist", "number_of_albums", "number_of_tracks" };
@@ -413,7 +413,7 @@ public final class FileFetcher implements Runnable, ArraySorter.Comparer<FileSt>
 		final String root;
 		if (path == null) {
 			artist = null;
-			fakeRoot = FileSt.FAKE_PATH_ROOT + context.getText(R.string.albums).toString() + FileSt.FAKE_PATH_SEPARATOR;
+			fakeRoot = FileSt.FAKE_PATH_ROOT + context.getText(R.string.albums) + FileSt.FAKE_PATH_SEPARATOR;
 			root = FileSt.ALBUM_ROOT + File.separator;
 		} else {
 			final int fakePathIdx = path.indexOf(FileSt.FAKE_PATH_ROOT_CHAR);
@@ -657,7 +657,7 @@ public final class FileFetcher implements Runnable, ArraySorter.Comparer<FileSt>
 		}
 		Throwable e = null;
 		try {
-			if (path == null || path.length() == 0) {
+			if (path == null || path.isEmpty()) {
 				fetchRoot();
 			} else if (path.charAt(0) == FileSt.ARTIST_ROOT_CHAR) {
 				if (path.startsWith(FileSt.ARTIST_PREFIX)) {
@@ -696,7 +696,7 @@ public final class FileFetcher implements Runnable, ArraySorter.Comparer<FileSt>
 							}
 							albums[i] = null;
 						}
-						if (tracks.size() > 0) {
+						if (!tracks.isEmpty()) {
 							//ignore any errors if at least one track was fetched
 							e = null;
 							count = tracks.size();

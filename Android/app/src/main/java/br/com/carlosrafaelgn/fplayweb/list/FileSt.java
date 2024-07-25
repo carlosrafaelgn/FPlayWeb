@@ -78,7 +78,7 @@ public final class FileSt {
 	public FileSt(String absolutePath, String name, Long albumId) {
 		this.isDirectory = true;
 		this.path = absolutePath;
-		this.name = ((name.length() == 0) ? " " : name);
+		this.name = (name.isEmpty() ? " " : name);
 		this.albumId = albumId;
 		this.specialType = FileSt.TYPE_ALBUM;
 	}
@@ -86,7 +86,7 @@ public final class FileSt {
 	public FileSt(String absolutePath, String name, int specialType) {
 		this.isDirectory = (specialType != 0);
 		this.path = absolutePath;
-		this.name = ((name.length() == 0) ? " " : name);
+		this.name = (name.isEmpty() ? " " : name);
 		this.specialType = specialType;
 	}
 

@@ -135,7 +135,7 @@ public final class HostMediaSession {
 				@Override
 				public void onPlayFromMediaId(String mediaId, Bundle extras) {
 					try {
-						if (mediaId != null && mediaId.length() > 0)
+						if (mediaId != null && !mediaId.isEmpty())
 							skipToQueueItem(Long.parseLong(mediaId));
 					} catch (Throwable ex) {
 						// Just ignore...

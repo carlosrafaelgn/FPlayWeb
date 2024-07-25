@@ -33,6 +33,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.window.OnBackInvokedDispatcher;
 
 public class MainActivity extends Activity {
@@ -73,15 +74,12 @@ public class MainActivity extends Activity {
 		onBackInvokedCallbackRegistered = false;
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-			final OnBackInvokedDispatcher dispatcher = getOnBackInvokedDispatcher();
-			if (dispatcher != null) {
-				dispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, () -> {
-					if (handleBackPressed())
-						finish();
-				});
+			getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, () -> {
+				if (handleBackPressed())
+					finish();
+			});
 
-				onBackInvokedCallbackRegistered = true;
-			}
+			onBackInvokedCallbackRegistered = true;
 		}
 
 		final MainApplication application = (MainApplication)getApplication();
@@ -162,7 +160,7 @@ public class MainActivity extends Activity {
 	}
 
 	@Override
-	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 		if (webViewHost != null)
 			webViewHost.onRequestPermissionsResult(grantResults);
 	}
