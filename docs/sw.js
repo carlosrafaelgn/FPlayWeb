@@ -32,7 +32,7 @@
 // whenever it detects a change in the source code of the
 // service worker).
 const CACHE_PREFIX = "fplay-static-cache-";
-const CACHE_VERSION = "20240721";
+const CACHE_VERSION = "20241124";
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
 
 self.addEventListener("install", (event) => {
@@ -124,6 +124,66 @@ self.addEventListener("activate", (event) => {
 	);
 });
 
+async function fetchResponse(url) {
+	let cache = null;
+
+	let response = null;
+
+	try {
+		cache = await caches.open(CACHE_NAME);
+
+		response = await cache.match(url, { ignoreVary: true });
+
+		// Return the resource if it has been found.
+		if (response)
+			return response;
+
+		// When the resource cannot be found in the cache,
+		// try to fetch it from the network.
+		response = await fetch(url);
+		if (response && !response.ok)
+			response = null;
+	} catch (ex) {
+		// If anything goes wrong, just ignore and try
+		// to fetch the response from the server again.
+	}
+
+	// If the fetch succeeds, store the response in the cache
+	// for later! (This means we probably forgot to add a file
+	// to the cache during the installation phase)
+
+	// Just as requests, responses are streams and we will
+	// need two usable streams: one to be used by the cache
+	// and one to be returned to the browser! So, we send a
+	// clone of the response to the cache.
+	if (response) {
+		try {
+			await cache.put(url, response.clone());
+		} catch (ex) {
+			// If anything goes wrong, just ignore and try
+			// to add the response to the cache later.
+		}
+		return response;
+	}
+
+	// The request was neither in our cache nor was it
+	// available from the network (maybe we are offline).
+	// Therefore, try to fulfill requests for favicons with
+	// the largest favicon we have available in our cache.
+	if (cache) {
+		try {
+			if (url.indexOf("favicon") >= 0)
+				response = await cache.match("assets/images/favicons/favicon-512x512.png", { ignoreVary: true });
+		} catch (ex) {
+			// The resource was not in our cache, was not available
+			// from the network and was also not a favicon...
+			// Unfortunately, there is nothing else we can do :(
+		}
+	}
+
+	return (response || Response.error());
+}
+
 self.addEventListener("fetch", (event) => {
 	// https://developer.mozilla.org/en-US/docs/Web/API/Request
 	// mode is navigate only for the document itself (/ or
@@ -147,48 +207,7 @@ self.addEventListener("fetch", (event) => {
 		url.startsWith("http://localhost"))
 		return;
 
-	event.respondWith(caches.open(CACHE_NAME).then((cache) => {
-		return cache.match(url, { ignoreVary: true }).then((response) => {
-			// Return the resource if it has been found.
-			if (response)
-				return response;
-
-			// When the resource was not found in the cache,
-			// try to fetch it from the network.
-			return fetch(url).then((response) => {
-				// If this fetch succeeds, store it in the cache for
-				// later! (This means we probably forgot to add a file
-				// to the cache during the installation phase)
-
-				// Just as requests, responses are streams and we will
-				// need two usable streams: one to be used by the cache
-				// and one to be returned to the browser! So, we send a
-				// clone of the response to the cache.
-				if (response && response.status === 200)
-					return cache.put(url, response.clone()).then(() => {
-						return response;
-					}, () => {
-						// If anything goes wrong, just ignore and try
-						// to add the response to the cache later.
-						return response;
-					});
-
-				return response;
-			}, () => {
-				// The request was neither in our cache nor was it
-				// available from the network (maybe we are offline).
-				// Therefore, try to fulfill requests for favicons with
-				// the largest favicon we have available in our cache.
-				if (url.indexOf("favicon") >= 0)
-					return cache.match("assets/images/favicons/favicon-512x512.png", { ignoreVary: true });
-
-				// The resource was not in our cache, was not available
-				// from the network and was also not a favicon...
-				// Unfortunately, there is nothing else we can do :(
-				return null;
-			});
-		});
-	}));
+	event.respondWith(fetchResponse(url));
 });
 
 // References:

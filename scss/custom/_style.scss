@@ -33,6 +33,7 @@
 
 .playlist-item-row1, .playlist-item-s-row1 {
 	top: $s1;
+	font-weight: 700;
 }
 
 .playlist-item-row2 {
@@ -150,6 +151,7 @@
 	text-overflow: ellipsis;
 	-webkit-user-select: text;
 	user-select: text;
+	font-size: $small-contents-size;
 }
 
 #title-label {

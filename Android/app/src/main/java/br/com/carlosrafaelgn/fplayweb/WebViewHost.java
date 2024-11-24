@@ -603,6 +603,10 @@ public class WebViewHost {
 		return (floatView != null);
 	}
 
+	public HostMediaSession getHostMediaSession() {
+		return (webViewJavaScriptInterface == null ? null : webViewJavaScriptInterface.hostMediaSession);
+	}
+
 	private float getDensity() {
 		if (density == 0) {
 			final Resources resources = application.getResources();

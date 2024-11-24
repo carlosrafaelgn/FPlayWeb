@@ -48,6 +48,7 @@ import android.view.KeyEvent;
 import android.webkit.WebView;
 
 import br.com.carlosrafaelgn.fplayweb.MainActivity;
+import br.com.carlosrafaelgn.fplayweb.MainService;
 import br.com.carlosrafaelgn.fplayweb.R;
 import br.com.carlosrafaelgn.fplayweb.WebViewHost;
 
@@ -78,6 +79,7 @@ public final class HostMediaSession {
 	private NotificationManager notificationManager;
 	private PendingIntent intentActivity, intentPrev, intentPlayPause, intentNext, intentExit;
 	private Notification.Action actionPrev, actionPause, actionPlay, actionNext, actionExit;
+	private Notification notification;
 
 	public HostMediaSession(WebViewHost webViewHost) {
 		this.webViewHost = webViewHost;
@@ -240,6 +242,12 @@ public final class HostMediaSession {
 		notificationManager.createNotificationChannel(notificationChannel);
 
 		refreshNotification();
+
+		webViewHost.application.startForegroundService(new Intent(webViewHost.application, MainService.class));
+	}
+
+	public Notification getNotification() {
+		return notification;
 	}
 
 	private void refreshNotification() {
@@ -258,7 +266,7 @@ public final class HostMediaSession {
 			.setContentTitle(lastTitle)
 			.setSubText(lastArtist)
 			.setColorized(false)
-			// Apparently, the ongoing flag should be set to false for the delete intent to the send
+			// Apparently, the ongoing flag should be set to false for the delete intent to be sent
 			// https://stackoverflow.com/q/74808095/3569421
 			.setOngoing(false)
 			.setContentIntent(intentActivity)
@@ -278,7 +286,7 @@ public final class HostMediaSession {
 		}
 
 		try {
-			notificationManager.notify(1, builder.build());
+			notificationManager.notify(1, notification = builder.build());
 		} catch (Throwable ex) {
 			// Why the *rare* android.os.TransactionTooLargeException?
 			// What to do?!?!
@@ -434,6 +442,10 @@ public final class HostMediaSession {
 		if (notificationManager == null)
 			return;
 
+		notification = null;
+
+		webViewHost.application.stopService(new Intent(webViewHost.application, MainService.class));
+
 		try {
 			notificationManager.deleteNotificationChannel(CHANNEL_ID);
 		} catch (Throwable ex) {
@@ -447,6 +459,7 @@ public final class HostMediaSession {
 		}
 
 		notificationManager = null;
+		notification = null;
 
 		intentActivity = null;
 		intentPrev = null;
