@@ -77,7 +77,7 @@ class ButtonControl {
 			text = (options.text || (options.stringKey ? Strings.translate(options.stringKey) : ""));
 
 		span.setAttribute("tabindex", "-1");
-		span.setAttribute("aria-hidden", "true");
+		//span.setAttribute("aria-hidden", "true");
 
 		if (options.icon) {
 			className = "large";
@@ -114,7 +114,7 @@ class ButtonControl {
 	public static prepare(button: HTMLButtonElement): HTMLSpanElement {
 		const span = document.createElement("span");
 		span.setAttribute("tabindex", "-1");
-		span.setAttribute("aria-hidden", "true");
+		//span.setAttribute("aria-hidden", "true");
 
 		while (button.firstChild) {
 			const firstChild = button.firstChild;

@@ -89,7 +89,7 @@ class SliderControl {
 		const focusContainer = document.createElement("span");
 		focusContainer.className = "slider-control-focus-container" + classSuffix;
 		focusContainer.setAttribute("tabindex", "-1");
-		focusContainer.setAttribute("aria-hidden", "true");
+		//focusContainer.setAttribute("aria-hidden", "true");
 		this.focusContainer = focusContainer;
 
 		this.onvaluechange = null;

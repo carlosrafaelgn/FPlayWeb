@@ -121,9 +121,9 @@ class CheckboxControl {
 		button.setAttribute("for", id);
 		button.setAttribute("tabindex", "0");
 		span.setAttribute("tabindex", "-1");
-		span.setAttribute("aria-hidden", "true");
+		//span.setAttribute("aria-hidden", "true");
 		input.setAttribute("tabindex", "-1");
-		input.setAttribute("aria-hidden", "true");
+		//input.setAttribute("aria-hidden", "true");
 
 		button.className = input.className;
 		input.className = "";
