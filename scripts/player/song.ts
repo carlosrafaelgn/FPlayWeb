@@ -41,7 +41,7 @@ interface SongInfo {
 }
 
 class Song implements SerializableListItem, SongInfo {
-	private static lastId = 0;
+	private static _lastId = 0;
 
 	public static isPathHttp(path: string): boolean {
 		return (path.startsWith("http:") || path.startsWith("https:") || path.startsWith("icy:"));
@@ -96,7 +96,7 @@ class Song implements SerializableListItem, SongInfo {
 			fileSize = metadata.fileSize;
 		}
 
-		this.id = ++Song.lastId;
+		this.id = ++Song._lastId;
 		this.url = urlOrMetadata as string;
 		this.flags = flags || 0;
 		this.isHttp = Song.isPathHttp(this.url);

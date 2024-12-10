@@ -28,7 +28,7 @@
 // This file came from my other project: https://github.com/carlosrafaelgn/pixel
 //
 interface ModalButtonCallback {
-	(id: string | undefined, button: HTMLButtonElement): void;
+	(id: string | undefined, button: ButtonControl): void;
 }
 
 interface ModalButtonOptions extends CommonButtonControlOptions {
@@ -65,32 +65,32 @@ interface ModalOptions {
 }
 
 class Modal {
-	private static internalId = 0;
+	private static _internalId = 0;
 
-	private static modal: Modal | null = null;
+	private static _modal: Modal | null = null;
 
 	public static get visible(): boolean {
-		return !!Modal.modal;
+		return !!Modal._modal;
 	}
 
 	public static get currentModalElement() : HTMLFormElement | null {
-		return (Modal.modal ? Modal.modal.modalElement : null);
+		return (Modal._modal ? Modal._modal._modalElement : null);
 	}
 
 	public static get currentModalHeaderElement() : HTMLDivElement | null {
-		return (Modal.modal ? Modal.modal.modalHeaderElement : null);
+		return (Modal._modal ? Modal._modal._modalHeaderElement : null);
 	}
 
 	public static get currentModalBodyElement() : HTMLDivElement | null {
-		return (Modal.modal ? Modal.modal.modalBodyElement : null);
+		return (Modal._modal ? Modal._modal._modalBodyElement : null);
 	}
 
 	public static get currentModalFooterElement() : HTMLDivElement | null {
-		return (Modal.modal ? Modal.modal.modalFooterElement : null);
+		return (Modal._modal ? Modal._modal._modalFooterElement : null);
 	}
 
 	public static show(options: ModalOptions): boolean {
-		if (Modal.modal)
+		if (Modal._modal)
 			return false;
 
 		if (options.okCancel) {
@@ -98,7 +98,7 @@ class Modal {
 				{
 					id: "cancel",
 					defaultCancel: true,
-					icon: "icon-clear",
+					iconName: "icon-clear",
 					text: options.cancelText || Strings.Cancel,
 					color: "red",
 					onclick: (options.oncancel || Modal.hide)
@@ -106,7 +106,7 @@ class Modal {
 				{
 					id: "ok",
 					defaultSubmit: options.okCancelSubmit,
-					icon: "icon-check",
+					iconName: "icon-check",
 					text: options.okText || Strings.OK,
 					color: "green",
 					onclick: (options.onok || Modal.hide)
@@ -117,7 +117,7 @@ class Modal {
 				{
 					id: "cancel",
 					defaultCancel: true,
-					icon: "icon-clear",
+					iconName: "icon-clear",
 					text: Strings.Close,
 					color: "red",
 					onclick: Modal.hide
@@ -125,49 +125,49 @@ class Modal {
 			];
 		}
 
-		Modal.modal = new Modal(options);
+		Modal._modal = new Modal(options);
 
 		return true;
 	}
 
 	public static hide(): void {
-		if (Modal.modal)
-			Modal.modal.hideInternal();
+		if (Modal._modal)
+			Modal._modal.hideInternal();
 	}
 
 	public static defaultCancelAction(): boolean {
-		return (Modal.modal ? Modal.modal.defaultCancelActionInternal() : false);
+		return (Modal._modal ? Modal._modal.defaultCancelActionInternal() : false);
 	}
 
 	public static historyStatePopped(): boolean | null {
-		if (!Modal.modal)
+		if (!Modal._modal)
 			return null;
 
-		if (!Modal.modal.fading)
+		if (!Modal._modal._fading)
 			Modal.defaultCancelAction();
 
 		return false;
 	}
 
-	private readonly options: ModalOptions;
-	private readonly containerElement: HTMLDivElement;
-	private readonly modalElement: HTMLFormElement;
-	private readonly modalHeaderElement: HTMLHeadingElement;
-	private readonly modalBodyElement: HTMLDivElement;
-	private readonly modalFooterElement: HTMLDivElement;
-	private readonly defaultCancelButton: HTMLButtonElement | null;
-	private readonly defaultSubmitButton: HTMLButtonElement | null;
-	private readonly focusBlocker: FocusBlocker;
+	private readonly _options: ModalOptions;
+	private readonly _containerElement: HTMLDivElement;
+	private readonly _modalElement: HTMLFormElement;
+	private readonly _modalHeaderElement: HTMLHeadingElement;
+	private readonly _modalBodyElement: HTMLDivElement;
+	private readonly _modalFooterElement: HTMLDivElement;
+	private readonly _defaultCancelButton: ButtonControl | null;
+	private readonly _defaultSubmitButton: ButtonControl | null;
+	private readonly _focusBlocker: FocusBlocker;
 
-	private readonly boundDocumentKeyDown: any;
+	private readonly _boundDocumentKeyDown: any;
 
-	private fading: boolean;
+	private _fading: boolean;
 
 	private constructor(options: ModalOptions) {
-		this.options = options;
+		this._options = options;
 
-		this.focusBlocker = new FocusBlocker();
-		this.focusBlocker.block();
+		this._focusBlocker = new FocusBlocker();
+		this._focusBlocker.block();
 
 		HistoryHandler.pushState();
 
@@ -177,22 +177,22 @@ class Modal {
 		// https://developer.mozilla.org/en-US/docs/Web/CSS/::backdrop
 		// https://caniuse.com/mdn-api_htmldialogelement_showmodal
 		const containerElement = document.createElement("div");
-		this.containerElement = containerElement;
+		this._containerElement = containerElement;
 		containerElement.className = (!options.transparentBackground ? "modal-container fade background" : "modal-container fade");
 
-		const headerId = "modalHeader" + Modal.internalId,
+		const headerId = "modalHeader" + Modal._internalId,
 			modalElement = document.createElement("form");
-		this.modalElement = modalElement;
-		modalElement.setAttribute("tabindex", "-1");
-		modalElement.setAttribute("role", "dialog");
-		modalElement.setAttribute("aria-modal", "true");
+		this._modalElement = modalElement;
+		modalElement.tabIndex = -1;
+		modalElement.role = "dialog";
+		modalElement.ariaModal = "true";
 		modalElement.setAttribute("aria-labelledby", headerId);
 		modalElement.className = "modal" + (options.fullHeight ? " full-height" : "");
 		modalElement.onsubmit = this.submit.bind(this);
 
 		const modalHeaderElement = document.createElement("h1");
-		this.modalHeaderElement = modalHeaderElement;
-		(options.titleHeader || modalHeaderElement).setAttribute("id", headerId);
+		this._modalHeaderElement = modalHeaderElement;
+		(options.titleHeader || modalHeaderElement).id = headerId;
 		modalHeaderElement.className = "modal-header padding" + (options.rightHeader ? " right" : "");
 		if (options.title) {
 			if ((typeof options.title) === "string")
@@ -204,7 +204,7 @@ class Modal {
 		}
 
 		const modalBodyElement = document.createElement("div");
-		this.modalBodyElement = modalBodyElement;
+		this._modalBodyElement = modalBodyElement;
 		modalBodyElement.className = "modal-body scrollable padding top-margin" + (options.leftBody ? " left" : "");
 
 		if (!options.html) {
@@ -223,27 +223,12 @@ class Modal {
 			modalBodyElement.appendChild(options.html as HTMLElement);
 		}
 
-		const buttons = modalBodyElement.getElementsByTagName("button");
-		if (buttons && buttons.length) {
-			for (let i = buttons.length - 1; i >= 0; i--) {
-				const button = buttons[i];
-				ButtonControl.prepare(button);
-				button.onclick = () => {
-					if (this.fading)
-						return;
-
-					if (this.options.onbuttonclick)
-						this.options.onbuttonclick(button.id, button);
-				};
-			}
-		}
-
 		const modalFooterElement = document.createElement("div");
-		this.modalFooterElement = modalFooterElement;
+		this._modalFooterElement = modalFooterElement;
 		modalFooterElement.className = "modal-footer padding top-border left-margin right-margin";
 
-		this.defaultCancelButton = null;
-		this.defaultSubmitButton = null;
+		this._defaultCancelButton = null;
+		this._defaultSubmitButton = null;
 
 		if (options.buttons) {
 			for (let i = 0; i < options.buttons.length; i++) {
@@ -251,20 +236,20 @@ class Modal {
 
 				const button = ButtonControl.create(currentButton, true);
 				if (currentButton.defaultCancel)
-					this.defaultCancelButton = button;
+					this._defaultCancelButton = button;
 				if (currentButton.defaultSubmit)
-					this.defaultSubmitButton = button;
+					this._defaultSubmitButton = button;
 				//if (i)
 				//	button.style.float = "right";
 				button.onclick = () => {
-					if (this.fading)
+					if (this._fading)
 						return;
 
 					if (currentButton.onclick)
 						currentButton.onclick(currentButton.id, button);
 
-					if (this.options.onbuttonclick)
-						this.options.onbuttonclick(currentButton.id, button);
+					if (this._options.onbuttonclick)
+						this._options.onbuttonclick(currentButton.id, button);
 				};
 
 				modalFooterElement.appendChild(button);
@@ -285,21 +270,21 @@ class Modal {
 		containerElement.appendChild(modalElement);
 		document.body.appendChild(containerElement);
 
-		this.boundDocumentKeyDown = this.documentKeyDown.bind(this);
-		document.addEventListener("keydown", this.boundDocumentKeyDown, true);
+		this._boundDocumentKeyDown = this.documentKeyDown.bind(this);
+		document.addEventListener("keydown", this._boundDocumentKeyDown, true);
 
-		this.fading = true;
+		this._fading = true;
 
 		DelayControl.delayShortCB(() => {
 			if (options.onshowing)
 				options.onshowing();
 
-			this.containerElement.classList.add("in");
+			this._containerElement.classList.add("in");
 
 			DelayControl.delayFadeCB(() => {
-				this.fading = false;
+				this._fading = false;
 
-				const element = ((this.options.onshown && this.options.onshown()) || this.modalElement);
+				const element = ((this._options.onshown && this._options.onshown()) || this._modalElement);
 
 				try {
 					element.focus();
@@ -311,43 +296,43 @@ class Modal {
 	}
 
 	private hideInternal(): void {
-		if (Modal.modal !== this || this.fading)
+		if (Modal._modal !== this || this._fading)
 			return;
 
-		if (this.options.onhiding && this.options.onhiding() === false)
+		if (this._options.onhiding && this._options.onhiding() === false)
 			return;
 
-		document.removeEventListener("keydown", this.boundDocumentKeyDown, true);
+		document.removeEventListener("keydown", this._boundDocumentKeyDown, true);
 
-		this.fading = true;
-		this.containerElement.classList.remove("in");
+		this._fading = true;
+		this._containerElement.classList.remove("in");
 
 		DelayControl.delayFadeCB(() => {
-			Modal.modal = null;
+			Modal._modal = null;
 
-			if (this.options.returnFocusElement) {
+			if (this._options.returnFocusElement) {
 				try {
-					this.options.returnFocusElement.focus();
+					this._options.returnFocusElement.focus();
 				} catch (ex: any) {
 					// Just ignore...
 				}
 			}
 
-			if (this.options.onhidden)
-				this.options.onhidden();
+			if (this._options.onhidden)
+				this._options.onhidden();
 
-			document.body.removeChild(this.containerElement);
+			document.body.removeChild(this._containerElement);
 
 			HistoryHandler.popState();
 
-			if (this.focusBlocker)
-				this.focusBlocker.unblock();
+			if (this._focusBlocker)
+				this._focusBlocker.unblock();
 	
-			if (this.options.buttons) {
-				for (let i = this.options.buttons.length - 1; i >= 0; i--)
-					zeroObject(this.options.buttons[i]);
+			if (this._options.buttons) {
+				for (let i = this._options.buttons.length - 1; i >= 0; i--)
+					zeroObject(this._options.buttons[i]);
 			}
-			zeroObject(this.options);
+			zeroObject(this._options);
 			zeroObject(this);
 		});
 	}
@@ -358,8 +343,8 @@ class Modal {
 	}
 
 	private defaultCancelActionInternal(): boolean {
-		if (this.defaultCancelButton) {
-			this.defaultCancelButton.click();
+		if (this._defaultCancelButton) {
+			this._defaultCancelButton.click();
 			return true;
 		}
 		return false;
@@ -368,8 +353,8 @@ class Modal {
 	private submit(e: Event): boolean {
 		cancelEvent(e);
 
-		if (this.defaultSubmitButton)
-			this.defaultSubmitButton.click();
+		if (this._defaultSubmitButton)
+			this._defaultSubmitButton.click();
 
 		return false;
 	}

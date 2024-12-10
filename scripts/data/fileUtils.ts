@@ -29,9 +29,9 @@ class FileUtils {
 	public static readonly httpURLPrefix = "http";
 	public static readonly fileURLPrefix = "file://";
 	public static readonly localURLPrefix = "local://";
-	private static readonly fileURLPrefixWindows = "file:///";
-	private static readonly regExpSepWindows = /\\/g;
-	private static readonly regExpHash = /\#/g;
+	private static readonly _fileURLPrefixWindows = "file:///";
+	private static readonly _regExpSepWindows = /\\/g;
+	private static readonly _regExpHash = /\#/g;
 
 	private static readonly supportedExtensions: { [extension: string]: boolean } = {
 		".aac": true,
@@ -67,8 +67,8 @@ class FileUtils {
 		// encodeURIComponent() encodes all special characters, which includes : / and #.
 		// On the other hand, encodeURI() encodes several special characters, but preserves : / and #, and
 		// Android does not like a file URL containing #'s...
-		return encodeURI((absolutePath.charCodeAt(0) === 0x2F) ? (FileUtils.fileURLPrefix + absolutePath) : (FileUtils.fileURLPrefixWindows + absolutePath.replace(FileUtils.regExpSepWindows, "/")))
-			.replace(FileUtils.regExpHash, "%23");
+		return encodeURI((absolutePath.charCodeAt(0) === 0x2F) ? (FileUtils.fileURLPrefix + absolutePath) : (FileUtils._fileURLPrefixWindows + absolutePath.replace(FileUtils._regExpSepWindows, "/")))
+			.replace(FileUtils._regExpHash, "%23");
 	}
 
 	public static nameFromLinuxPath(path: string): string {

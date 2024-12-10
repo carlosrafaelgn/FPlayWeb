@@ -29,24 +29,24 @@ class OggBufferedReader extends BufferedFileReader {
 	// https://wiki.xiph.org/OggVorbis
 	// (Ogg) Basic page structure = 27 bytes
 	// (Ogg) Maximum segment table = 255 bytes
-	private static readonly basicPageStructureLength = 27;
-	private static readonly maximumOggPageHeaderLength = OggBufferedReader.basicPageStructureLength + 255;
+	private static readonly _basicPageStructureLength = 27;
+	private static readonly _maximumOggPageHeaderLength = OggBufferedReader._basicPageStructureLength + 255;
 	// (Vorbis) Pack type = 1 bytes
 	// (Vorbis) Identifier = 6 bytes "vorbis"
-	private static readonly vorbisIdentifierLength = 1 + 6;
+	private static readonly _vorbisIdentifierLength = 1 + 6;
 
-	private currentPageLength: number;
-	private additionalSkipLength: number;
+	private _currentPageLength: number;
+	private _additionalSkipLength: number;
 
 	public constructor(file: File, buffer: Uint8Array) {
 		super(file, buffer);
 
-		this.currentPageLength = 0;
-		this.additionalSkipLength = 0;
+		this._currentPageLength = 0;
+		this._additionalSkipLength = 0;
 	}
 
 	private readPageLength(): number {
-		if (super.bufferAvailable < OggBufferedReader.basicPageStructureLength)
+		if (super.bufferAvailable < OggBufferedReader._basicPageStructureLength)
 			return -1;
 
 		// Capture pattern (32 bits)
@@ -79,7 +79,7 @@ class OggBufferedReader extends BufferedFileReader {
 	public async findInitialVorbisCommentPage(metadata: Metadata): Promise<boolean> {
 		for (; ; ) {
 			// Read one Ogg page + enough data to try to figure out its vorbis type
-			const tmpLength = OggBufferedReader.maximumOggPageHeaderLength + OggBufferedReader.vorbisIdentifierLength;
+			const tmpLength = OggBufferedReader._maximumOggPageHeaderLength + OggBufferedReader._vorbisIdentifierLength;
 
 			const p = super.fillBuffer(tmpLength);
 			if (p)
@@ -92,9 +92,9 @@ class OggBufferedReader extends BufferedFileReader {
 			if (!pageLength)
 				continue;
 
-			if (pageLength > OggBufferedReader.vorbisIdentifierLength) {
+			if (pageLength > OggBufferedReader._vorbisIdentifierLength) {
 				// readPageAndExtraData() leaves at least vorbisIdentifierLength extra bytes in the buffer
-				if (super.bufferAvailable < OggBufferedReader.vorbisIdentifierLength)
+				if (super.bufferAvailable < OggBufferedReader._vorbisIdentifierLength)
 					return false;
 
 				const packtype = super.readByte();
@@ -126,7 +126,7 @@ class OggBufferedReader extends BufferedFileReader {
 							// channels (1 byte)
 							// rate (4 bytes)
 
-							this.currentPageLength = pageLength - 7;
+							this._currentPageLength = pageLength - 7;
 
 							const p = this.fillBuffer(9);
 							if (p)
@@ -142,7 +142,7 @@ class OggBufferedReader extends BufferedFileReader {
 							metadata.channels = channels;
 							metadata.sampleRate = sampleRate;
 
-							this.currentPageLength = pageLength - 16;
+							this._currentPageLength = pageLength - 16;
 
 							super.skip(pageLength - 16);
 							continue;
@@ -158,9 +158,9 @@ class OggBufferedReader extends BufferedFileReader {
 						if (signature1 === 0x766f7262 && // vorb
 							signature2 === 0x6973) { // is
 
-							this.currentPageLength = pageLength - 7;
+							this._currentPageLength = pageLength - 7;
 
-							const p = this.fillBuffer(this.currentPageLength);
+							const p = this.fillBuffer(this._currentPageLength);
 							if (p)
 								await p;
 
@@ -191,81 +191,81 @@ class OggBufferedReader extends BufferedFileReader {
 		if (bytes <= 0)
 			return;
 
-		if (this.additionalSkipLength > 0) {
-			this.additionalSkipLength += bytes;
-		} else if (bytes <= this.currentPageLength) {
-			this.currentPageLength -= bytes;
+		if (this._additionalSkipLength > 0) {
+			this._additionalSkipLength += bytes;
+		} else if (bytes <= this._currentPageLength) {
+			this._currentPageLength -= bytes;
 			super.skip(bytes);
 			return;
 		} else {
-			this.additionalSkipLength = bytes - this.currentPageLength;
-			super.skip(this.currentPageLength);
-			this.currentPageLength = 0;
+			this._additionalSkipLength = bytes - this._currentPageLength;
+			super.skip(this._currentPageLength);
+			this._currentPageLength = 0;
 		}
 
-		while (super.bufferAvailable > OggBufferedReader.maximumOggPageHeaderLength) {
-			this.currentPageLength = this.readPageLength();
-			if (this.currentPageLength < 0) {
+		while (super.bufferAvailable > OggBufferedReader._maximumOggPageHeaderLength) {
+			this._currentPageLength = this.readPageLength();
+			if (this._currentPageLength < 0) {
 				// Something wrong happened, so just skip to the end to force an eof
-				super.skip(super.totalLength);
+				super.skip(this.totalLength);
 				return;
 			}
 
-			if (!this.currentPageLength)
+			if (!this._currentPageLength)
 				continue;
 
-			if (this.additionalSkipLength <= this.currentPageLength) {
-				this.currentPageLength -= this.additionalSkipLength;
-				super.skip(this.additionalSkipLength);
-				this.additionalSkipLength = 0;
+			if (this._additionalSkipLength <= this._currentPageLength) {
+				this._currentPageLength -= this._additionalSkipLength;
+				super.skip(this._additionalSkipLength);
+				this._additionalSkipLength = 0;
 				return;
 			}
 
-			this.additionalSkipLength -= this.currentPageLength;
-			super.skip(this.currentPageLength);
-			this.currentPageLength = 0;
+			this._additionalSkipLength -= this._currentPageLength;
+			super.skip(this._currentPageLength);
+			this._currentPageLength = 0;
 		}
 	}
 
 	private async skipAdditionalSkipLength(): Promise<void> {
-		while (this.additionalSkipLength > 0) {
-			let p = super.fillBuffer(OggBufferedReader.maximumOggPageHeaderLength + OggBufferedReader.maximumOggPageHeaderLength + 4);
+		while (this._additionalSkipLength > 0) {
+			let p = super.fillBuffer(OggBufferedReader._maximumOggPageHeaderLength + OggBufferedReader._maximumOggPageHeaderLength + 4);
 			if (p)
 				await p;
 
-			if (!this.currentPageLength && !this.readNextPageLength()) {
-				this.additionalSkipLength = 0;
+			if (!this._currentPageLength && !this.readNextPageLength()) {
+				this._additionalSkipLength = 0;
 				return;
 			}
 
-			if (this.additionalSkipLength <= this.currentPageLength) {
-				this.currentPageLength -= this.additionalSkipLength;
-				super.skip(this.additionalSkipLength);
-				this.additionalSkipLength = 0;
+			if (this._additionalSkipLength <= this._currentPageLength) {
+				this._currentPageLength -= this._additionalSkipLength;
+				super.skip(this._additionalSkipLength);
+				this._additionalSkipLength = 0;
 
-				p = super.fillBuffer(OggBufferedReader.maximumOggPageHeaderLength + OggBufferedReader.maximumOggPageHeaderLength + 4);
+				p = super.fillBuffer(OggBufferedReader._maximumOggPageHeaderLength + OggBufferedReader._maximumOggPageHeaderLength + 4);
 				if (p)
 					await p;
 
 				return;
 			}
 
-			this.additionalSkipLength -= this.currentPageLength;
-			super.skip(this.currentPageLength);
-			this.currentPageLength = 0;
+			this._additionalSkipLength -= this._currentPageLength;
+			super.skip(this._currentPageLength);
+			this._currentPageLength = 0;
 		}
 	}
 
 	private readNextPageLength(): boolean {
-		while (super.bufferAvailable > OggBufferedReader.maximumOggPageHeaderLength) {
-			this.currentPageLength = this.readPageLength();
-			if (this.currentPageLength < 0) {
+		while (super.bufferAvailable > OggBufferedReader._maximumOggPageHeaderLength) {
+			this._currentPageLength = this.readPageLength();
+			if (this._currentPageLength < 0) {
 				// Something wrong happened, so just skip to the end to force an eof
-				super.skip(super.totalLength);
+				super.skip(this.totalLength);
 				return false;
 			}
 
-			if (!this.currentPageLength)
+			if (!this._currentPageLength)
 				continue;
 
 			if (!super.bufferAvailable)
@@ -278,32 +278,32 @@ class OggBufferedReader extends BufferedFileReader {
 	}
 
 	public fillBuffer(length: number): Promise<void | null> | null {
-		if (this.additionalSkipLength > 0)
+		if (this._additionalSkipLength > 0)
 			return this.skipAdditionalSkipLength().then(() => this.fillBuffer(length));
 
 		// Always leave enough data in the buffer in order to allow for
 		// an extra int (32 bits) to be read, in addition to the next page header
-		const p = super.fillBuffer(Math.min(length + OggBufferedReader.maximumOggPageHeaderLength + OggBufferedReader.maximumOggPageHeaderLength + 4, super.bufferLength));
+		const p = super.fillBuffer(Math.min(length + OggBufferedReader._maximumOggPageHeaderLength + OggBufferedReader._maximumOggPageHeaderLength + 4, super.bufferLength));
 		if (p)
 			return p.then(() => this.fillBuffer(length));
 
-		if (!this.currentPageLength)
+		if (!this._currentPageLength)
 			this.readNextPageLength();
 
 		return null;
 	}
 
 	public readByte(): number {
-		if (!this.currentPageLength && !this.readNextPageLength())
+		if (!this._currentPageLength && !this.readNextPageLength())
 			return -1;
 
-		this.currentPageLength--;
+		this._currentPageLength--;
 		return super.readByte();
 	}
 
 	public readUInt32BE(): number | null {
-		if (this.currentPageLength >= 4) {
-			this.currentPageLength -= 4;
+		if (this._currentPageLength >= 4) {
+			this._currentPageLength -= 4;
 			return super.readUInt32BE();
 		}
 
@@ -321,8 +321,8 @@ class OggBufferedReader extends BufferedFileReader {
 	}
 
 	public readUInt32LE(): number | null {
-		if (this.currentPageLength >= 4) {
-			this.currentPageLength -= 4;
+		if (this._currentPageLength >= 4) {
+			this._currentPageLength -= 4;
 			return super.readUInt32LE();
 		}
 
@@ -340,8 +340,8 @@ class OggBufferedReader extends BufferedFileReader {
 	}
 
 	public readUInt16BE(): number | null {
-		if (this.currentPageLength >= 2) {
-			this.currentPageLength -= 2;
+		if (this._currentPageLength >= 2) {
+			this._currentPageLength -= 2;
 			return super.readUInt16BE();
 		}
 
@@ -355,8 +355,8 @@ class OggBufferedReader extends BufferedFileReader {
 	}
 
 	public readUInt16LE(): number | null {
-		if (this.currentPageLength >= 2) {
-			this.currentPageLength -= 2;
+		if (this._currentPageLength >= 2) {
+			this._currentPageLength -= 2;
 			return super.readUInt16LE();
 		}
 
@@ -378,20 +378,20 @@ class OggBufferedReader extends BufferedFileReader {
 		}
 
 		length -= p as number;
-		this.currentPageLength -= p as number;
+		this._currentPageLength -= p as number;
 		offset += p as number;
 		totalRead += p as number;
 
 		while (length > 0 && !super.eof) {
-			if (!this.currentPageLength) {
-				if (this.bufferAvailable < OggBufferedReader.maximumOggPageHeaderLength)
-					await super.fillBuffer(OggBufferedReader.maximumOggPageHeaderLength + OggBufferedReader.maximumOggPageHeaderLength + 4);
+			if (!this._currentPageLength) {
+				if (this.bufferAvailable < OggBufferedReader._maximumOggPageHeaderLength)
+					await super.fillBuffer(OggBufferedReader._maximumOggPageHeaderLength + OggBufferedReader._maximumOggPageHeaderLength + 4);
 
 				if (!this.readNextPageLength())
 					return totalRead;
 			}
 
-			p = super.read(buffer, offset, Math.min(length, this.currentPageLength));
+			p = super.read(buffer, offset, Math.min(length, this._currentPageLength));
 			if ((typeof p) !== "number")
 				p = await p;
 
@@ -399,14 +399,14 @@ class OggBufferedReader extends BufferedFileReader {
 				break;
 
 			length -= p as number;
-			this.currentPageLength -= p as number;
+			this._currentPageLength -= p as number;
 			offset += p as number;
 			totalRead += p as number;
 		}
 
-		if (!this.currentPageLength) {
-			if (this.bufferAvailable < OggBufferedReader.maximumOggPageHeaderLength)
-				await super.fillBuffer(OggBufferedReader.maximumOggPageHeaderLength + OggBufferedReader.maximumOggPageHeaderLength + 4);
+		if (!this._currentPageLength) {
+			if (this.bufferAvailable < OggBufferedReader._maximumOggPageHeaderLength)
+				await super.fillBuffer(OggBufferedReader._maximumOggPageHeaderLength + OggBufferedReader._maximumOggPageHeaderLength + 4);
 
 			this.readNextPageLength();
 		}
@@ -415,21 +415,21 @@ class OggBufferedReader extends BufferedFileReader {
 	}
 
 	public read(buffer: Uint8Array, offset: number, length: number): Promise<number> | number {
-		if (this.additionalSkipLength > 0)
+		if (this._additionalSkipLength > 0)
 			return this.skipAdditionalSkipLength().then(() => this.read(buffer, offset, length));
 
 		let totalRead = 0;
 
 		while (length > 0 && !super.eof) {
-			if (!this.currentPageLength) {
-				if (this.bufferAvailable < OggBufferedReader.maximumOggPageHeaderLength)
+			if (!this._currentPageLength) {
+				if (this.bufferAvailable < OggBufferedReader._maximumOggPageHeaderLength)
 					return this.readAsync(0, buffer, offset, length, totalRead);
 
 				if (!this.readNextPageLength())
 					return totalRead;
 			}
 
-			const p = super.read(buffer, offset, Math.min(length, this.currentPageLength));
+			const p = super.read(buffer, offset, Math.min(length, this._currentPageLength));
 			if ((typeof p) !== "number")
 				return this.readAsync(p, buffer, offset, length, totalRead);
 
@@ -437,12 +437,12 @@ class OggBufferedReader extends BufferedFileReader {
 				break;
 
 			length -= p as number;
-			this.currentPageLength -= p as number;
+			this._currentPageLength -= p as number;
 			offset += p as number;
 			totalRead += p as number;
 		}
 
-		if (!this.currentPageLength && this.bufferAvailable > OggBufferedReader.maximumOggPageHeaderLength)
+		if (!this._currentPageLength && this.bufferAvailable > OggBufferedReader._maximumOggPageHeaderLength)
 			this.readNextPageLength();
 
 		return totalRead;

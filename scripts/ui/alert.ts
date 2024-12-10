@@ -25,77 +25,77 @@
 //
 
 class Alert {
-	private static readonly shortDelayMS = 2500;
-	private static readonly longDelayMS = 4500;
+	private static readonly _shortDelayMS = 2500;
+	private static readonly _longDelayMS = 4500;
 
-	private static timeout = 0;
-	private static element: HTMLDivElement | null = null;
+	private static _timeout = 0;
+	private static _element: HTMLDivElement | null = null;
 
 	private static removeElement(): void {
-		if (!Alert.element)
+		if (!Alert._element)
 			return;
 
-		const timeout = parseInt(Alert.element.getAttribute("data-timeout") as string);
-		if (timeout !== Alert.timeout)
+		const timeout = parseInt(Alert._element.dataset["timeout"] as string);
+		if (timeout !== Alert._timeout)
 			return;
 
-		document.body.removeChild(Alert.element);
+		document.body.removeChild(Alert._element);
 
-		Alert.timeout = 0;
-		Alert.element = null;
+		Alert._timeout = 0;
+		Alert._element = null;
 	}
 
 	private static hideByTimeout(): void {
-		if (!Alert.element)
+		if (!Alert._element)
 			return;
 
-		const timeout = parseInt(Alert.element.getAttribute("data-timeout") as string);
-		if (timeout !== Alert.timeout)
+		const timeout = parseInt(Alert._element.dataset["timeout"] as string);
+		if (timeout !== Alert._timeout)
 			return;
 
-		Alert.timeout = 0;
+		Alert._timeout = 0;
 
 		Alert.hide();
 	}
 
 	public static hide(): void {
-		if (!Alert.element || !Alert.element.classList.contains("in"))
+		if (!Alert._element || !Alert._element.classList.contains("in"))
 			return;
 
-		if (Alert.timeout)
-			clearTimeout(Alert.timeout);
+		if (Alert._timeout)
+			clearTimeout(Alert._timeout);
 
-		Alert.element.classList.remove("in");
+		Alert._element.classList.remove("in");
 
-		Alert.timeout = DelayControl.delayFadeCB(Alert.removeElement);
+		Alert._timeout = DelayControl.delayFadeCB(Alert.removeElement);
 
-		Alert.element.setAttribute("data-timeout", Alert.timeout.toString());
+		Alert._element.dataset["timeout"] = Alert._timeout.toString();
 	}
 
 	public static show(text: string, important?: boolean): void {
-		if (Alert.timeout) {
-			clearTimeout(Alert.timeout);
-			Alert.timeout = 0;
+		if (Alert._timeout) {
+			clearTimeout(Alert._timeout);
+			Alert._timeout = 0;
 		}
 
-		if (!Alert.element) {
-			Alert.element = document.createElement("div");
-			Alert.element.setAttribute("role", "alert");
-			Alert.element.className = "alert fade";
-			Alert.element.onclick = Alert.hide;
+		if (!Alert._element) {
+			Alert._element = document.createElement("div");
+			Alert._element.role = "alert";
+			Alert._element.className = "alert fade";
+			Alert._element.onclick = Alert.hide;
 
-			document.body.appendChild(Alert.element);
+			document.body.appendChild(Alert._element);
 
 			DelayControl.delayShortCB(function () { Alert.show(text, important); });
 			return;
 		}
 
-		Strings.changeText(Alert.element, text);
+		Strings.changeText(Alert._element, text);
 
-		Alert.element.classList.add("in");
+		Alert._element.classList.add("in");
 
-		Alert.timeout = setTimeout(Alert.hideByTimeout, DelayControl.fadeDelayMS + (important ? Alert.longDelayMS : Alert.shortDelayMS));
+		Alert._timeout = setTimeout(Alert.hideByTimeout, DelayControl.fadeDelayMS + (important ? Alert._longDelayMS : Alert._shortDelayMS));
 
-		Alert.element.setAttribute("data-timeout", Alert.timeout.toString());
+		Alert._element.dataset["timeout"] = Alert._timeout.toString();
 	}
 }

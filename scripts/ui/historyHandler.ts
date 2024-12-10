@@ -25,24 +25,24 @@
 //
 
 class HistoryHandler {
-	private static readonly state = { id: Strings.AppName };
+	private static readonly _state = { id: Strings.AppName };
 
-	private static poppedInternally = false;
-	private static handlers: (() => boolean | null)[];
+	private static _poppedInternally = false;
+	private static _handlers: (() => boolean | null)[];
 
 	public static init(...handlers: (() => boolean | null)[]): void {
-		HistoryHandler.handlers = handlers || [];
+		HistoryHandler._handlers = handlers || [];
 
 		window.addEventListener("popstate", HistoryHandler.historyStatePopped);
 	}
 
 	private static historyStatePopped(e: PopStateEvent): void {
-		if (HistoryHandler.poppedInternally) {
-			HistoryHandler.poppedInternally = false;
+		if (HistoryHandler._poppedInternally) {
+			HistoryHandler._poppedInternally = false;
 			return;
 		}
 
-		const handlers = HistoryHandler.handlers;
+		const handlers = HistoryHandler._handlers;
 		if (!handlers)
 			return;
 
@@ -60,12 +60,12 @@ class HistoryHandler {
 	}
 
 	public static pushState(): void {
-		window.history.pushState(HistoryHandler.state, Strings.AppName);
+		window.history.pushState(HistoryHandler._state, Strings.AppName);
 	}
 
 	public static popState(): void {
 		if (window.history.state && window.history.state.id === Strings.AppName) {
-			HistoryHandler.poppedInternally = true;
+			HistoryHandler._poppedInternally = true;
 			window.history.back();
 		}
 	}

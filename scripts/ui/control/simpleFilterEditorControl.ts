@@ -51,8 +51,7 @@ class SimpleFilterEditorControl {
 
 		this.sliders = sliders;
 		for (let i = 0; i < sliders.length; i++) {
-			const span = document.createElement("span"),
-				freq = document.createElement("span"),
+			const freq = document.createElement("span"),
 				gain = document.createElement("span"),
 				sliderValue = this.filterToSlider(i);
 
@@ -92,9 +91,8 @@ class SimpleFilterEditorControl {
 
 			gain.className = "small-top-margin";
 
-			span.className = "simple-filter-slider" + ((!i || AppUI.primaryInputIsTouch) ? "" : " left-margin");
-			element.appendChild(span);
-			sliders[i] = new SliderControl(span, label, sliderToDB, SliderControlValueChild.LeftChild, true, true, -30, 30, sliderValue, gain, freq);
+			sliders[i] = SliderControl.create(label, sliderToDB, SliderControlValueChild.LeftChild, false, true, -30, 30, sliderValue, "simple-filter-slider" + ((!i || AppUI.primaryInputIsTouch) ? "" : " left-margin"), gain, freq);
+			element.appendChild(sliders[i]);
 			this.createHandler(sliders[i], i);
 		}
 	}
@@ -111,7 +109,7 @@ class SimpleFilterEditorControl {
 			editor.commitChanges();
 		};
 
-		slider.ondragend = commitChanges;
+		slider.ondragchangecommit = commitChanges;
 		slider.onkeyboardchange = commitChanges;
 	}
 

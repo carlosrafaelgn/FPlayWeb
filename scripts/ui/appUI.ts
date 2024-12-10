@@ -50,52 +50,51 @@ class AppUI {
 	public static readonly fontSizeREM = 3.5;
 	public static readonly contentsSizeREM = 6;
 
-	private static readonly baseThinBorderPX = 1;
-	private static readonly baseThickBorderPX = 2;
+	private static readonly _baseThinBorderPX = 1;
+	private static readonly _baseThickBorderPX = 2;
 
-	private static readonly zoomHandlers: AppUIZoomHandler[] = [];
+	private static readonly _zoomHandlers: AppUIZoomHandler[] = [];
 
-	private static readonly rootVariables = document.getElementById("root-variables") as HTMLStyleElement;
+	private static readonly _rootVariables = document.getElementById("root-variables") as HTMLStyleElement;
 
-	private static readonly cover = document.getElementById("cover") as HTMLDivElement;
-	private static readonly panelContainer = document.getElementById("panel-container") as HTMLDivElement;
-	private static readonly fixedPanel = document.getElementById("fixed-panel") as HTMLDivElement;
-	private static readonly middlePanel = document.getElementById("middle-panel") as HTMLDivElement;
-	private static readonly optionalPanel = document.getElementById("optional-panel") as HTMLDivElement;
+	private static readonly _cover = document.getElementById("cover") as HTMLDivElement;
+	private static readonly _panelContainer = document.getElementById("panel-container") as HTMLDivElement;
+	private static _fixedPanel: HTMLDivElement;
+	private static _middlePanel: HTMLDivElement;
+	private static _optionalPanel: HTMLDivElement;
 
-	private static readonly iconPlay = document.getElementById("i-play") as HTMLElement;
-	private static readonly iconPause = document.getElementById("i-pause") as HTMLElement;
-	private static readonly ruler = document.getElementById("ruler") as HTMLDivElement;
-	private static readonly titleLabel = document.getElementById("title-label") as HTMLParagraphElement;
-	private static readonly artistLabel = document.getElementById("artist-label") as HTMLParagraphElement;
-	private static readonly assistiveSongLengthLabel = document.getElementById("assistive-song-length-label") as HTMLSpanElement;
-	private static readonly topMessage = document.getElementById("top-message") as HTMLDivElement;
-	private static readonly toggleViewButton = document.getElementById("toggle-view-button") as HTMLButtonElement;
+	private static _playButton: ButtonControl;
+	private static _ruler: HTMLDivElement;
+	private static _titleLabel: HTMLParagraphElement;
+	private static _artistLabel: HTMLParagraphElement;
+	private static _assistiveSongLengthLabel: HTMLSpanElement;
+	private static _topMessage: HTMLDivElement;
+	private static _toggleViewButton: ButtonControl;
 
-	private static webFrame: WebFrame | null;
+	private static _webFrame: WebFrame | null;
 
-	private static currentTimeS: number;
-	private static songLengthLabel: HTMLSpanElement;
-	private static seekSlider: SliderControl;
+	private static _currentTimeS: number;
+	private static _songLengthLabel: HTMLSpanElement;
+	private static _seekSlider: SliderControl;
 
-	private static volumeSlider: SliderControl;
+	private static _volumeSlider: SliderControl;
 
-	private static playlistControl: ListControl<Song>;
+	private static _playlistControl: ListControl<Song>;
 
-	private static graphicalFilterControlType: HTMLButtonElement;
-	private static graphicalFilterControlEnabled: HTMLInputElement;
-	private static stereoPannerControlEnabled: HTMLInputElement;
-	private static monoDownMixerControlEnabled: HTMLInputElement;
+	private static _graphicalFilterControlType: ButtonControl;
+	private static _graphicalFilterControlEnabled: ButtonControl;
+	private static _stereoPannerControlEnabled: ButtonControl;
+	private static _monoDownMixerControlEnabled: ButtonControl;
 
 	private static _loading = false;
 
-	private static devicePixelRatio = -1;
+	private static _devicePixelRatio = -1;
 	private static _1remInPX = 1;
 	private static _fontScale = 1;
 	private static _smallIconSizePX = Icon.baseSizePX;
 	private static _largeIconSizePX = Icon.baseSizePX << 1;
-	private static _thinBorderPX = AppUI.baseThinBorderPX;
-	private static _thickBorderPX = AppUI.baseThickBorderPX;
+	private static _thinBorderPX = AppUI._baseThinBorderPX;
+	private static _thickBorderPX = AppUI._baseThickBorderPX;
 	private static _buttonSizePX = 1;
 	private static _contentsSizePX = 1;
 	private static _playlistItemSizePX = 1;
@@ -103,30 +102,30 @@ class AppUI {
 	private static _extraRGBMode = false;
 	private static _neonMode = false;
 
-	private static directoryCancelled = false;
+	private static _directoryCancelled = false;
 
-	private static topMessageFading = 0;
-	private static topMessageTimeout = 0;
+	private static _topMessageFading = 0;
+	private static _topMessageTimeout = 0;
 
-	private static focusBlocker: FocusBlocker | null = null;
+	private static _focusBlocker: FocusBlocker | null = null;
 
-	private static panelContainerToggled = false;
-	private static panelContainerToggling = false;
-	private static panelContainerToggleVersion = 0;
+	private static _panelContainerToggled = false;
+	private static _panelContainerToggling = false;
+	private static _panelContainerToggleVersion = 0;
 
 	private static preparePlaylist(): void {
-		if (!App.player || !AppUI.playlistControl)
+		if (!App.player || !AppUI._playlistControl)
 			return;
 
 		const playlist = App.player.playlist;
 		if (!playlist) {
-			AppUI.playlistControl.adapter = null;
+			AppUI._playlistControl.adapter = null;
 			return;
 		}
 
 		playlist.onsonglengthchange = AppUI.playlistSongLengthChange;
 
-		AppUI.playlistControl.adapter = new PlaylistAdapter(playlist);
+		AppUI._playlistControl.adapter = new PlaylistAdapter(playlist);
 	}
 
 	private static adjustDecimal(x: number): string {
@@ -181,10 +180,10 @@ class AppUI {
 	}
 
 	private static adjustWindow(): void {
-		const _1remInPx = (App.hostInterface ? (AppUI.baseSizePX * (AppUI._fontScale = App.hostInterface.getFontScale())) : (AppUI.ruler.getBoundingClientRect().height * 0.125));
+		const _1remInPx = (App.hostInterface ? (AppUI.baseSizePX * (AppUI._fontScale = App.hostInterface.getFontScale())) : (AppUI._ruler.getBoundingClientRect().height * 0.125));
 
-		if (AppUI.devicePixelRatio !== devicePixelRatio || AppUI._1remInPX !== _1remInPx) {
-			AppUI.devicePixelRatio = devicePixelRatio;
+		if (AppUI._devicePixelRatio !== devicePixelRatio || AppUI._1remInPX !== _1remInPx) {
+			AppUI._devicePixelRatio = devicePixelRatio;
 			AppUI._1remInPX = _1remInPx;
 
 			if (App.hostInterface)
@@ -241,13 +240,13 @@ class AppUI {
 			//const largeIconSizePXStr = AppUI.adjustDecimal((Icon.baseSizePX * (factor << 1)) * (Math.max(1, AppUI._fontScale) | 0) / devicePixelRatio);
 			//AppUI._largeIconSizePX = parseFloat(largeIconSizePXStr);
 
-			let i = ((AppUI.baseThinBorderPX * devicePixelRatio) | 0) / devicePixelRatio;
+			let i = ((AppUI._baseThinBorderPX * devicePixelRatio) | 0) / devicePixelRatio;
 			if (!i)
 				i = 1;
 			const thinBorderPXStr = AppUI.adjustDecimal(i);
 			AppUI._thinBorderPX = parseFloat(thinBorderPXStr);
 
-			i = ((AppUI.baseThickBorderPX * devicePixelRatio) | 0) / devicePixelRatio;
+			i = ((AppUI._baseThickBorderPX * devicePixelRatio) | 0) / devicePixelRatio;
 			if (!i)
 				i = 1;
 			const thickBorderPXStr = AppUI.adjustDecimal(i);
@@ -256,7 +255,7 @@ class AppUI {
 			const playlistItemSizePXStr = AppUI.adjustDecimal((3 * AppUI.remToPX(AppUI.smallContentsSizeREM)) + AppUI.s2PX);
 			AppUI._playlistItemSizePX = parseFloat(playlistItemSizePXStr);
 
-			AppUI.rootVariables.textContent = `:root {
+			AppUI._rootVariables.textContent = `:root {
 				--button-size: ${AppUI._buttonSizePX}px;
 				--button-padding: ${AppUI.adjustDecimal(0.5 * (AppUI._buttonSizePX - AppUI._contentsSizePX))}px;
 				--negative-button-padding: -${AppUI.adjustDecimal(0.5 * (AppUI._buttonSizePX - AppUI._contentsSizePX))}px;
@@ -274,15 +273,15 @@ class AppUI {
 			//if (App.player)
 			//	App.player.graphicalFilterControl.editor.scale = factor;
 
-			for (let i = AppUI.zoomHandlers.length - 1; i >= 0; i--)
-				AppUI.zoomHandlers[i]();
+			for (let i = AppUI._zoomHandlers.length - 1; i >= 0; i--)
+				AppUI._zoomHandlers[i]();
 		}
 
 		AppUI.checkPanelContainerToggleState();
 	}
 
 	private static changeZoom(delta: number): void {
-		if (!AppUI.webFrame)
+		if (!AppUI._webFrame)
 			return;
 
 		const factor = ((devicePixelRatio >= 1) ? (1 + Math.ceil(devicePixelRatio * 4)) :
@@ -293,25 +292,25 @@ class AppUI {
 							4))))) + delta;
 
 		if (factor <= 0) {
-			AppUI.webFrame.setZoomFactor(0.5);
+			AppUI._webFrame.setZoomFactor(0.5);
 		} else if (factor >= 21) {
-			AppUI.webFrame.setZoomFactor(5);
+			AppUI._webFrame.setZoomFactor(5);
 		} else {
 			switch (factor) {
 				case 1:
-					AppUI.webFrame.setZoomFactor(2 / 3);
+					AppUI._webFrame.setZoomFactor(2 / 3);
 					break;
 				case 2:
-					AppUI.webFrame.setZoomFactor(3 / 4);
+					AppUI._webFrame.setZoomFactor(3 / 4);
 					break;
 				case 3:
-					AppUI.webFrame.setZoomFactor(4 / 5);
+					AppUI._webFrame.setZoomFactor(4 / 5);
 					break;
 				case 4:
-					AppUI.webFrame.setZoomFactor(9 / 10);
+					AppUI._webFrame.setZoomFactor(9 / 10);
 					break;
 				default:
-					AppUI.webFrame.setZoomFactor((factor - 1) / 4);
+					AppUI._webFrame.setZoomFactor((factor - 1) / 4);
 					break;
 			}
 		}
@@ -319,7 +318,7 @@ class AppUI {
 
 	private static globalKeyHandler(e: KeyboardEvent): any {
 		if ((e.ctrlKey || e.metaKey)) {
-			if (AppUI.webFrame) {
+			if (AppUI._webFrame) {
 				// Change default zoom behavior
 				switch (e.key) {
 					case "-":
@@ -340,7 +339,7 @@ class AppUI {
 				case "Escape":
 					if (!e.repeat) {
 						if (!Modal.visible) {
-							if (AppUI.playlistControl && AppUI.playlistControl.deleteMode)
+							if (AppUI._playlistControl && AppUI._playlistControl.deleteMode)
 								AppUI.toggleDeleteMode(true);
 							else if (App.player)
 								App.player.playPause();
@@ -366,7 +365,7 @@ class AppUI {
 						App.player.next();
 					return cancelEvent(e);
 				default:
-					if (e.target === document.body && !AppUI.panelContainerToggled && !Modal.visible) {
+					if (e.target === document.body && !AppUI._panelContainerToggled && !Modal.visible) {
 						switch (e.key) {
 							case "ArrowDown":
 							case "ArrowRight":
@@ -379,8 +378,8 @@ class AppUI {
 							case "Enter":
 							case " ":
 								cancelEvent(e);
-								AppUI.playlistControl.element.focus();
-								AppUI.playlistControl.elementKeyDown(e);
+								AppUI._playlistControl.focus();
+								AppUI._playlistControl.elementKeyDown(e);
 								return false;
 						}
 					}
@@ -390,8 +389,8 @@ class AppUI {
 	}
 
 	private static historyStatePopped(): boolean | null {
-		if (!AppUI.playlistControl || !AppUI.playlistControl.deleteMode) {
-			if (!AppUI.panelContainerToggled)
+		if (!AppUI._playlistControl || !AppUI._playlistControl.deleteMode) {
+			if (!AppUI._panelContainerToggled)
 				return null;
 
 			AppUI.toggleView(false);
@@ -423,7 +422,84 @@ class AppUI {
 		window.addEventListener("resize", AppUI.adjustCover);
 		AppUI.adjustCover();
 
-		AppUI.webFrame = webFrame;
+		AppUI._panelContainer.innerHTML = `
+		<main id="fixed-panel">
+			<header id="top-panel" class="toolbar bottom-border">
+				<div aria-atomic="true" aria-live="polite">
+					<p id="title-label">
+						<f-icon color="pink" name="icon-title" large class="margin" sr-title="${Strings.TitleLabel}"></f-icon>-
+					</p>
+					<p id="artist-label">
+						<f-icon color="orange" name="icon-artist" large class="margin" sr-title="${Strings.ArtistLabel}"></f-icon>-
+					</p>
+					<p class="sr-only">
+						<span>${Strings.DurationLabel}</span><span id="assistive-song-length-label"></span>
+					</p>
+				</div>
+				<div id="top-message" class="fade" aria-atomic="true" aria-live="assertive"></div>
+			</header>
+
+			<f-list id="playlist-control" aria-label="${Strings.Playlist}"></f-list>
+
+			<div id="middle-panel" class="toolbar top-border">
+				<f-button square class="toolbar-left hidden-normal" onclick="AppUI.toggleView(true)" text="${Strings.ShowEffects}" icon-name="icon-filter">
+				</f-button><f-button square color="green" class="no-left-margin" onclick="AppUI.addFiles()" text="${Strings.AddSongs}" icon-name="icon-add-title">
+				</f-button><f-button id="add-folder-button" square color="orange" onclick="AppUI.addFiles(true)" text="${Strings.AddFolders}" icon-name="icon-add-folder">
+				</f-button><f-button id="info-button" square color="gray" onclick="AppUI.showSongInfo()" text="${Strings.ShowInfo}" icon-name="icon-info">
+				</f-button><f-button square color="red" onclick="AppUI.toggleDeleteMode(true)" text="${Strings.DeleteSongs}" icon-name="icon-clear">
+				</f-button><f-button square class="toolbar-right" onclick="AppUI.showAbout()" text="${Strings.Menu}" icon-name="icon-menu">
+				</f-button>
+			</div>
+
+			<div id="bottom-panel" class="toolbar top-border">
+				<f-slider id="seek-slider" aria-label="${Strings.Seek}" unfocusable manual-aria></f-slider>
+				<div>
+					<f-button square onclick="App.player && App.player.previous()" text="${Strings.Previous}" icon-name="icon-previous">
+					</f-button><f-button id="play-button" square onclick="App.player && App.player.playPause()" text="${Strings.PlayPause}" icon-name="icon-play">
+					</f-button><f-button square onclick="App.player && App.player.stop()" text="${Strings.Stop}" icon-name="icon-stop">
+					</f-button><f-button square onclick="App.player && App.player.next()" text="${Strings.Next}" icon-name="icon-next">
+					</f-button><f-slider id="volume-slider" aria-label="${Strings.Volume}" min="${Player.minVolume}" max="0" value="${appSettings.playerVolume}" value-child="${SliderControlValueChild.RightChild}" class="left-margin"></f-slider>
+				</div>
+			</div>
+		</main>
+
+		<aside id="optional-panel" class="scrollable">
+			<div id="optional-panel-container">
+				<div class="toolbar bottom-border hidden-normal">
+					<f-button id="toggle-view-button" onclick="AppUI.toggleView(true)" text="${Strings.ShowPlaylist}" icon-name="icon-playlist"></f-button>
+				</div>
+
+				<div class="toolbar">
+					<f-button id="graphical-filter-control-enabled" checkable text="${Strings.Enabled}">
+					</f-button><f-button id="graphical-filter-control-type" icon-name="icon-filter"></f-button>
+				</div>
+
+				<div id="filter-container" class="top-margin"></div>
+
+				<div class="top-border">
+					<f-button id="stereo-panner-control-enabled" checkable text="${Strings.Panning}" icon-name="icon-multiple-stop">
+					</f-button><f-slider id="stereo-panner-slider" class="left-margin"></f-slider>
+				</div>
+
+				<div class="top-border" id="mono-down-mixer-control-container">
+					<f-button id="mono-down-mixer-control-enabled" checkable text="${Strings.DownMixToMono}" icon-name="icon-call-merge-flipped"></f-button>
+				</div>
+			</div>
+		</aside>
+		`;
+
+		AppUI._fixedPanel = document.getElementById("fixed-panel") as HTMLDivElement;
+		AppUI._middlePanel = document.getElementById("middle-panel") as HTMLDivElement;
+		AppUI._optionalPanel = document.getElementById("optional-panel") as HTMLDivElement;
+		AppUI._playButton = document.getElementById("play-button") as ButtonControl;
+		AppUI._ruler = document.getElementById("ruler") as HTMLDivElement;
+		AppUI._titleLabel = document.getElementById("title-label") as HTMLParagraphElement;
+		AppUI._artistLabel = document.getElementById("artist-label") as HTMLParagraphElement;
+		AppUI._assistiveSongLengthLabel = document.getElementById("assistive-song-length-label") as HTMLSpanElement;
+		AppUI._topMessage = document.getElementById("top-message") as HTMLDivElement;
+		AppUI._toggleViewButton = document.getElementById("toggle-view-button") as ButtonControl;
+
+		AppUI._webFrame = webFrame;
 
 		window.addEventListener("keydown", AppUI.globalKeyHandler, true);
 
@@ -438,63 +514,61 @@ class AppUI {
 			(addFolderButton.parentNode as HTMLElement).removeChild(addFolderButton);
 		}
 
-		ButtonControl.init();
-		CheckboxControl.init();
-
-		AppUI.seekSlider = new SliderControl("seek-slider", Strings.Seek, null, SliderControlValueChild.None, false, false, 0, 1, 0, null, null, true);
-		AppUI.seekSlider.disabled = true;
-		AppUI.seekSlider.onvaluechange = AppUI.seekSliderValueChange;
-		AppUI.seekSlider.ondragend = AppUI.seekSliderDragEnd;
+		AppUI._seekSlider = document.getElementById("seek-slider") as SliderControl;
+		AppUI._seekSlider.disabled = true;
+		AppUI._seekSlider.onvaluechange = AppUI.seekSliderValueChange;
+		AppUI._seekSlider.ondragchangecommit = AppUI.seekSliderDragChangeCommit;
 
 		const currentTimeLabel = document.createElement("span");
 		currentTimeLabel.className = "seek-label";
-		AppUI.currentTimeS = 0;
+		AppUI._currentTimeS = 0;
 		Strings.changeText(currentTimeLabel, Formatter.none);
-		AppUI.seekSlider.leftChild = currentTimeLabel;
+		AppUI._seekSlider.leftChild = currentTimeLabel;
 
-		AppUI.songLengthLabel = document.createElement("span");
-		AppUI.songLengthLabel.className = "seek-label";
-		Strings.changeText(AppUI.songLengthLabel, Formatter.none);
-		Strings.changeText(AppUI.assistiveSongLengthLabel, Formatter.none);
-		AppUI.seekSlider.rightChild = AppUI.songLengthLabel;
+		AppUI._songLengthLabel = document.createElement("span");
+		AppUI._songLengthLabel.className = "seek-label";
+		Strings.changeText(AppUI._songLengthLabel, Formatter.none);
+		Strings.changeText(AppUI._assistiveSongLengthLabel, Formatter.none);
+		AppUI._seekSlider.rightChild = AppUI._songLengthLabel;
 
-		AppUI.volumeSlider = new SliderControl("volume-slider", Strings.Volume, function (value) {
+		AppUI._volumeSlider = document.getElementById("volume-slider") as SliderControl;
+		AppUI._volumeSlider.mapper = function (value) {
 			return (value <= Player.minVolume ? GraphicalFilterEditorStrings.MinusInfinity : (value ? value : "-0")) + " dB";
-		}, SliderControlValueChild.RightChild, true, false, Player.minVolume, 0, appSettings.playerVolume);
-		AppUI.volumeSlider.leftChild = Icon.createLarge("icon-volume", "green small-right-margin");
+		};
+		AppUI._volumeSlider.leftChild = Icon.create("icon-volume", "green", true, "small-right-margin");
 		const volumeLabel = document.createElement("span");
 		volumeLabel.className = "small-left-margin";
-		volumeLabel.setAttribute("id", "volume-label");
-		AppUI.volumeSlider.rightChild = volumeLabel;
-		AppUI.volumeSlider.onvaluechange = AppUI.volumeSliderValueChange;
+		volumeLabel.id = "volume-label";
+		AppUI._volumeSlider.rightChild = volumeLabel;
+		AppUI._volumeSlider.onvaluechange = AppUI.volumeSliderValueChange;
 
-		AppUI.playlistControl = new ListControl("playlist-control", Strings.Playlist, true);
-		AppUI.playlistControl.onitemclick = AppUI.playlistControlItemClick;
-		AppUI.playlistControl.onitemcontextmenu = AppUI.playlistControlItemContextMenu;
+		AppUI._playlistControl = document.getElementById("playlist-control") as ListControl<Song>;
+		AppUI._playlistControl.onitemclick = AppUI.playlistControlItemClick;
+		AppUI._playlistControl.onitemcontextmenu = AppUI.playlistControlItemContextMenu;
 
-		AppUI.graphicalFilterControlType = document.getElementById("graphical-filter-control-type") as HTMLButtonElement;
-		ButtonControl.setText(AppUI.graphicalFilterControlType, appSettings.graphicalFilterControlSimpleMode ? Strings.TraditionalFilter : Strings.AdvancedFilter);
-		AppUI.graphicalFilterControlType.onclick = AppUI.graphicalFilterControlTypeClick;
+		AppUI._graphicalFilterControlType = document.getElementById("graphical-filter-control-type") as ButtonControl;
+		AppUI._graphicalFilterControlType.text = (appSettings.graphicalFilterControlSimpleMode ? Strings.TraditionalFilter : Strings.AdvancedFilter);
+		AppUI._graphicalFilterControlType.onclick = AppUI.graphicalFilterControlTypeClick;
 
-		AppUI.graphicalFilterControlEnabled = document.getElementById("graphical-filter-control-enabled") as HTMLInputElement;
-		AppUI.graphicalFilterControlEnabled.checked = appSettings.graphicalFilterControlEnabled || false;
-		AppUI.graphicalFilterControlEnabled.onclick = AppUI.graphicalFilterControlEnabledClick;
+		AppUI._graphicalFilterControlEnabled = document.getElementById("graphical-filter-control-enabled") as ButtonControl;
+		AppUI._graphicalFilterControlEnabled.checked = appSettings.graphicalFilterControlEnabled || false;
+		AppUI._graphicalFilterControlEnabled.onclick = AppUI.graphicalFilterControlEnabledClick;
 
-		AppUI.stereoPannerControlEnabled = document.getElementById("stereo-panner-control-enabled") as HTMLInputElement;
-		AppUI.stereoPannerControlEnabled.checked = appSettings.stereoPannerControlEnabled || false;
-		AppUI.stereoPannerControlEnabled.onclick = AppUI.stereoPannerControlEnabledClick;
+		AppUI._stereoPannerControlEnabled = document.getElementById("stereo-panner-control-enabled") as ButtonControl;
+		AppUI._stereoPannerControlEnabled.checked = appSettings.stereoPannerControlEnabled || false;
+		AppUI._stereoPannerControlEnabled.onclick = AppUI.stereoPannerControlEnabledClick;
 
 		if (MonoDownMixerControl.isSupported()) {
-			AppUI.monoDownMixerControlEnabled = document.getElementById("mono-down-mixer-control-enabled") as HTMLInputElement;
-			AppUI.monoDownMixerControlEnabled.checked = appSettings.monoDownMixerControlEnabled || false;
-			AppUI.monoDownMixerControlEnabled.onclick = AppUI.monoDownMixerControlEnabledClick;
+			AppUI._monoDownMixerControlEnabled = document.getElementById("mono-down-mixer-control-enabled") as ButtonControl;
+			AppUI._monoDownMixerControlEnabled.checked = appSettings.monoDownMixerControlEnabled || false;
+			AppUI._monoDownMixerControlEnabled.onclick = AppUI.monoDownMixerControlEnabledClick;
 		} else {
 			const monoDownMixerControlContainer = document.getElementById("mono-down-mixer-control-container") as HTMLDivElement;
 			(monoDownMixerControlContainer.parentNode as HTMLDivElement).removeChild(monoDownMixerControlContainer);
 		}
 
 		if (App.frameless)
-			AppUI.panelContainer.classList.remove("web");
+			AppUI._panelContainer.classList.remove("web");
 
 		window.addEventListener("resize", AppUI.adjustWindow, { passive: true });
 
@@ -507,7 +581,7 @@ class AppUI {
 
 	public static init(appSettings: AppSettings): void {
 		if (App.player) {
-			AppUI.volumeSlider.value = App.player.volume;
+			AppUI._volumeSlider.value = App.player.volume;
 
 			App.player.onsongchange = AppUI.playerSongChange;
 			App.player.onloadingchange = AppUI.playerLoadingChange;
@@ -522,41 +596,41 @@ class AppUI {
 			AppUI.centerCurrentSongIntoView();
 
 			try {
-				AppUI.playlistControl.element.focus();
+				AppUI._playlistControl.focus();
 			} catch (ex: any) {
 				// Just ignore...
 			}
 
 			HistoryHandler.init(Menu.historyStatePopped, Modal.historyStatePopped, AppUI.historyStatePopped);
 
-			AppUI.cover.classList.remove("in");
+			AppUI._cover.classList.remove("in");
 	
 			DelayControl.delayShortCB(function () {
 				AppUI.centerCurrentSongIntoView();
 	
 				DelayControl.delayFadeCB(function () {
-					if (AppUI.cover)
-						document.body.removeChild(AppUI.cover);
+					if (AppUI._cover)
+						document.body.removeChild(AppUI._cover);
 				});
 			});
 		}
 	}
 
 	private static adjustCover(): void {
-		if (AppUI.cover) {
+		if (AppUI._cover) {
 			// Having a 1px x 1px black rectangle that is scaled by a large amount makes
 			// an area of the rectangle transparent, like a regular scaling "artifact"
 			// that appears when scaling regular images. Therefore, I decided to keep the
 			// rectangle with a size of 2px x 2px, scaling it twice as needed, in order to
 			// try to reduce this "artifact".
 			const rect = document.body.getBoundingClientRect();
-			AppUI.cover.style.transform = `scale(${rect.right}, ${rect.bottom})`;
+			AppUI._cover.style.transform = `scale(${rect.right}, ${rect.bottom})`;
 		}
 	}
 
 	private static centerCurrentSongIntoView(): void {
 		if (App.player && App.player.playlist && App.player.playlist.currentIndex >= 0)
-			AppUI.playlistControl.centerItemIntoView(App.player.playlist.currentIndex);
+			AppUI._playlistControl.centerItemIntoView(App.player.playlist.currentIndex);
 	}
 
 	public static destroy(): void {
@@ -599,8 +673,8 @@ class AppUI {
 		return AppUI._playlistItemSizePX;
 	}
 
-	public static get playlistControlElement(): HTMLElement {
-		return AppUI.playlistControl.element;
+	public static get playlistControlElement(): ListControl<Song> {
+		return AppUI._playlistControl;
 	}
 
 	public static get rgbMode(): boolean {
@@ -659,16 +733,16 @@ class AppUI {
 
 	public static addZoomHandler(zoomHandler: AppUIZoomHandler | null): void {
 		if (zoomHandler)
-			AppUI.zoomHandlers.push(zoomHandler);
+			AppUI._zoomHandlers.push(zoomHandler);
 	}
 
 	public static removeZoomHandler(zoomHandler: AppUIZoomHandler | null): void {
 		if (!zoomHandler)
 			return;
 
-		for (let i = AppUI.zoomHandlers.length - 1; i >= 0; i--) {
-			if (AppUI.zoomHandlers[i] === zoomHandler) {
-				AppUI.zoomHandlers.splice(i, 1);
+		for (let i = AppUI._zoomHandlers.length - 1; i >= 0; i--) {
+			if (AppUI._zoomHandlers[i] === zoomHandler) {
+				AppUI._zoomHandlers.splice(i, 1);
 				return;
 			}
 		}
@@ -690,59 +764,44 @@ class AppUI {
 		return px / AppUI._1remInPX;
 	}
 
-	public static appendHTML(parent: HTMLElement, html: string): void {
-		if (!parent || !html)
-			return;
-
-		const temp = document.createElement("div");
-		temp.innerHTML = html;
-
-		let child: Node | null;
-
-		while ((child = temp.firstChild)) {
-			temp.removeChild(child);
-			parent.appendChild(child);
-		}
-	}
-
 	private static playerSongChange(song: Song | null, currentTimeS: number): void {
-		if (!App.player || !AppUI.playlistControl)
+		if (!App.player || !AppUI._playlistControl)
 			return;
 
 		document.title = ((song && song.title) ? (song.title + " - FPlay") : "FPlay");
 
-		Strings.changeText(AppUI.titleLabel, (song && song.title) || Formatter.none);
+		Strings.changeText(AppUI._titleLabel, (song && song.title) || Formatter.none);
 
-		Strings.changeText(AppUI.artistLabel, (song && song.artist) || Formatter.none);
+		Strings.changeText(AppUI._artistLabel, (song && song.artist) || Formatter.none);
 
-		if (App.player.playlist && App.player.playlist.currentIndex >= 0 && !AppUI.playlistControl.deleteMode && song)
-			AppUI.playlistControl.bringItemIntoView(App.player.playlist.currentIndex);
+		if (App.player.playlist && App.player.playlist.currentIndex >= 0 && !AppUI._playlistControl.deleteMode && song)
+			AppUI._playlistControl.bringItemIntoView(App.player.playlist.currentIndex);
 
 		if (currentTimeS < 0)
 			currentTimeS = 0;
-		AppUI.currentTimeS = currentTimeS | 0;
+		AppUI._currentTimeS = currentTimeS | 0;
 
 		if (!song) {
-			Strings.changeText(AppUI.songLengthLabel, Formatter.none);
-			Strings.changeText(AppUI.assistiveSongLengthLabel, Formatter.none);
+			Strings.changeText(AppUI._songLengthLabel, Formatter.none);
+			Strings.changeText(AppUI._assistiveSongLengthLabel, Formatter.none);
 
-			if (AppUI.seekSlider) {
-				AppUI.seekSlider.disabled = true;
-				AppUI.seekSlider.manuallyChangeAll(0, Formatter.none, SliderControlValueChild.LeftChild);
+			if (AppUI._seekSlider) {
+				AppUI._seekSlider.disabled = true;
+				AppUI._seekSlider.manuallyChangeAll(0, Formatter.none, SliderControlValueChild.LeftChild);
 			}
 		} else {
-			Strings.changeText(AppUI.songLengthLabel, song.length);
-			Strings.changeText(AppUI.assistiveSongLengthLabel, song.length);
+			Strings.changeText(AppUI._songLengthLabel, song.length);
+			Strings.changeText(AppUI._assistiveSongLengthLabel, song.length);
 
-			if (AppUI.seekSlider) {
+			if (AppUI._seekSlider) {
 				if (song.lengthMS > 0) {
-					AppUI.seekSlider.disabled = false;
-					AppUI.seekSlider.max = song.lengthMS;
+					AppUI._seekSlider.disabled = false;
+					AppUI._seekSlider.max = song.lengthMS;
 				} else {
-					AppUI.seekSlider.disabled = true;
+					AppUI._seekSlider.disabled = true;
 				}
 
-				AppUI.seekSlider.manuallyChangeAll(currentTimeS * 1000, Formatter.formatTimeS(AppUI.currentTimeS), SliderControlValueChild.LeftChild);
+				AppUI._seekSlider.manuallyChangeAll(currentTimeS * 1000, Formatter.formatTimeS(AppUI._currentTimeS), SliderControlValueChild.LeftChild);
 			}
 		}
 	}
@@ -752,27 +811,20 @@ class AppUI {
 	}
 
 	private static playerPausedChange(paused: boolean): void {
-		if (AppUI.iconPlay && AppUI.iconPause) {
-			if (paused) {
-				AppUI.iconPause.classList.add("hidden");
-				AppUI.iconPlay.classList.remove("hidden");
-			} else {
-				AppUI.iconPlay.classList.add("hidden");
-				AppUI.iconPause.classList.remove("hidden");
-			}
-		}
+		if (AppUI._playButton)
+			AppUI._playButton.iconName = (paused ? "icon-play" : "icon-pause");
 	}
 
 	private static playerCurrentTimeSChange(currentTimeS: number): void {
-		if (!AppUI.seekSlider || AppUI.seekSlider.dragging || !App.player)
+		if (!AppUI._seekSlider || AppUI._seekSlider.dragging || !App.player)
 			return;
 
 		if (currentTimeS < 0)
 			currentTimeS = 0;
 
 		const s = currentTimeS | 0;
-		if (AppUI.currentTimeS !== s) {
-			AppUI.currentTimeS = s;
+		if (AppUI._currentTimeS !== s) {
+			AppUI._currentTimeS = s;
 
 			const currentTimeMS = s * 1000;
 			if (App.player.currentSong) {
@@ -781,16 +833,16 @@ class AppUI {
 					App.player.preloadNextSong();
 			}
 
-			AppUI.seekSlider.manuallyChangeAll(currentTimeMS, Formatter.formatTimeS(s), SliderControlValueChild.LeftChild);
+			AppUI._seekSlider.manuallyChangeAll(currentTimeMS, Formatter.formatTimeS(s), SliderControlValueChild.LeftChild);
 		} else {
-			AppUI.seekSlider.value = currentTimeS * 1000;
+			AppUI._seekSlider.value = currentTimeS * 1000;
 		}
 	}
 
 	private static playerError(message: string): void {
 		Modal.show({
 			text: message,
-			returnFocusElement: AppUI.playlistControl.element
+			returnFocusElement: AppUI._playlistControl
 		});
 	}
 
@@ -799,37 +851,37 @@ class AppUI {
 			return;
 
 		if (song === App.player.currentSong) {
-			Strings.changeText(AppUI.songLengthLabel, song.length);
-			Strings.changeText(AppUI.assistiveSongLengthLabel, song.length);
+			Strings.changeText(AppUI._songLengthLabel, song.length);
+			Strings.changeText(AppUI._assistiveSongLengthLabel, song.length);
 
-			if (AppUI.seekSlider) {
+			if (AppUI._seekSlider) {
 				if (song.lengthMS > 0) {
-					AppUI.seekSlider.disabled = false;
-					AppUI.seekSlider.max = song.lengthMS;
+					AppUI._seekSlider.disabled = false;
+					AppUI._seekSlider.max = song.lengthMS;
 				} else {
-					AppUI.seekSlider.value = 0;
-					AppUI.seekSlider.disabled = true;
+					AppUI._seekSlider.value = 0;
+					AppUI._seekSlider.disabled = true;
 				}
 			}
 		}
 
-		if (AppUI.playlistControl)
-			AppUI.playlistControl.refreshVisibleItems();
+		if (AppUI._playlistControl)
+			AppUI._playlistControl.refreshVisibleItems();
 	}
 
 	private static seekSliderValueChange(value: number): void {
-		if (!AppUI.seekSlider || !AppUI.seekSlider.dragging)
+		if (!AppUI._seekSlider || !AppUI._seekSlider.dragging)
 			return;
 
 		const s = ((value / 1000) | 0);
-		if (AppUI.currentTimeS !== s) {
-			AppUI.currentTimeS = s;
+		if (AppUI._currentTimeS !== s) {
+			AppUI._currentTimeS = s;
 
-			AppUI.seekSlider.manuallyChangeAria(Formatter.formatTimeS(s), SliderControlValueChild.LeftChild);
+			AppUI._seekSlider.manuallyChangeAria(Formatter.formatTimeS(s), SliderControlValueChild.LeftChild);
 		}
 	}
 
-	private static seekSliderDragEnd(value: number): void {
+	private static seekSliderDragChangeCommit(value: number): void {
 		if (!App.player)
 			return;
 
@@ -860,96 +912,96 @@ class AppUI {
 			return;
 
 		App.graphicalFilterControl.simpleMode = !App.graphicalFilterControl.simpleMode;
-		ButtonControl.setText(AppUI.graphicalFilterControlType, App.graphicalFilterControl.simpleMode ? Strings.TraditionalFilter : Strings.AdvancedFilter);
+		AppUI._graphicalFilterControlType.text = (App.graphicalFilterControl.simpleMode ? Strings.TraditionalFilter : Strings.AdvancedFilter);
 	}
 
 	private static graphicalFilterControlEnabledClick(): void {
 		if (!App.graphicalFilterControl)
 			return;
 
-		App.graphicalFilterControl.enabled = AppUI.graphicalFilterControlEnabled.checked;
+		App.graphicalFilterControl.enabled = AppUI._graphicalFilterControlEnabled.checked;
 	}
 
 	private static stereoPannerControlEnabledClick(): void {
 		if (!App.stereoPannerControl)
 			return;
 
-		App.stereoPannerControl.enabled = AppUI.stereoPannerControlEnabled.checked;
+		App.stereoPannerControl.enabled = AppUI._stereoPannerControlEnabled.checked;
 	}
 
 	private static monoDownMixerControlEnabledClick(): void {
 		if (!App.monoDownMixerControl)
 			return;
 
-		App.monoDownMixerControl.enabled = AppUI.monoDownMixerControlEnabled.checked;
+		App.monoDownMixerControl.enabled = AppUI._monoDownMixerControlEnabled.checked;
 	}
 
 	public static hideTopMessage(): void {
-		if (AppUI.topMessageFading < 0 || !AppUI.topMessage)
+		if (AppUI._topMessageFading < 0 || !AppUI._topMessage)
 			return;
 
-		if (AppUI.topMessageTimeout)
-			clearTimeout(AppUI.topMessageTimeout);
+		if (AppUI._topMessageTimeout)
+			clearTimeout(AppUI._topMessageTimeout);
 
-		AppUI.topMessageFading = -1;
+		AppUI._topMessageFading = -1;
 
-		AppUI.topMessage.classList.remove("in");
+		AppUI._topMessage.classList.remove("in");
 
-		AppUI.topMessageTimeout = DelayControl.delayFadeCB(function () {
-			if (AppUI.topMessageFading >= 0)
+		AppUI._topMessageTimeout = DelayControl.delayFadeCB(function () {
+			if (AppUI._topMessageFading >= 0)
 				return;
 
-			AppUI.topMessageFading = 0;
-			AppUI.topMessageTimeout = 0;
+			AppUI._topMessageFading = 0;
+			AppUI._topMessageTimeout = 0;
 
-			AppUI.topMessage.style.visibility = "";
+			AppUI._topMessage.style.visibility = "";
 
-			AppUI.topMessage.innerHTML = "";
+			AppUI._topMessage.innerHTML = "";
 
-			if (AppUI.titleLabel)
-				AppUI.titleLabel.classList.remove("behind");
+			if (AppUI._titleLabel)
+				AppUI._titleLabel.classList.remove("behind");
 
-			if (AppUI.artistLabel)
-				AppUI.artistLabel.classList.remove("behind");
+			if (AppUI._artistLabel)
+				AppUI._artistLabel.classList.remove("behind");
 		});
 	}
 
 	public static showTopMessage(html: string, createHandler?: (parent: HTMLDivElement) => void): void {
-		if (!AppUI.topMessage)
+		if (!AppUI._topMessage)
 			return;
 
-		if (AppUI.topMessageTimeout)
-			clearTimeout(AppUI.topMessageTimeout);
+		if (AppUI._topMessageTimeout)
+			clearTimeout(AppUI._topMessageTimeout);
 
-		AppUI.topMessageFading = 1;
+		AppUI._topMessageFading = 1;
 
-		if (AppUI.titleLabel)
-			AppUI.titleLabel.classList.add("behind");
+		if (AppUI._titleLabel)
+			AppUI._titleLabel.classList.add("behind");
 
-		if (AppUI.artistLabel)
-			AppUI.artistLabel.classList.add("behind");
+		if (AppUI._artistLabel)
+			AppUI._artistLabel.classList.add("behind");
 
-		AppUI.topMessage.innerHTML = html;
+		AppUI._topMessage.innerHTML = html;
 
 		if (createHandler)
-			createHandler(AppUI.topMessage);
+			createHandler(AppUI._topMessage);
 
-		AppUI.topMessage.style.visibility = "visible";
+		AppUI._topMessage.style.visibility = "visible";
 
-		AppUI.topMessageTimeout = DelayControl.delayShortCB(function () {
-			if (AppUI.topMessageFading <= 0 || AppUI.topMessageFading !== 1)
+		AppUI._topMessageTimeout = DelayControl.delayShortCB(function () {
+			if (AppUI._topMessageFading <= 0 || AppUI._topMessageFading !== 1)
 				return;
 
-			AppUI.topMessageFading = 2;
+			AppUI._topMessageFading = 2;
 
-			AppUI.topMessage.classList.add("in");
+			AppUI._topMessage.classList.add("in");
 
-			AppUI.topMessageTimeout = DelayControl.delayFadeCB(function () {
-				if (AppUI.topMessageFading !== 2)
+			AppUI._topMessageTimeout = DelayControl.delayFadeCB(function () {
+				if (AppUI._topMessageFading !== 2)
 					return;
 
-				AppUI.topMessageFading = 0;
-				AppUI.topMessageTimeout = 0;
+				AppUI._topMessageFading = 0;
+				AppUI._topMessageTimeout = 0;
 			});
 		});
 	}
@@ -964,7 +1016,7 @@ class AppUI {
 
 		if (FilePicker.isSupported()) {
 			filePaths = null;
-			fileFetcher = FilePicker.showAddPlay(AppUI.playlistControl.element);
+			fileFetcher = FilePicker.showAddPlay(AppUI._playlistControl);
 		} else {
 			filePaths = await App.showOpenDialogWeb(webDirectory);
 			fileFetcher = null;
@@ -1032,12 +1084,12 @@ class AppUI {
 				App.updateLoadingIcon();
 			} while (fileFetcher);
 
-			if (missingSongWasAdded && AppUI.playlistControl)
-				AppUI.playlistControl.refreshVisibleItems();
+			if (missingSongWasAdded && AppUI._playlistControl)
+				AppUI._playlistControl.refreshVisibleItems();
 		} catch (ex: any) {
 			Modal.show({
 				text: "addFiles error: " + (ex.message || ex.toString()),
-				returnFocusElement: AppUI.playlistControl.element
+				returnFocusElement: AppUI._playlistControl
 			});
 		} finally {
 			AppUI._loading = false;
@@ -1046,54 +1098,44 @@ class AppUI {
 	}
 
 	public static toggleDeleteMode(popStateIfLeaving: boolean): void {
-		if (!AppUI.playlistControl)
+		if (!AppUI._playlistControl)
 			return;
 
-		if (AppUI.focusBlocker) {
-			AppUI.focusBlocker.unblock();
-			AppUI.focusBlocker = null;
+		if (AppUI._focusBlocker) {
+			AppUI._focusBlocker.unblock();
+			AppUI._focusBlocker = null;
 		}
 
-		if (AppUI.playlistControl.deleteMode) {
-			AppUI.playlistControl.deleteMode = false;
+		if (AppUI._playlistControl.deleteMode) {
+			AppUI._playlistControl.deleteMode = false;
 
 			AppUI.hideTopMessage();
 
 			if (popStateIfLeaving)
 				HistoryHandler.popState();
 		} else {
-			AppUI.playlistControl.deleteMode = true;
+			AppUI._playlistControl.deleteMode = true;
 
-			AppUI.focusBlocker = new FocusBlocker();
-			AppUI.focusBlocker.block(AppUI.middlePanel);
+			AppUI._focusBlocker = new FocusBlocker();
+			AppUI._focusBlocker.block(AppUI._middlePanel);
 
 			AppUI.showTopMessage(Strings.DeleteModeHTML, function (parent) {
 				const div = document.createElement("div");
 
-				ButtonControl.create({
-					color: "red",
-					icon: "icon-delete-all",
-					text: Strings.DeleteAllSongs,
-					parent: div,
-					onclick: function () {
-						if (App.player && App.player.playlist)
-							App.player.playlist.clear();
+				div.innerHTML = `
+					<f-button color="red" onclick="
+					if (App.player && App.player.playlist)
+						App.player.playlist.clear();
 
-						if (AppUI.playlistControl && AppUI.playlistControl.deleteMode)
-							AppUI.toggleDeleteMode(true);
-					}
-				});
-
-				ButtonControl.create({
-					color: "green",
-					icon: "icon-check",
-					text: Strings.Done,
-					parent: div,
-					onclick: function () {
-						if (AppUI.playlistControl && AppUI.playlistControl.deleteMode)
-							AppUI.toggleDeleteMode(true);
-					}
-				});
+					if (AppUI._playlistControl && AppUI._playlistControl.deleteMode)
+						AppUI.toggleDeleteMode(true);
+					" text="${Strings.DeleteAllSongs}" icon-name="icon-delete-all">
+					</f-button><f-button color="green" onclick="
+					if (AppUI._playlistControl && AppUI._playlistControl.deleteMode)
+						AppUI.toggleDeleteMode(true);
+					" text="${Strings.Done}" icon-name="icon-check">
+					</f-button>
+				`;
 
 				parent.appendChild(div);
 			});
@@ -1102,77 +1144,77 @@ class AppUI {
 		}
 
 		try {
-			AppUI.playlistControl.element.focus();
+			AppUI._playlistControl.focus();
 		} catch (ex: any) {
 			// Just ignore...
 		}
 	}
 
 	private static checkPanelContainerToggleState() {
-		if (window.innerWidth <= 875 || !AppUI.fixedPanel || !AppUI.optionalPanel)
+		if (window.innerWidth <= 875 || !AppUI._fixedPanel || !AppUI._optionalPanel)
 			return;
 
-		if (AppUI.panelContainerToggling) {
-			AppUI.panelContainerToggleVersion++;
-			AppUI.panelContainerToggling = false;
+		if (AppUI._panelContainerToggling) {
+			AppUI._panelContainerToggleVersion++;
+			AppUI._panelContainerToggling = false;
 
-			const parent = AppUI.cover.parentNode;
+			const parent = AppUI._cover.parentNode;
 			if (parent)
-				parent.removeChild(AppUI.cover);
+				parent.removeChild(AppUI._cover);
 
-			AppUI.cover.classList.remove("in");
+			AppUI._cover.classList.remove("in");
 		}
 
-		if (AppUI.panelContainerToggled) {
-			AppUI.panelContainerToggled = false;
+		if (AppUI._panelContainerToggled) {
+			AppUI._panelContainerToggled = false;
 
-			AppUI.panelContainer.classList.remove("toggled");
+			AppUI._panelContainer.classList.remove("toggled");
 
 			HistoryHandler.popState();
 		}
 	}
 
 	public static toggleView(popStateIfLeaving: boolean): void {
-		if (AppUI.panelContainer) {
-			AppUI.panelContainerToggleVersion++;
+		if (AppUI._panelContainer) {
+			AppUI._panelContainerToggleVersion++;
 
-			const version = AppUI.panelContainerToggleVersion,
+			const version = AppUI._panelContainerToggleVersion,
 				fadePanels = function (focusElement: HTMLElement, addToggledClass: boolean) {
-					AppUI.panelContainerToggling = true;
+					AppUI._panelContainerToggling = true;
 
-					AppUI.cover.classList.remove("in");
+					AppUI._cover.classList.remove("in");
 
-					if (!AppUI.cover.parentNode)
-						document.body.appendChild(AppUI.cover);
+					if (!AppUI._cover.parentNode)
+						document.body.appendChild(AppUI._cover);
 
 					DelayControl.delayShortCB(async function () {
-						if (AppUI.panelContainerToggleVersion !== version)
+						if (AppUI._panelContainerToggleVersion !== version)
 							return;
 
-						AppUI.cover.classList.add("in");
+						AppUI._cover.classList.add("in");
 
 						await DelayControl.delayFade();
 
-						if (AppUI.panelContainerToggleVersion !== version)
+						if (AppUI._panelContainerToggleVersion !== version)
 							return;
 
 						if (addToggledClass)
-							AppUI.panelContainer.classList.add("toggled");
+							AppUI._panelContainer.classList.add("toggled");
 						else
-							AppUI.panelContainer.classList.remove("toggled");
+							AppUI._panelContainer.classList.remove("toggled");
 
-						AppUI.cover.classList.remove("in");
+						AppUI._cover.classList.remove("in");
 
 						await DelayControl.delayFade();
 
-						if (AppUI.panelContainerToggleVersion !== version)
+						if (AppUI._panelContainerToggleVersion !== version)
 							return;
 
-						const parent = AppUI.cover.parentNode;
+						const parent = AppUI._cover.parentNode;
 						if (parent)
-							parent.removeChild(AppUI.cover);
+							parent.removeChild(AppUI._cover);
 
-						AppUI.panelContainerToggling = false;
+						AppUI._panelContainerToggling = false;
 
 						try {
 							focusElement.focus();
@@ -1182,17 +1224,17 @@ class AppUI {
 					});
 				};
 
-			if (AppUI.panelContainerToggled) {
-				AppUI.panelContainerToggled = false;
+			if (AppUI._panelContainerToggled) {
+				AppUI._panelContainerToggled = false;
 
-				fadePanels(AppUI.playlistControl.element, false);
+				fadePanels(AppUI._playlistControl, false);
 
 				if (popStateIfLeaving)
 					HistoryHandler.popState();
 			} else {
-				AppUI.panelContainerToggled = true;
+				AppUI._panelContainerToggled = true;
 
-				fadePanels(ButtonControl.getDefaultFocusElement(AppUI.toggleViewButton), true);
+				fadePanels(AppUI._toggleViewButton.defaultFocusElement, true);
 
 				HistoryHandler.pushState();
 			}
@@ -1225,43 +1267,46 @@ class AppUI {
 				${(song.url ? `<p class="top-margin"><b>${Strings.Path}</b><br/>${Strings.htmlEncode(song.url.startsWith(FileUtils.localURLPrefix) ? song.url.substring(FileUtils.localURLPrefix.length) : (song.url.startsWith(FileUtils.fileURLPrefix) ? decodeURI(song.url.substring(FileUtils.fileURLPrefix.length)) : song.url))}</p>` : '')}
 			</div>`,
 			title: Strings.SongInfo,
-			returnFocusElement: AppUI.playlistControl.element
+			returnFocusElement: AppUI._playlistControl
 		});
 	}
 
 	public static showAbout(): void {
 		const body = document.createElement("div");
 
-		const rgbModeCheckbox = CheckboxControl.create({
-			stringKey: Strings.RGBMode,
+		const rgbModeCheckbox = ButtonControl.create({
+			text: Strings.RGBMode,
+			checkable: true,
 			checked: AppUI.rgbMode,
 			parent: body,
 			onclick: function () {
-				AppUI.rgbMode = CheckboxControl.isChecked(rgbModeCheckbox);
-				CheckboxControl.setChecked(extraRGBModeCheckbox, AppUI.extraRGBMode);
+				AppUI.rgbMode = rgbModeCheckbox.checked;
+				extraRGBModeCheckbox.checked = AppUI.extraRGBMode;
 			}
 		});
 
-		const extraRGBModeCheckbox = CheckboxControl.create({
-			stringKey: Strings.ExtraRGBMode,
+		const extraRGBModeCheckbox = ButtonControl.create({
+			text: Strings.ExtraRGBMode,
+			checkable: true,
 			checked: AppUI.extraRGBMode,
 			parent: body,
 			onclick: function () {
-				AppUI.extraRGBMode = CheckboxControl.isChecked(extraRGBModeCheckbox);
-				CheckboxControl.setChecked(rgbModeCheckbox, AppUI.rgbMode);
+				AppUI.extraRGBMode = extraRGBModeCheckbox.checked;
+				rgbModeCheckbox.checked = AppUI.rgbMode;
 			}
 		});
 
-		const neonModeCheckbox = CheckboxControl.create({
-			stringKey: Strings.NeonMode,
+		const neonModeCheckbox = ButtonControl.create({
+			text: Strings.NeonMode,
+			checkable: true,
 			checked: AppUI.neonMode,
 			parent: body,
 			onclick: function () {
-				AppUI.neonMode = CheckboxControl.isChecked(neonModeCheckbox);
+				AppUI.neonMode = neonModeCheckbox.checked;
 			}
 		});
 
-		AppUI.appendHTML(body, `
+		body.insertAdjacentHTML("beforeend", `
 			<h1 class="modal-header padding extra-large-top-margin extra-large-bottom-margin n-left-margin n-right-margin">
 				${(Strings.About + " (v" + (window as any).CACHE_VERSION + ")")}
 			</h1>
@@ -1280,7 +1325,7 @@ class AppUI {
 		Modal.show({
 			html: body,
 			title: Strings.Options,
-			returnFocusElement: AppUI.playlistControl.element,
+			returnFocusElement: AppUI._playlistControl,
 			onhidden: function () {
 				App.saveSettings(false);
 			}

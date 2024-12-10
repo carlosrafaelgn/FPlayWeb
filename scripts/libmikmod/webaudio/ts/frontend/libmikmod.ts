@@ -39,12 +39,12 @@ class LibMikMod {
 	public static infoModType: string | null = null;
 	public static infoComment: string | null = null;
 
-	private static currentId = 0;
-	private static audioNode: AudioWorkletNode | null = null;
+	private static _currentId = 0;
+	private static _audioNode: AudioWorkletNode | null = null;
 	
-	private static onload: ((audioNode: AudioWorkletNode) => void) | null = null;
-	private static onerror: ((errorCode: number, reason?: any) => void) | null = null;
-	private static onended: (() => void) | null = null;
+	private static _onload: ((audioNode: AudioWorkletNode) => void) | null = null;
+	private static _onerror: ((errorCode: number, reason?: any) => void) | null = null;
+	private static _onended: (() => void) | null = null;
 
 	public static isSupported(): boolean {
 		// Should we also check for HTTPS? Because, apparently, the browser already undefines
@@ -63,7 +63,7 @@ class LibMikMod {
 
 		LibMikMod.initializing = true;
 
-		LibMikMod.currentId = 0;
+		LibMikMod._currentId = 0;
 
 		try {
 			const response = await fetch(libPath + "libmikmodclib.wasm?" + LibMikMod.WEB_VERSION);
@@ -78,7 +78,7 @@ class LibMikMod {
 				audioNode.port.onmessage = function (ev) {
 					const message = ev.data as LibMikModResponse;
 
-					if (!message || message.messageId !== LibMikModMessageId.INIT || !LibMikMod.initializing || LibMikMod.currentId)
+					if (!message || message.messageId !== LibMikModMessageId.INIT || !LibMikMod.initializing || LibMikMod._currentId)
 						return;
 
 					if (message.errorStr) {
@@ -93,10 +93,10 @@ class LibMikMod {
 					reject(ev);
 				};
 
-				LibMikMod.audioNode = audioNode;
+				LibMikMod._audioNode = audioNode;
 
 				LibMikMod.postMessage({
-					id: LibMikMod.currentId,
+					id: LibMikMod._currentId,
 					messageId: LibMikModMessageId.INIT,
 					buffer: wasmBuffer
 				});
@@ -114,13 +114,13 @@ class LibMikMod {
 	}
 
 	private static postMessage(message: LibMikModMessage): void {
-		if (!LibMikMod.audioNode)
+		if (!LibMikMod._audioNode)
 			return;
 
 		if (message.buffer)
-			LibMikMod.audioNode.port.postMessage(message, [message.buffer]);
+			LibMikMod._audioNode.port.postMessage(message, [message.buffer]);
 		else
-			LibMikMod.audioNode.port.postMessage(message);
+			LibMikMod._audioNode.port.postMessage(message);
 	}
 
 	public static loadModule(options: LibMikModLoadOptions): void {
@@ -142,22 +142,22 @@ class LibMikMod {
 
 		const audioNode = new AudioWorkletNode(options.audioContext, "libmikmodprocessor");
 
-		LibMikMod.currentId++;
+		LibMikMod._currentId++;
 
 		audioNode.port.onmessage = LibMikMod.handleResponse;
 		audioNode.onprocessorerror = LibMikMod.notifyProcessorError;
 
-		LibMikMod.audioNode = audioNode;
+		LibMikMod._audioNode = audioNode;
 
 		LibMikMod.infoSongName = null;
 		LibMikMod.infoModType = null;
 		LibMikMod.infoComment = null;
 
-		LibMikMod.onload = options.onload;
-		LibMikMod.onerror = options.onerror;
-		LibMikMod.onended = options.onended;
+		LibMikMod._onload = options.onload;
+		LibMikMod._onerror = options.onerror;
+		LibMikMod._onended = options.onended;
 
-		const id = LibMikMod.currentId,
+		const id = LibMikMod._currentId,
 			initialOptions: LibMikModInitialOptions = {
 				hqMixer: options.hqMixer,
 				wrap: options.wrap,
@@ -171,17 +171,17 @@ class LibMikMod {
 		if ("lastModified" in source) {
 			if ("arrayBuffer" in source) {
 				source.arrayBuffer().then(function (arrayBuffer) {
-					if (id !== LibMikMod.currentId)
+					if (id !== LibMikMod._currentId)
 						return;
 
 					LibMikMod.postMessage({
-						id: LibMikMod.currentId,
+						id: LibMikMod._currentId,
 						messageId: LibMikModMessageId.LOAD_MODULE_BUFFER,
 						buffer: arrayBuffer,
 						options: initialOptions
 					});
 				}, function (reason) {
-					if (id !== LibMikMod.currentId)
+					if (id !== LibMikMod._currentId)
 						return;
 
 					LibMikMod.notifyReaderError(reason);
@@ -189,20 +189,20 @@ class LibMikMod {
 			} else {
 				const reader = new FileReader();
 				reader.onerror = function (ev) {
-					if (id !== LibMikMod.currentId)
+					if (id !== LibMikMod._currentId)
 						return;
 
 					LibMikMod.notifyReaderError(ev);
 				};
 				reader.onload = function () {
-					if (id !== LibMikMod.currentId)
+					if (id !== LibMikMod._currentId)
 						return;
 
 					if (!reader.result)
 						LibMikMod.notifyReaderError("Empty reader result");
 					else
 						LibMikMod.postMessage({
-							id: LibMikMod.currentId,
+							id: LibMikMod._currentId,
 							messageId: LibMikModMessageId.LOAD_MODULE_BUFFER,
 							buffer: reader.result as ArrayBuffer,
 							options: initialOptions
@@ -212,7 +212,7 @@ class LibMikMod {
 			}
 		} else {
 			LibMikMod.postMessage({
-				id: LibMikMod.currentId,
+				id: LibMikMod._currentId,
 				messageId: LibMikModMessageId.LOAD_MODULE_BUFFER,
 				buffer: source,
 				options: initialOptions
@@ -225,32 +225,32 @@ class LibMikMod {
 			throw new Error("Library not initialized");
 
 		LibMikMod.postMessage({
-			id: LibMikMod.currentId,
+			id: LibMikMod._currentId,
 			messageId: LibMikModMessageId.CHANGE_GENERAL_OPTIONS,
 			options: options
 		});
 	}
 
 	private static cleanUp(): void {
-		LibMikMod.currentId++;
+		LibMikMod._currentId++;
 
 		LibMikMod.infoSongName = null;
 		LibMikMod.infoModType = null;
 		LibMikMod.infoComment = null;
 
-		LibMikMod.audioNode = null;
+		LibMikMod._audioNode = null;
 
-		LibMikMod.onload = null;
-		LibMikMod.onerror = null;
-		LibMikMod.onended = null;
+		LibMikMod._onload = null;
+		LibMikMod._onerror = null;
+		LibMikMod._onended = null;
 	}
 
 	public static stopModule(): void {
-		if (!LibMikMod.audioNode)
+		if (!LibMikMod._audioNode)
 			return;
 
 		LibMikMod.postMessage({
-			id: LibMikMod.currentId,
+			id: LibMikMod._currentId,
 			messageId: LibMikModMessageId.STOP_MODULE
 		});
 
@@ -266,10 +266,10 @@ class LibMikMod {
 	}
 
 	private static notifyError(errorCode: number, reason?: any): void {
-		if (!LibMikMod.audioNode)
+		if (!LibMikMod._audioNode)
 			return;
 
-		const onerror = LibMikMod.onerror;
+		const onerror = LibMikMod._onerror;
 
 		LibMikMod.cleanUp();
 
@@ -278,10 +278,10 @@ class LibMikMod {
 	}
 
 	private static notifyEnded(): void {
-		if (!LibMikMod.audioNode)
+		if (!LibMikMod._audioNode)
 			return;
 
-		const onended = LibMikMod.onended;
+		const onended = LibMikMod._onended;
 
 		LibMikMod.cleanUp();
 
@@ -297,7 +297,7 @@ class LibMikMod {
 
 		switch (message.messageId) {
 			case LibMikModMessageId.LOAD_MODULE_BUFFER:
-				if (message.id !== LibMikMod.currentId || !LibMikMod.audioNode)
+				if (message.id !== LibMikMod._currentId || !LibMikMod._audioNode)
 					break;
 
 				if (message.errorCode) {
@@ -307,20 +307,20 @@ class LibMikMod {
 					LibMikMod.infoModType = (message.infoModType || null);
 					LibMikMod.infoComment = (message.infoComment || null);
 
-					if (LibMikMod.onload)
-						LibMikMod.onload(LibMikMod.audioNode);
+					if (LibMikMod._onload)
+						LibMikMod._onload(LibMikMod._audioNode);
 				}
 				break;
 
 			case LibMikModMessageId.PLAYBACK_ERROR:
-				if (message.id !== LibMikMod.currentId)
+				if (message.id !== LibMikMod._currentId)
 					break;
 
 				LibMikMod.notifyProcessorError(message.errorStr || message.errorCode?.toString());
 				break;
 
 			case LibMikModMessageId.PLAYBACK_ENDED:
-				if (message.id !== LibMikMod.currentId)
+				if (message.id !== LibMikMod._currentId)
 					break;
 
 				LibMikMod.notifyEnded();

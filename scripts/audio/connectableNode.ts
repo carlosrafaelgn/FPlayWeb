@@ -27,29 +27,29 @@
 abstract class ConnectableNode {
 	private _enabled: boolean;
 
-	private previous: ConnectableNode | null;
-	private next: ConnectableNode | null;
+	private _previous: ConnectableNode | null;
+	private _next: ConnectableNode | null;
 
 	public constructor() {
 		this._enabled = false;
-		this.previous = null;
-		this.next = null;
+		this._previous = null;
+		this._next = null;
 	}
 
 	protected abstract get input(): AudioNode | null;
 	protected abstract get output(): AudioNode | null;
 
 	private get actualInput(): AudioNode | null {
-		return (this._enabled ? this.input : (this.next ? this.next.actualInput : null));
+		return (this._enabled ? this.input : (this._next ? this._next.actualInput : null));
 	}
 
 	private get actualOutput(): AudioNode | null {
-		return (this._enabled ? this.output : (this.previous ? this.previous.actualOutput : null));
+		return (this._enabled ? this.output : (this._previous ? this._previous.actualOutput : null));
 	}
 
 	protected nodesChanged(): void {
-		const previous = this.previous,
-			next = this.next;
+		const previous = this._previous,
+			next = this._next;
 
 		if (previous)
 			previous.disconnectFromDestination();
@@ -80,10 +80,10 @@ abstract class ConnectableNode {
 	public connectToDestination(destination: ConnectableNode | null): void {
 		this.disconnectFromDestination();
 
-		this.next = destination;
+		this._next = destination;
 
 		if (destination) {
-			destination.previous = this;
+			destination._previous = this;
 
 			const actualOutput = this.actualOutput;
 			if (actualOutput) {
@@ -99,9 +99,9 @@ abstract class ConnectableNode {
 		if (actualOutput)
 			actualOutput.disconnect();
 
-		if (this.next) {
-			this.next.previous = null;
-			this.next = null;
+		if (this._next) {
+			this._next._previous = null;
+			this._next = null;
 		}
 	}
 }

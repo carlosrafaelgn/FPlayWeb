@@ -26,37 +26,37 @@
 
 class FilePickerAndroidProvider implements FilePickerProvider {
 	public static callback: ((enumerationVersion: number, filePaths: string[] | null) => void) | null = null;
-	private static callbackPermissionResolve: ((permissionGranted: boolean) => void) | null = null;
-	private static callbackClickDoneResolve: (() => void) | null = null;
-	private static permissionGranted = false;
+	private static _callbackPermissionResolve: ((permissionGranted: boolean) => void) | null = null;
+	private static _callbackClickDoneResolve: (() => void) | null = null;
+	private static _permissionGranted = false;
 
 	public static callbackPermission(permissionGranted: number): void {
-		FilePickerAndroidProvider.permissionGranted = !!permissionGranted;
+		FilePickerAndroidProvider._permissionGranted = !!permissionGranted;
 
-		if (FilePickerAndroidProvider.callbackPermissionResolve) {
-			FilePickerAndroidProvider.callbackPermissionResolve(FilePickerAndroidProvider.permissionGranted);
-			FilePickerAndroidProvider.callbackPermissionResolve = null;
+		if (FilePickerAndroidProvider._callbackPermissionResolve) {
+			FilePickerAndroidProvider._callbackPermissionResolve(FilePickerAndroidProvider._permissionGranted);
+			FilePickerAndroidProvider._callbackPermissionResolve = null;
 		}
 	}
 
 	public static callbackClickDone(): void {
-		if (FilePickerAndroidProvider.callbackClickDoneResolve) {
-			FilePickerAndroidProvider.callbackClickDoneResolve();
-			FilePickerAndroidProvider.callbackClickDoneResolve = null;
+		if (FilePickerAndroidProvider._callbackClickDoneResolve) {
+			FilePickerAndroidProvider._callbackClickDoneResolve();
+			FilePickerAndroidProvider._callbackClickDoneResolve = null;
 		}
 	}
 
 	private static checkPermission(): Promise<boolean> {
-		if (FilePickerAndroidProvider.callbackPermissionResolve) {
-			FilePickerAndroidProvider.callbackPermissionResolve(false);
-			FilePickerAndroidProvider.callbackPermissionResolve = null;
+		if (FilePickerAndroidProvider._callbackPermissionResolve) {
+			FilePickerAndroidProvider._callbackPermissionResolve(false);
+			FilePickerAndroidProvider._callbackPermissionResolve = null;
 		}
 
 		if (!App.hostInterface)
 			return Promise.resolve(false);
 
 		if (App.hostInterface.checkFilePermission()) {
-			FilePickerAndroidProvider.permissionGranted = true;
+			FilePickerAndroidProvider._permissionGranted = true;
 			return Promise.resolve(true);
 		}
 
@@ -66,18 +66,18 @@ class FilePickerAndroidProvider implements FilePickerProvider {
 				return;
 			}
 
-			FilePickerAndroidProvider.callbackPermissionResolve = resolve;
+			FilePickerAndroidProvider._callbackPermissionResolve = resolve;
 
 			App.hostInterface.requestFilePermission();
 		});
 	}
 
-	private version: number;
-	private enumerationVersion: number;
+	private _version: number;
+	private _enumerationVersion: number;
 
 	public constructor() {
-		this.version = 0;
-		this.enumerationVersion = 0;
+		this._version = 0;
+		this._enumerationVersion = 0;
 	}
 
 	public editableRoots(): boolean {
@@ -94,7 +94,7 @@ class FilePickerAndroidProvider implements FilePickerProvider {
 
 	// File paths should start with "/", but not directory paths!
 	private enumerate(path: string | null): Promise<string[] | null> {
-		this.enumerationVersion++;
+		this._enumerationVersion++;
 
 		if (FilePickerAndroidProvider.callback) {
 			FilePickerAndroidProvider.callback(0, null);
@@ -106,7 +106,7 @@ class FilePickerAndroidProvider implements FilePickerProvider {
 				return null;
 
 			FilePickerAndroidProvider.callback = (enumerationVersion, filePaths) => {
-				if (enumerationVersion !== this.enumerationVersion) {
+				if (enumerationVersion !== this._enumerationVersion) {
 					resolve(null);
 				} else {
 					FilePickerAndroidProvider.callback = null;
@@ -114,14 +114,14 @@ class FilePickerAndroidProvider implements FilePickerProvider {
 				}
 			};
 
-			App.hostInterface.enumerateFiles(this.enumerationVersion, path);
+			App.hostInterface.enumerateFiles(this._enumerationVersion, path);
 		});
 	}
 
 	private async getDirectoryFiles(version: number, filePaths: string[], directoryPath: string): Promise<void> {
 		const paths = await this.enumerate(directoryPath);
 
-		if (!paths || version !== this.version)
+		if (!paths || version !== this._version)
 			return;
 
 		const comparer = Strings.comparer;
@@ -132,7 +132,7 @@ class FilePickerAndroidProvider implements FilePickerProvider {
 			return ((aFile === bFile) ? comparer(a, b) : (aFile ? 1 : -1));
 		});
 
-		for (let i = 0; i < paths.length && version === this.version; i++) {
+		for (let i = 0; i < paths.length && version === this._version; i++) {
 			const path = paths[i];
 
 			if (path.charCodeAt(0) === 0x2F)
@@ -146,9 +146,9 @@ class FilePickerAndroidProvider implements FilePickerProvider {
 		this.cancel();
 
 		const filePaths: string[] = [],
-			version = this.version,
+			version = this._version,
 			// The Promise's executor function runs before the constructor returns, so this is safe!
-			promiseClickReady = new Promise<void>(function (resolve) { FilePickerAndroidProvider.callbackClickDoneResolve = resolve; }),
+			promiseClickReady = new Promise<void>(function (resolve) { FilePickerAndroidProvider._callbackClickDoneResolve = resolve; }),
 			// We must call this as soon as possible, to try to prevent the error
 			// "File chooser dialog can only be shown with a user activation".
 			// This error occurs if the call to input.click() happens a few seconds
@@ -157,14 +157,14 @@ class FilePickerAndroidProvider implements FilePickerProvider {
 
 		await promiseClickReady;
 
-		if (!App.hostInterface || version !== this.version)
+		if (!App.hostInterface || version !== this._version)
 			return null;
 
 		if (directories)
-			for (let i = 0; i < directories.length && version === this.version; i++)
+			for (let i = 0; i < directories.length && version === this._version; i++)
 				await this.getDirectoryFiles(version, filePaths, directories[i].path);
 
-		if (files && version === this.version) {
+		if (files && version === this._version) {
 			for (let i = 0; i < files.length; i++)
 				filePaths.push(files[i].path);
 		}
@@ -179,7 +179,7 @@ class FilePickerAndroidProvider implements FilePickerProvider {
 
 		const returnedFiles = await promise;
 
-		if (!returnedFiles || returnedFiles.length !== filePaths.length || version !== this.version)
+		if (!returnedFiles || returnedFiles.length !== filePaths.length || version !== this._version)
 			return null;
 
 		for (let i = filePaths.length - 1; i >= 0; i--)
@@ -191,17 +191,17 @@ class FilePickerAndroidProvider implements FilePickerProvider {
 	public async navigate(path: string | null): Promise<FilePickerListItem[] | null> {
 		this.cancel();
 
-		const version = this.version;
+		const version = this._version;
 
-		if (!FilePickerAndroidProvider.permissionGranted && !await FilePickerAndroidProvider.checkPermission())
+		if (!FilePickerAndroidProvider._permissionGranted && !await FilePickerAndroidProvider.checkPermission())
 			return null;
 
-		if (version !== this.version)
+		if (version !== this._version)
 			return null;
 
 		const paths = await this.enumerate(path);
 
-		if (!paths || !paths.length || version !== this.version)
+		if (!paths || !paths.length || version !== this._version)
 			return null;
 
 		const items: FilePickerListItem[] = new Array(paths.length);
@@ -238,8 +238,8 @@ class FilePickerAndroidProvider implements FilePickerProvider {
 	}
 
 	public cancel(): void {
-		this.version++;
-		this.enumerationVersion++;
+		this._version++;
+		this._enumerationVersion++;
 
 		FilePickerAndroidProvider.callbackClickDone();
 	}
@@ -248,6 +248,6 @@ class FilePickerAndroidProvider implements FilePickerProvider {
 		this.cancel();
 
 		if (App.hostInterface)
-			App.hostInterface.cancelFileEnumeration(this.enumerationVersion);
+			App.hostInterface.cancelFileEnumeration(this._enumerationVersion);
 	}
 }

@@ -32,7 +32,7 @@ interface HostMediaSession {
 }
 
 class HostMediaSession {
-	private static browserWrapper: HostMediaSession | null = null;
+	private static _browserWrapper: HostMediaSession | null = null;
 
 	private static setActionHandler(mediaSession: any, type: string, callback: any | null): void {
 		try {
@@ -72,7 +72,7 @@ class HostMediaSession {
 		if (App.hostInterface)
 			return App.hostInterface;
 
-		if (!HostMediaSession.browserWrapper) {
+		if (!HostMediaSession._browserWrapper) {
 			// https://developers.google.com/web/updates/2017/02/media-session
 			// https://developer.chrome.com/blog/media-session/
 			// https://w3c.github.io/mediasession
@@ -111,7 +111,7 @@ class HostMediaSession {
 					function () { }
 				);
 
-				HostMediaSession.browserWrapper = {
+				HostMediaSession._browserWrapper = {
 					setPaused: function (paused, lengthMS, positionS) {
 						_paused = paused;
 						mediaSession.playbackState = ((_paused || _loading) ? "paused" : "playing");
@@ -154,6 +154,6 @@ class HostMediaSession {
 			}
 		}
 
-		return HostMediaSession.browserWrapper;
+		return HostMediaSession._browserWrapper;
 	}
 }

@@ -31,31 +31,31 @@ class MonoDownMixerControl extends ConnectableNode {
 		return (("AudioWorklet" in window) && ("AudioWorkletNode" in window));
 	}
 
-	private readonly audioContext: AudioContext;
+	private readonly _audioContext: AudioContext;
 
 	private _multiplier: number;
-	private audioNode: AudioWorkletNode | null;
-	private loading: boolean;
-	private loaded: boolean;
-	private desiredEnabled: boolean;
+	private _audioNode: AudioWorkletNode | null;
+	private _loading: boolean;
+	private _loaded: boolean;
+	private _desiredEnabled: boolean;
 
 	public constructor(audioContext: AudioContext) {
 		super();
 
 		this._multiplier = 0.5;
-		this.audioContext = audioContext;
-		this.audioNode = null;
-		this.loading = false;
-		this.loaded = false;
-		this.desiredEnabled = false;
+		this._audioContext = audioContext;
+		this._audioNode = null;
+		this._loading = false;
+		this._loaded = false;
+		this._desiredEnabled = false;
 	}
 
 	protected get input(): AudioNode | null {
-		return this.audioNode;
+		return this._audioNode;
 	}
 
 	protected get output(): AudioNode | null {
-		return this.audioNode;
+		return this._audioNode;
 	}
 
 	public get enabled(): boolean {
@@ -67,12 +67,12 @@ class MonoDownMixerControl extends ConnectableNode {
 		if (!MonoDownMixerControl.isSupported())
 			enabled = false;
 
-		this.desiredEnabled = enabled;
+		this._desiredEnabled = enabled;
 
-		if (this.audioNode) {
+		if (this._audioNode) {
 			super.enabled = enabled;
 		} else if (enabled) {
-			if (this.loaded)
+			if (this._loaded)
 				this.createAudioNode();
 			else
 				this.load();
@@ -86,8 +86,8 @@ class MonoDownMixerControl extends ConnectableNode {
 	public set multiplier(multiplier: number) {
 		this._multiplier = multiplier;
 
-		if (this.audioNode)
-			(this.audioNode.parameters as any).get("multiplier").value = multiplier;
+		if (this._audioNode)
+			(this._audioNode.parameters as any).get("multiplier").value = multiplier;
 	}
 
 	private showError(step: string, reason: any): void {
@@ -95,14 +95,14 @@ class MonoDownMixerControl extends ConnectableNode {
 	}
 
 	private load(): void {
-		if (this.loading || this.loaded || !this.audioContext)
+		if (this._loading || this._loaded || !this._audioContext)
 			return;
 
-		this.loading = true;
+		this._loading = true;
 
-		addAudioWorkletModule(this.audioContext, "assets/js/monodownmixerprocessor.js?" + (window as any).CACHE_VERSION).then(() => {
-			this.loading = false;
-			this.loaded = true;
+		addAudioWorkletModule(this._audioContext, "assets/js/monodownmixerprocessor.js?" + (window as any).CACHE_VERSION).then(() => {
+			this._loading = false;
+			this._loaded = true;
 			this.createAudioNode();
 		}, (reason) => {
 			this.showError("loading the mono down-mixer script", reason);
@@ -117,16 +117,16 @@ class MonoDownMixerControl extends ConnectableNode {
 		// https://developer.mozilla.org/en-US/docs/Web/API/AudioParam#a-rate
 		// https://developer.mozilla.org/en-US/docs/Web/API/AudioParam#k-rate
 
-		if (!this.loaded)
+		if (!this._loaded)
 			return;
 
-		if (this.audioNode) {
-			this.audioNode.disconnect();
-			this.audioNode = null;
+		if (this._audioNode) {
+			this._audioNode.disconnect();
+			this._audioNode = null;
 		}
 
 		try {
-			const audioNode = new AudioWorkletNode(this.audioContext, "monodownmixerprocessor");
+			const audioNode = new AudioWorkletNode(this._audioContext, "monodownmixerprocessor");
 
 			if (audioNode.numberOfInputs !== 1) {
 				super.enabled = false;
@@ -146,20 +146,20 @@ class MonoDownMixerControl extends ConnectableNode {
 				return;
 			}
 
-			this.audioNode = audioNode;
+			this._audioNode = audioNode;
 
 			audioNode.onprocessorerror = (e) => {
-				if (this.audioNode && this.audioNode === audioNode) {
+				if (this._audioNode && this._audioNode === audioNode) {
 					audioNode.disconnect();
 					super.enabled = false;
-					this.audioNode = null;
+					this._audioNode = null;
 					this.showError("processing the mono down-mixer", e);
 				}
 			};
 
 			(audioNode.parameters as any).get("multiplier").value = this._multiplier;
 
-			super.enabled = this.desiredEnabled;
+			super.enabled = this._desiredEnabled;
 		} catch (ex: any) {
 			super.enabled = false;
 

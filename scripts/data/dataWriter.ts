@@ -25,22 +25,22 @@
 //
 
 class DataWriter {
-	private arrayBuffer: ArrayBuffer;
-	private dataView: DataView;
-	private readonly textEncoder: TextEncoder;
+	private _arrayBuffer: ArrayBuffer;
+	private _dataView: DataView;
+	private readonly _textEncoder: TextEncoder;
 	private _length: number;
 	private _capacity: number;
 
 	public constructor(initialCapacity?: number) {
 		this._capacity = ((initialCapacity && initialCapacity > 0) ? initialCapacity : 16384);
-		this.arrayBuffer = new ArrayBuffer(this._capacity);
-		this.dataView = new DataView(this.arrayBuffer);
-		this.textEncoder = new TextEncoder();
+		this._arrayBuffer = new ArrayBuffer(this._capacity);
+		this._dataView = new DataView(this._arrayBuffer);
+		this._textEncoder = new TextEncoder();
 		this._length = 0;
 	}
 
 	public get trimmedArrayBuffer(): ArrayBuffer {
-		return this.arrayBuffer.slice(0, this._length);
+		return this._arrayBuffer.slice(0, this._length);
 	}
 
 	public get length(): number {
@@ -61,55 +61,55 @@ class DataWriter {
 			return;
 
 		const arrayBuffer = new ArrayBuffer(desired + (desired >> 2));
-		(new Uint8Array(arrayBuffer)).set(new Uint8Array(this.arrayBuffer));
-		this.arrayBuffer = arrayBuffer;
-		this.dataView = new DataView(this.arrayBuffer);
+		(new Uint8Array(arrayBuffer)).set(new Uint8Array(this._arrayBuffer));
+		this._arrayBuffer = arrayBuffer;
+		this._dataView = new DataView(this._arrayBuffer);
 		this._capacity = arrayBuffer.byteLength;
 	}
 
 	public writeInt8(value: number): DataWriter {
 		this.ensureCapacity(1);
-		this.dataView.setInt8(this._length++, value);
+		this._dataView.setInt8(this._length++, value);
 		return this;
 	}
 
 	public writeUint8(value: number): DataWriter {
 		this.ensureCapacity(1);
-		this.dataView.setUint8(this._length++, value);
+		this._dataView.setUint8(this._length++, value);
 		return this;
 	}
 
 	public writeInt16(value: number): DataWriter {
 		this.ensureCapacity(2);
-		this.dataView.setInt16(this._length, value, true);
+		this._dataView.setInt16(this._length, value, true);
 		this._length += 2;
 		return this;
 	}
 
 	public writeUint16(value: number): DataWriter {
 		this.ensureCapacity(2);
-		this.dataView.setUint16(this._length, value, true);
+		this._dataView.setUint16(this._length, value, true);
 		this._length += 2;
 		return this;
 	}
 
 	public writeInt32(value: number): DataWriter {
 		this.ensureCapacity(4);
-		this.dataView.setInt32(this._length, value, true);
+		this._dataView.setInt32(this._length, value, true);
 		this._length += 4;
 		return this;
 	}
 
 	public writeFloat32(value: number): DataWriter {
 		this.ensureCapacity(4);
-		this.dataView.setFloat32(this._length, value, true);
+		this._dataView.setFloat32(this._length, value, true);
 		this._length += 4;
 		return this;
 	}
 
 	public writeFloat64(value: number): DataWriter {
 		this.ensureCapacity(8);
-		this.dataView.setFloat64(this._length, value, true);
+		this._dataView.setFloat64(this._length, value, true);
 		this._length += 8;
 		return this;
 	}
@@ -120,14 +120,14 @@ class DataWriter {
 
 		this.ensureCapacity(2 + (value.length * 6));
 
-		const r = this.textEncoder.encodeInto(value, new Uint8Array(this.arrayBuffer, this._length + 2));
+		const r = this._textEncoder.encodeInto(value, new Uint8Array(this._arrayBuffer, this._length + 2));
 		if (!r.written)
 			throw new Error("String encoding error");
 
 		if (r.written > 0xFFFF)
 			throw new Error("String too large");
 
-		this.dataView.setUint16(this._length, r.written, true);
+		this._dataView.setUint16(this._length, r.written, true);
 		this._length += 2 + r.written;
 
 		return this;

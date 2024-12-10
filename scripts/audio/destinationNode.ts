@@ -25,16 +25,16 @@
 //
 
 class DestinationNode extends ConnectableNode {
-	private readonly node: AudioNode;
+	private readonly _node: AudioNode;
 
 	public constructor(node: AudioNode) {
 		super();
 
-		this.node = node;
+		this._node = node;
 	}
 
 	protected get input(): AudioNode | null {
-		return this.node;
+		return this._node;
 	}
 
 	protected get output(): AudioNode | null {

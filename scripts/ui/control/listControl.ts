@@ -25,7 +25,7 @@
 //
 
 class ListControlItem<T> {
-	private static internalId = 0;
+	private static _internalId = 0;
 
 	// index is only used when useVirtualItems is false
 	public index: number;
@@ -43,10 +43,10 @@ class ListControlItem<T> {
 		this.keyboard = false;
 		this.item = null;
 		this.element = element;
-		element.setAttribute("id", "listControlItem" + (ListControlItem.internalId++));
-		element.setAttribute("role", "row");
-		element.setAttribute("aria-selected", "false");
-		element.setAttribute("aria-readonly", "true");
+		element.id = "listControlItem" + (ListControlItem._internalId++);
+		element.role = "row";
+		element.ariaSelected = "false";
+		element.ariaReadOnly = "true";
 	}
 
 	public reset(): void {
@@ -57,7 +57,7 @@ class ListControlItem<T> {
 		this.item = null;
 		if (this.element) {
 			this.element.classList.remove("current", "selected", "keyboard");
-			this.element.setAttribute("aria-selected", "false");
+			this.element.ariaSelected = "false";
 		}
 	}
 
@@ -71,140 +71,114 @@ class ListControlItem<T> {
 	}
 }
 
-class ListControl<T extends Object> {
-	public readonly element: HTMLElement;
-
-	private readonly container: HTMLDivElement;
-	private readonly resizeObserver: ResizeObserver;
-	private readonly useVirtualItems: boolean;
+class ListControl<T extends Object> extends HTMLElement {
+	private readonly _container: HTMLDivElement;
+	private readonly _resizeObserver: ResizeObserver;
+	private readonly _useVirtualItems: boolean;
 
 	private _adapter: ListAdapter<T> | null;
 
-	private itemHeight: number;
-	private itemMargin: number;
-	private itemHeightAndMargin: number;
-	private ignoreFirstIndex: boolean;
-	private firstIndex: number;
-	private lastIndex: number;
-	private currentListItem: T | null;
+	private _itemHeight: number;
+	private _itemMargin: number;
+	private _itemHeightAndMargin: number;
+	private _ignoreFirstIndex: boolean;
+	private _firstIndex: number;
+	private _lastIndex: number;
+	private _currentListItem: T | null;
 	// currentItem and keyboardItem are only used when useVirtualItems is false
-	private currentItem: ListControlItem<T> | null;
-	private keyboardItem: ListControlItem<T> | null;
-	private clientHeight: number;
-	private containerHeight: number;
-	private scrollbarPadding: boolean;
-	private scrollbarPaddingScheduled: boolean;
-	private visibleCount: number;
-	private items: ListControlItem<T>[];
-	private refreshVisibleItemsEnqueued: boolean;
-	private notifyCurrentItemChangedEnqueued: boolean;
+	private _currentItem: ListControlItem<T> | null;
+	private _keyboardItem: ListControlItem<T> | null;
+	private _clientHeight: number;
+	private _containerHeight: number;
+	private _scrollbarPadding: boolean;
+	private _scrollbarPaddingScheduled: boolean;
+	private _visibleCount: number;
+	private _items: ListControlItem<T>[];
+	private _refreshVisibleItemsEnqueued: boolean;
+	private _notifyCurrentItemChangedEnqueued: boolean;
 
-	private focused: boolean;
-	private keyboardIndex: number;
-	private lastKeyboardIndex: number;
+	private _initialized: boolean;
+	private _focused: boolean;
+	private _keyboardIndex: number;
+	private _lastKeyboardIndex: number;
 
-	private readonly boundZoomChanged: any;
-	private readonly boundRefreshVisibleItemsInternal: any;
-	private readonly boundNotifyCurrentItemChangedInternal: any;
-	private readonly boundAdjustScrollbarPaddingFromResize: any;
+	private readonly _boundZoomChanged: any;
+	private readonly _boundRefreshVisibleItemsInternal: any;
+	private readonly _boundNotifyCurrentItemChangedInternal: any;
+	private readonly _boundAdjustScrollbarPaddingFromResize: any;
 
 	public deleteMode: boolean;
 	public onitemclick: ((item: T, index: number, button: number) => void) | null;
 	public onitemcontrolclick: ((item: T, index: number, button: number, target: HTMLElement) => void) | null;
 	public onitemcontextmenu: ((item: T, index: number) => void) | null;
 
-	public constructor(element: string | HTMLElement, label: string, useVirtualItems: boolean) {
-		this.element = (((typeof element) === "string") ? document.getElementById(element as string) : element) as HTMLElement;
-		this.element.classList.add("list", "scrollable");
-		this.element.style.padding = "0";
-		this.element.setAttribute("role", "grid");
-		this.element.setAttribute("aria-label", label);
-		this.element.setAttribute("aria-readonly", "true");
-		this.element.setAttribute("aria-rowcount", "0");
-		this.element.removeAttribute("aria-activedescendant");
-		if (!this.element.getAttribute("tabindex"))
-			this.element.setAttribute("tabindex", "0");
+	public constructor() {
+		super();
 
 		// Not using virtual items makes mobile devices create a large
 		// layer for the items if they actually overflow. Also, now that
 		// the items are a child of the element, not the container, the
 		// margin of the last item becomes noticeable, because it can be
 		// seen when scrolling to the bottom of the list.
-		this.useVirtualItems = useVirtualItems;
-
-		const container = document.createElement("div");
-		container.className = "list-container";
-		//container.setAttribute("role", "rowgroup");
-		this.container = container;
-		if (useVirtualItems)
-			this.element.appendChild(container);
+		this._useVirtualItems = true;
 
 		this._adapter = null;
 
-		this.boundZoomChanged = this.zoomChanged.bind(this);
-		this.boundRefreshVisibleItemsInternal = this.refreshVisibleItemsInternal.bind(this);
-		this.boundAdjustScrollbarPaddingFromResize = this.adjustScrollbarPaddingFromResize.bind(this);
+		this._boundZoomChanged = this.zoomChanged.bind(this);
+		this._boundRefreshVisibleItemsInternal = this.refreshVisibleItemsInternal.bind(this);
+		this._boundAdjustScrollbarPaddingFromResize = this.adjustScrollbarPaddingFromResize.bind(this);
 
-		this.element.addEventListener("focus", this.elementFocus.bind(this));
-		this.element.addEventListener("keydown", this.elementKeyDown.bind(this));
-		this.element.addEventListener("keyup", this.elementKeyUp.bind(this));
-		this.element.addEventListener("blur", this.elementBlur.bind(this));
+		const container = document.createElement("div");
+		container.className = "f-list-container";
+		//container.role = "rowgroup";
+		this._container = container;
 
-		if (useVirtualItems)
-			this.element.addEventListener("scroll", this.elementScroll.bind(this), { passive: true });
-		else
-			this.boundNotifyCurrentItemChangedInternal = this.notifyCurrentItemChangedInternal.bind(this);
+		if (!this._useVirtualItems)
+			this._boundNotifyCurrentItemChangedInternal = this.notifyCurrentItemChangedInternal.bind(this);
 
-		this.resizeObserver = new ResizeObserver(this.resize.bind(this));
-		this.resizeObserver.observe(this.element, { box: "border-box" });
+		this._resizeObserver = new ResizeObserver(this.resize.bind(this));
 
-		this.itemHeight = 1;
-		this.itemMargin = 1;
-		this.itemHeightAndMargin = 2;
-		this.ignoreFirstIndex = false;
-		this.firstIndex = 0;
-		this.lastIndex = 0;
-		this.currentListItem = null;
-		this.currentItem = null;
-		this.keyboardItem = null;
-		this.clientHeight = 1;
-		this.containerHeight = 0;
-		this.scrollbarPadding = false;
-		this.scrollbarPaddingScheduled = false;
-		this.visibleCount = 1;
-		this.items = [];
-		this.refreshVisibleItemsEnqueued = false;
-		this.notifyCurrentItemChangedEnqueued = false;
+		this._itemHeight = 1;
+		this._itemMargin = 1;
+		this._itemHeightAndMargin = 2;
+		this._ignoreFirstIndex = false;
+		this._firstIndex = 0;
+		this._lastIndex = 0;
+		this._currentListItem = null;
+		this._currentItem = null;
+		this._keyboardItem = null;
+		this._clientHeight = 1;
+		this._containerHeight = 0;
+		this._scrollbarPadding = false;
+		this._scrollbarPaddingScheduled = false;
+		this._visibleCount = 1;
+		this._items = [];
+		this._refreshVisibleItemsEnqueued = false;
+		this._notifyCurrentItemChangedEnqueued = false;
 
-		this.focused = false;
-		this.keyboardIndex = -1;
-		this.lastKeyboardIndex = -1;
+		this._initialized = false;
+		this._focused = false;
+		this._keyboardIndex = -1;
+		this._lastKeyboardIndex = -1;
 
 		this.deleteMode = false;
 		this.onitemclick = null;
 		this.onitemcontrolclick = null;
 		this.onitemcontextmenu = null;
-
-		this.element.onclick = this.elementClick.bind(this);
-		this.element.oncontextmenu = this.elementContextMenu.bind(this);
-
-		this.resize();
-
-		AppUI.addZoomHandler(this.boundZoomChanged);
 	}
 
 	public destroy(): void {
 		if (this._adapter)
 			this._adapter.control = null;
 
-		if (this.resizeObserver)
-			this.resizeObserver.unobserve(this.element);
+		if (this._resizeObserver)
+			this._resizeObserver.unobserve(this);
 
-		if (this.items)
-			(this.items as Array<any>).fill(null);
+		if (this._items)
+			(this._items as Array<any>).fill(null);
 
-		if (this.boundZoomChanged)
-			AppUI.removeZoomHandler(this.boundZoomChanged);
+		if (this._boundZoomChanged)
+			AppUI.removeZoomHandler(this._boundZoomChanged);
 
 		zeroObject(this);
 	}
@@ -229,11 +203,11 @@ class ListControl<T extends Object> {
 
 			this.prepareAdapter();
 
-			if (!this.useVirtualItems) {
+			if (!this._useVirtualItems) {
 				if (adapter.list.length)
 					this.notifyItemsAdded(0, adapter.list.length - 1);
 			} else {
-				this.element.setAttribute("aria-rowcount", adapter.list.length.toString());
+				this.ariaRowCount = adapter.list.length.toString();
 			}
 		}
 	}
@@ -243,10 +217,10 @@ class ListControl<T extends Object> {
 		if (!adapter)
 			return;
 
-		this.itemHeight = adapter.itemHeight;
-		this.itemMargin = AppUI.thickBorderPX;
-		this.itemHeightAndMargin = this.itemHeight + this.itemMargin;
-		this.currentListItem = adapter.list.currentItem;
+		this._itemHeight = adapter.itemHeight;
+		this._itemMargin = AppUI.thickBorderPX;
+		this._itemHeightAndMargin = this._itemHeight + this._itemMargin;
+		this._currentListItem = adapter.list.currentItem;
 
 		this.adjustContainerHeight();
 		this.resize();
@@ -259,12 +233,12 @@ class ListControl<T extends Object> {
 
 		this.prepareAdapter();
 
-		const items = this.items;
+		const items = this._items;
 		for (let i = items.length - 1; i >= 0; i--) {
 			items[i].index = -1;
 		}
 
-		if (this.useVirtualItems)
+		if (this._useVirtualItems)
 			this.elementScroll();
 
 		/*const items = this.items,
@@ -277,38 +251,37 @@ class ListControl<T extends Object> {
 	}
 
 	private adjustScrollbarPadding(): void {
-		const scrollbarPadding = ((this.containerHeight | 0) > this.clientHeight);
+		const scrollbarPadding = ((this._containerHeight | 0) > this._clientHeight);
 
-		if (this.scrollbarPadding !== scrollbarPadding) {
-			this.scrollbarPadding = scrollbarPadding;
-			const element = this.element;
-			if (this.useVirtualItems) {
+		if (this._scrollbarPadding !== scrollbarPadding) {
+			this._scrollbarPadding = scrollbarPadding;
+			if (this._useVirtualItems) {
 				if (scrollbarPadding)
-					element.classList.add("virtual-padding");
+					this.classList.add("virtual-padding");
 				else
-					element.classList.remove("virtual-padding");
+					this.classList.remove("virtual-padding");
 			} else {
-				element.style.padding = (scrollbarPadding ? "" : "0");
+				this.style.padding = (scrollbarPadding ? "" : "0");
 			}
 		}
 	}
 
 	private adjustScrollbarPaddingFromResize(): void {
-		this.scrollbarPaddingScheduled = false;
+		this._scrollbarPaddingScheduled = false;
 		this.adjustScrollbarPadding();
 	}
 
 	private adjustContainerHeight(): void {
 		const adapter = this._adapter,
-			container = this.container;
+			container = this._container;
 		if (!adapter || !container)
 			return;
 
 		const itemCount = adapter.list.length,
-			containerHeight = (itemCount ? ((itemCount * this.itemHeightAndMargin) - this.itemMargin) : 0);
+			containerHeight = (itemCount ? ((itemCount * this._itemHeightAndMargin) - this._itemMargin) : 0);
 
-		if (this.containerHeight !== containerHeight) {
-			this.containerHeight = containerHeight;
+		if (this._containerHeight !== containerHeight) {
+			this._containerHeight = containerHeight;
 			container.style.height = containerHeight + "px";
 
 			this.adjustScrollbarPadding();
@@ -316,11 +289,11 @@ class ListControl<T extends Object> {
 	}
 
 	private clear(): void {
-		const container = this.container;
+		const container = this._container;
 		if (!container)
 			return;
 
-		const items = this.items;
+		const items = this._items;
 		for (let i = items.length - 1; i >= 0; i--) {
 			if (items[i].element) {
 				const parentNode = items[i].element.parentNode;
@@ -329,7 +302,7 @@ class ListControl<T extends Object> {
 			}
 		}
 
-		if (this.useVirtualItems) {
+		if (this._useVirtualItems) {
 			for (let i = items.length - 1; i >= 0; i--)
 				items[i].reset();
 		} else {
@@ -338,55 +311,54 @@ class ListControl<T extends Object> {
 			items.splice(0);
 		}
 
-		this.firstIndex = 0;
-		this.lastIndex = 0;
-		this.currentListItem = null;
-		this.currentItem = null;
-		this.keyboardItem = null;
-		this.element.scrollTop = 0;
-		this.containerHeight = 0;
-		this.container.style.height = "0";
+		this._firstIndex = 0;
+		this._lastIndex = 0;
+		this._currentListItem = null;
+		this._currentItem = null;
+		this._keyboardItem = null;
+		this.scrollTop = 0;
+		this._containerHeight = 0;
+		this._container.style.height = "0";
 
-		if (this.keyboardIndex > 0) {
-			this.keyboardIndex = 0;
-			this.lastKeyboardIndex = 0;
+		if (this._keyboardIndex > 0) {
+			this._keyboardIndex = 0;
+			this._lastKeyboardIndex = 0;
 		} else {
-			this.lastKeyboardIndex = -1;
+			this._lastKeyboardIndex = -1;
 		}
 
-		this.element.setAttribute("aria-rowcount", "0");
-		this.element.removeAttribute("aria-activedescendant");
+		this.ariaRowCount = "0";
+		this.removeAttribute("aria-activedescendant");
 
 		this.adjustScrollbarPadding();
 	}
 
 	private elementScroll(): void {
-		const adapter = this._adapter,
-			element = this.element;
-		if (!adapter || !element)
+		const adapter = this._adapter;
+		if (!adapter)
 			return;
 
-		const items = this.items,
-			itemHeightAndMargin = this.itemHeightAndMargin;
+		const items = this._items,
+			itemHeightAndMargin = this._itemHeightAndMargin;
 
 		// The +4 and -2 offsets are here to force the preparation of invisible
 		// items, in order to try to prevent the the appearance of blank spaces
 		// at the top and at the bottom of the list when the user scrolls it
 		// faster than the browser can process the script.
-		let oldFirstIndex = this.firstIndex - 2,
-			firstIndex = ((element.scrollTop / itemHeightAndMargin) | 0);
+		let oldFirstIndex = this._firstIndex - 2,
+			firstIndex = ((this.scrollTop / itemHeightAndMargin) | 0);
 
 		if (oldFirstIndex < 0)
 			oldFirstIndex = 0;
 
-		if (this.ignoreFirstIndex)
-			this.ignoreFirstIndex = false;
-		else if (this.firstIndex === firstIndex)
+		if (this._ignoreFirstIndex)
+			this._ignoreFirstIndex = false;
+		else if (this._firstIndex === firstIndex)
 			return;
 
-		this.firstIndex = firstIndex;
+		this._firstIndex = firstIndex;
 
-		let visibleCount = this.visibleCount + ((firstIndex === 0) ? 2 : ((firstIndex === 1) ? 3 : 4));
+		let visibleCount = this._visibleCount + ((firstIndex === 0) ? 2 : ((firstIndex === 1) ? 3 : 4));
 		if (visibleCount > items.length)
 			visibleCount = items.length;
 
@@ -425,7 +397,7 @@ class ListControl<T extends Object> {
 		const list = adapter.list,
 			length = list.length,
 			currentListItem = adapter.list.currentItem,
-			keyboardIndex = this.keyboardIndex;
+			keyboardIndex = this._keyboardIndex;
 
 		let i = 0;
 
@@ -449,21 +421,21 @@ class ListControl<T extends Object> {
 					item.keyboard = tmp;
 					if (tmp) {
 						item.element.classList.add("keyboard");
-						item.element.setAttribute("aria-selected", "true");
-						this.element.setAttribute("aria-activedescendant", item.element.getAttribute("id") as string);
+						item.element.ariaSelected = "true";
+						this.setAttribute("aria-activedescendant", item.element.id);
 					} else {
-						if (this.element.getAttribute("aria-activedescendant") === item.element.getAttribute("id"))
-							this.element.removeAttribute("aria-activedescendant");
+						if (this.getAttribute("aria-activedescendant") === item.element.id)
+							this.removeAttribute("aria-activedescendant");
 						item.element.classList.remove("keyboard");
-						item.element.setAttribute("aria-selected", "false");
+						item.element.ariaSelected = "false";
 					}
 				}
 
 				adapter.prepareElement(listItem, firstIndex, length, item.element);
-				item.element.setAttribute("aria-rowindex", firstIndex.toString());
+				item.element.ariaRowIndex = firstIndex.toString();
 
 				if (!item.item)
-					element.appendChild(item.element);
+					this.appendChild(item.element);
 				item.item = listItem;
 			}
 
@@ -479,72 +451,71 @@ class ListControl<T extends Object> {
 
 			if (item.item) {
 				item.item = null;
-				element.removeChild(item.element);
+				this.removeChild(item.element);
 			}
 		}
 
-		this.lastIndex = firstIndex - 1;
-		if (this.lastIndex < this.firstIndex)
-			this.lastIndex = this.firstIndex;
+		this._lastIndex = firstIndex - 1;
+		if (this._lastIndex < this._firstIndex)
+			this._lastIndex = this._firstIndex;
 	}
 
 	private refreshVisibleItemsInternal(): void {
-		this.refreshVisibleItemsEnqueued = false;
+		this._refreshVisibleItemsEnqueued = false;
 
-		const adapter = this._adapter,
-			element = this.element;
-		if (!adapter || !element)
+		const adapter = this._adapter;
+		if (!adapter)
 			return;
 
 		this.adjustContainerHeight();
 
-		const items = this.items,
-			itemHeightAndMargin = this.itemHeightAndMargin,
+		const items = this._items,
+			itemHeightAndMargin = this._itemHeightAndMargin,
 			list = adapter.list,
 			length = list.length,
 			currentListItem = adapter.list.currentItem,
-			keyboardIndex = this.keyboardIndex;
+			keyboardIndex = this._keyboardIndex;
 
-		if (!this.useVirtualItems) {
-			const visibleCount = this.visibleCount,
+		if (!this._useVirtualItems) {
+			const visibleCount = this._visibleCount,
 				newKeyboardItem = ((keyboardIndex >= 0 && keyboardIndex < items.length) ? items[keyboardIndex] : null);
 
-			if (this.keyboardItem !== newKeyboardItem) {
-				if (this.keyboardItem) {
-					this.keyboardItem.element.classList.remove("keyboard");
-					this.keyboardItem.element.setAttribute("aria-selected", "false");
+			if (this._keyboardItem !== newKeyboardItem) {
+				if (this._keyboardItem) {
+					this._keyboardItem.element.classList.remove("keyboard");
+					this._keyboardItem.element.ariaSelected = "false";
 				}
 
 				if (newKeyboardItem) {
 					newKeyboardItem.element.classList.add("keyboard");
-					newKeyboardItem.element.setAttribute("aria-selected", "true");
-					this.element.setAttribute("aria-activedescendant", newKeyboardItem.element.getAttribute("id") as string);
+					newKeyboardItem.element.ariaSelected = "true";
+					this.setAttribute("aria-activedescendant", newKeyboardItem.element.id);
 				} else {
-					this.element.removeAttribute("aria-activedescendant");
+					this.removeAttribute("aria-activedescendant");
 				}
 
-				this.keyboardItem = newKeyboardItem;
+				this._keyboardItem = newKeyboardItem;
 			}
 
 			for (let i = 0, firstIndex = this.indexFromY(0); i <= visibleCount && firstIndex < length; i++, firstIndex++) {
 				const element = items[firstIndex].element;
 				adapter.prepareElement(list.item(firstIndex), firstIndex, length, element);
-				element.setAttribute("aria-rowindex", firstIndex.toString());
+				element.ariaRowIndex = firstIndex.toString();
 			}
 
 			return;
 		}
 
-		this.currentListItem = currentListItem;
+		this._currentListItem = currentListItem;
 
 		let i = 0,
-			firstIndex = this.firstIndex;
+			firstIndex = this._firstIndex;
 
 		// The +4 and -2 offsets are here to force the preparation of invisible
 		// items, in order to try to prevent the the appearance of blank spaces
 		// at the top and at the bottom of the list when the user scrolls it
 		// faster than the browser can process the script.
-		let visibleCount = this.visibleCount + ((firstIndex === 0) ? 2 : ((firstIndex === 1) ? 3 : 4));
+		let visibleCount = this._visibleCount + ((firstIndex === 0) ? 2 : ((firstIndex === 1) ? 3 : 4));
 		if (visibleCount > items.length)
 			visibleCount = items.length;
 
@@ -569,21 +540,21 @@ class ListControl<T extends Object> {
 				item.keyboard = tmp;
 				if (tmp) {
 					item.element.classList.add("keyboard");
-					item.element.setAttribute("aria-selected", "true");
-					this.element.setAttribute("aria-activedescendant", item.element.getAttribute("id") as string);
+					item.element.ariaSelected = "true";
+					this.setAttribute("aria-activedescendant", item.element.id);
 				} else {
-					if (this.element.getAttribute("aria-activedescendant") === item.element.getAttribute("id"))
-						this.element.removeAttribute("aria-activedescendant");
+					if (this.getAttribute("aria-activedescendant") === item.element.id)
+						this.removeAttribute("aria-activedescendant");
 					item.element.classList.remove("keyboard");
-					item.element.setAttribute("aria-selected", "false");
+					item.element.ariaSelected = "false";
 				}
 			}
 
 			adapter.prepareElement(listItem, firstIndex, length, item.element);
-			item.element.setAttribute("aria-rowindex", firstIndex.toString());
+			item.element.ariaRowIndex = firstIndex.toString();
 
 			if (!item.item)
-				element.appendChild(item.element);
+				this.appendChild(item.element);
 			item.item = listItem;
 
 			if (item.index !== firstIndex) {
@@ -598,72 +569,71 @@ class ListControl<T extends Object> {
 
 			if (item.item) {
 				item.item = null;
-				element.removeChild(item.element);
+				this.removeChild(item.element);
 			}
 		}
 	}
 
 	private resize(): void {
-		const adapter = this._adapter,
-			element = this.element;
-		if (!adapter || !element)
+		const adapter = this._adapter;
+		if (!adapter)
 			return;
 
-		const oldClientHeight = this.clientHeight;
+		const oldClientHeight = this._clientHeight;
 
-		let clientHeight = element.clientHeight;
+		let clientHeight = this.clientHeight;
 		if (clientHeight < 0)
 			clientHeight = 0;
 
-		const visibleCount = Math.ceil(clientHeight / this.itemHeightAndMargin) + 1;
-		if (this.visibleCount !== visibleCount) {
-			this.visibleCount = visibleCount;
+		const visibleCount = Math.ceil(clientHeight / this._itemHeightAndMargin) + 1;
+		if (this._visibleCount !== visibleCount) {
+			this._visibleCount = visibleCount;
 
-			if (this.useVirtualItems) {
-				const items = this.items;
+			if (this._useVirtualItems) {
+				const items = this._items;
 
 				// Check out the comments inside scroll() and refreshVisibleItemsInternal(),
 				// for an explanation about this offset
 				while ((visibleCount + 4) > items.length)
-					items.push(new ListControlItem<T>(adapter.createEmptyElement("list-item virtual")));
+					items.push(new ListControlItem<T>(adapter.createEmptyElement("f-list-item virtual")));
 			}
 		}
 
 		if (oldClientHeight !== clientHeight) {
-			this.clientHeight = clientHeight;
+			this._clientHeight = clientHeight;
 
-			if (this.useVirtualItems) {
-				this.ignoreFirstIndex = true;
+			if (this._useVirtualItems) {
+				this._ignoreFirstIndex = true;
 				this.elementScroll();
 			}
 
 			// Changing the padding in response to the resize event of a ResizeObserver
 			// could cause a "ResizeObserver - loop limit exceeded" error
-			if (!this.scrollbarPaddingScheduled) {
-				this.scrollbarPaddingScheduled = true;
-				requestAnimationFrame(this.boundAdjustScrollbarPaddingFromResize);
+			if (!this._scrollbarPaddingScheduled) {
+				this._scrollbarPaddingScheduled = true;
+				requestAnimationFrame(this._boundAdjustScrollbarPaddingFromResize);
 			}
 		}
 	}
 
 	private elementClick(e: MouseEvent): void {
-		if (!this.element || !this._adapter || !e.target) // || !(e.target as HTMLElement).classList.contains("list-item"))
+		if (!this._adapter || !e.target) // || !(e.target as HTMLElement).classList.contains("f-list-item"))
 			return;
 
-		const rect = this.element.getBoundingClientRect(),
+		const rect = this.getBoundingClientRect(),
 			index = this.indexFromY(e.clientY - rect.top);
 
-		if (this.keyboardIndex >= 0) {
-			this.keyboardIndex = -1;
+		if (this._keyboardIndex >= 0) {
+			this._keyboardIndex = -1;
 			this.refreshVisibleItems();
 		}
 
 		if (index >= 0) {
-			this.lastKeyboardIndex = index;
+			this._lastKeyboardIndex = index;
 
 			const item = this._adapter.list.item(index);
 			if (item) {
-				if ((e.target as HTMLElement).classList.contains("list-item")) {
+				if ((e.target as HTMLElement).classList.contains("f-list-item")) {
 					if (this.deleteMode)
 						this._adapter.list.removeItems(index, index);
 					else if (this.onitemclick)
@@ -676,19 +646,19 @@ class ListControl<T extends Object> {
 	}
 
 	private elementContextMenu(e: MouseEvent): boolean {
-		if (!this.element || !this._adapter || !this.onitemcontextmenu || !e.target) // || !(e.target as HTMLElement).classList.contains("list-item"))
+		if (!this._adapter || !this.onitemcontextmenu || !e.target) // || !(e.target as HTMLElement).classList.contains("f-list-item"))
 			return cancelEvent(e);
 
-		const rect = this.element.getBoundingClientRect(),
+		const rect = this.getBoundingClientRect(),
 			index = this.indexFromY(e.clientY - rect.top);
 
-		if (this.keyboardIndex >= 0) {
-			this.keyboardIndex = -1;
+		if (this._keyboardIndex >= 0) {
+			this._keyboardIndex = -1;
 			this.refreshVisibleItems();
 		}
 
 		if (index >= 0) {
-			this.lastKeyboardIndex = index;
+			this._lastKeyboardIndex = index;
 
 			const item = this._adapter.list.item(index);
 			if (item)
@@ -709,7 +679,7 @@ class ListControl<T extends Object> {
 	//}
 
 	private elementFocus(): void {
-		this.focused = true;
+		this._focused = true;
 	}
 
 	public elementKeyDown(e: KeyboardEvent): any {
@@ -729,10 +699,10 @@ class ListControl<T extends Object> {
 				delta = -1;
 				break;
 			case "PageDown":
-				delta = ((this.clientHeight / this.itemHeightAndMargin) | 0);
+				delta = ((this._clientHeight / this._itemHeightAndMargin) | 0);
 				break;
 			case "PageUp":
-				delta = -((this.clientHeight / this.itemHeightAndMargin) | 0);
+				delta = -((this._clientHeight / this._itemHeightAndMargin) | 0);
 				break;
 			case "Home":
 				end = -1;
@@ -755,10 +725,10 @@ class ListControl<T extends Object> {
 		const length = adapter.list.length;
 
 		if (length > 0) {
-			let keyboardIndex = this.keyboardIndex;
+			let keyboardIndex = this._keyboardIndex;
 
 			if (keyboardIndex < 0)
-				keyboardIndex = this.lastKeyboardIndex;
+				keyboardIndex = this._lastKeyboardIndex;
 
 			if (!this.isItemVisible(keyboardIndex)) {
 				keyboardIndex = (this.isItemVisible(adapter.list.currentIndex) ?
@@ -783,7 +753,7 @@ class ListControl<T extends Object> {
 					keyboardIndex = ((oldKeyboardIndex === (length - 1)) ? 0 : (length - 1));
 			}
 
-			this.keyboardIndex = keyboardIndex;
+			this._keyboardIndex = keyboardIndex;
 
 			this.bringItemIntoView(keyboardIndex);
 
@@ -812,7 +782,7 @@ class ListControl<T extends Object> {
 				}
 			}
 		} else {
-			this.keyboardIndex = -1;
+			this._keyboardIndex = -1;
 		}
 
 		return cancelEvent(e);
@@ -822,7 +792,7 @@ class ListControl<T extends Object> {
 		// Apparently, onkeyup is called after onfocus (when the
 		// user navigates to the control using Tab or Shift+Tab)
 		const adapter = this._adapter;
-		if (!adapter || e.ctrlKey || e.metaKey || e.altKey || e.key !== "Tab" || !this.focused)
+		if (!adapter || e.ctrlKey || e.metaKey || e.altKey || e.key !== "Tab" || !this._focused)
 			return;
 
 		const length = adapter.list.length;
@@ -830,35 +800,35 @@ class ListControl<T extends Object> {
 		if (!length)
 			return;
 
-		let keyboardIndex = Math.min(length - 1, Math.max(0, this.lastKeyboardIndex));
+		let keyboardIndex = Math.min(length - 1, Math.max(0, this._lastKeyboardIndex));
 
 		if (!this.isItemVisible(keyboardIndex))
 			keyboardIndex = (this.isItemVisible(adapter.list.currentIndex) ?
 				adapter.list.currentIndex :
 				this.indexFromY(0));
 
-		this.keyboardIndex = keyboardIndex;
+		this._keyboardIndex = keyboardIndex;
 		this.bringItemIntoView(keyboardIndex);
 
 		this.refreshVisibleItems();
 	}
 
 	private elementBlur(): void {
-		this.focused = false;
+		this._focused = false;
 
-		this.lastKeyboardIndex = this.keyboardIndex;
+		this._lastKeyboardIndex = this._keyboardIndex;
 
-		if (this.keyboardIndex >= 0) {
-			this.keyboardIndex = -1;
+		if (this._keyboardIndex >= 0) {
+			this._keyboardIndex = -1;
 			this.refreshVisibleItems();
 		}
 	}
 
 	private listControlItemFromIndex(index: number): ListControlItem<T> | null {
-		if (!this.items)
+		if (!this._items)
 			return null;
 
-		const items = this.items;
+		const items = this._items;
 
 		for (let i = items.length - 1; i >= 0; i--) {
 			if (items[i].index === index && items[i].item && items[i].element)
@@ -869,19 +839,19 @@ class ListControl<T extends Object> {
 	}
 
 	public yFromIndex(index: number): number {
-		return (this.element ? ((index * this.itemHeightAndMargin) - this.element.scrollTop) : 0);
+		return ((index * this._itemHeightAndMargin) - this.scrollTop);
 	}
 
 	public indexFromY(y: number): number {
-		if (!this.element || !this._adapter)
+		if (!this._adapter)
 			return -1;
-		const index = ((y + this.element.scrollTop + 0.9) / this.itemHeightAndMargin) | 0;
+		const index = ((y + this.scrollTop + 0.9) / this._itemHeightAndMargin) | 0;
 		return ((index < 0 || index >= this._adapter.list.length) ? -1 : index);
 	}
 
 	public isItemVisible(index: number): boolean {
 		const y = this.yFromIndex(index);
-		return (y > -this.itemHeight && y < this.clientHeight);
+		return (y > -this._itemHeight && y < this._clientHeight);
 	}
 
 	public bringItemIntoView(index: number, center?: boolean): void {
@@ -890,23 +860,23 @@ class ListControl<T extends Object> {
 			if (center)
 				this.centerItemIntoView(index);
 			else
-				this.element.scrollTop += y;
-		} else if (y > (this.clientHeight - this.itemHeight)) {
+				this.scrollTop += y;
+		} else if (y > (this._clientHeight - this._itemHeight)) {
 			if (center)
 				this.centerItemIntoView(index);
 			else
-				this.element.scrollTop += y - (this.clientHeight - this.itemHeight);
+				this.scrollTop += y - (this._clientHeight - this._itemHeight);
 		}
 	}
 
 	public centerItemIntoView(index: number): void {
-		this.element.scrollTop = (index * this.itemHeightAndMargin) - ((this.clientHeight - this.itemHeight) >> 1);
+		this.scrollTop = (index * this._itemHeightAndMargin) - ((this._clientHeight - this._itemHeight) >> 1);
 	}
 
 	public refreshVisibleItems(): void {
-		if (!this.refreshVisibleItemsEnqueued) {
-			this.refreshVisibleItemsEnqueued = true;
-			queueMicrotask(this.boundRefreshVisibleItemsInternal);
+		if (!this._refreshVisibleItemsEnqueued) {
+			this._refreshVisibleItemsEnqueued = true;
+			queueMicrotask(this._boundRefreshVisibleItemsInternal);
 		}
 	}
 
@@ -915,17 +885,15 @@ class ListControl<T extends Object> {
 	}
 
 	public notifyItemsAdded(firstIndex: number, lastIndex: number): void {
-		if (this.useVirtualItems) {
+		if (this._useVirtualItems) {
 			this.refreshVisibleItems();
 		} else {
 			const adapter = this._adapter,
-				count = lastIndex - firstIndex + 1,
-				element = this.element;
-
-			if (!adapter || count <= 0 || !element)
+				count = lastIndex - firstIndex + 1;
+			if (!adapter || count <= 0)
 				return;
 
-			const items = this.items,
+			const items = this._items,
 				list = adapter.list,
 				length = list.length,
 				currentListItem = list.currentItem,
@@ -933,19 +901,19 @@ class ListControl<T extends Object> {
 
 			for (let i = lastIndex; i >= firstIndex; i--) {
 				const listItem = list.item(i),
-					item = new ListControlItem<T>(adapter.createEmptyElement("list-item real"));
+					item = new ListControlItem<T>(adapter.createEmptyElement("f-list-item real"));
 
 				adapter.prepareElement(listItem, i, length, item.element);
-				item.element.setAttribute("aria-rowindex", i.toString());
+				item.element.ariaRowIndex = i.toString();
 				newItems[i - firstIndex] = item;
 
 				if (currentListItem === listItem) {
-					if (this.currentItem) {
-						this.currentItem.current = false;
-						this.currentItem.element.classList.remove("current");
+					if (this._currentItem) {
+						this._currentItem.current = false;
+						this._currentItem.element.classList.remove("current");
 					}
 
-					this.currentItem = item;
+					this._currentItem = item;
 					item.current = true;
 					item.element.classList.add("current");
 				}
@@ -958,43 +926,41 @@ class ListControl<T extends Object> {
 			else
 				items.splice(firstIndex, 0, ...newItems);
 
-			if (this.items.length !== list.length)
+			if (this._items.length !== list.length)
 				throw new Error("Assertion error: this.items.length !== list.length");
 
 			this.adjustContainerHeight();
 
 			for (let i = 0; i < count; i++)
-				element.insertBefore(newItems[i].element, insertBeforeReference);
+				this.insertBefore(newItems[i].element, insertBeforeReference);
 
 			for (let i = items.length - 1; i > lastIndex; i--) {
 				const element = items[i].element;
 				adapter.prepareElementIndexOrLengthChanged(list.item(i), i, length, element);
-				element.setAttribute("aria-rowindex", i.toString());
+				element.ariaRowIndex = i.toString();
 			}
 
 			for (let i = firstIndex - 1; i >= 0; i--) {
 				const element = items[i].element;
 				adapter.prepareElementIndexOrLengthChanged(list.item(i), i, length, element);
-				element.setAttribute("aria-rowindex", i.toString());
+				element.ariaRowIndex = i.toString();
 			}
 		}
 
-		if (this.element && this._adapter)
-			this.element.setAttribute("aria-rowcount", this._adapter.list.length.toString());
+		if (this._adapter)
+			this.ariaRowCount = this._adapter.list.length.toString();
 	}
 
 	public notifyItemsRemoved(firstIndex: number, lastIndex: number): void {
-		if (this.useVirtualItems) {
+		if (this._useVirtualItems) {
 			this.refreshVisibleItems();
 		} else {
 			const adapter = this._adapter,
-				count = lastIndex - firstIndex + 1,
-				element = this.element;
-
-			if (!adapter || count <= 0 || !element)
+				count = lastIndex - firstIndex + 1;
+			if (!adapter || count <= 0)
 				return;
 
-			const items = this.items,
+			const items = this._items,
 				list = adapter.list,
 				length = list.length,
 				removedItems = items.splice(firstIndex, count);
@@ -1003,58 +969,95 @@ class ListControl<T extends Object> {
 				const item = removedItems[i];
 
 				if (item.current)
-					this.currentItem = null;
+					this._currentItem = null;
 
-				element.removeChild(item.element);
+				this.removeChild(item.element);
 				item.zero();
 			}
 
-			if (this.items.length !== list.length)
+			if (this._items.length !== list.length)
 				throw new Error("Assertion error: this.items.length !== list.length");
 
 			for (let i = items.length - 1; i >= 0; i--) {
 				const element = items[i].element;
 				adapter.prepareElementIndexOrLengthChanged(list.item(i), i, length, element);
-				element.setAttribute("aria-rowindex", i.toString());
+				element.ariaRowIndex = i.toString();
 			}
 
 			this.adjustContainerHeight();
 		}
 
-		if (this.element && this._adapter)
-			this.element.setAttribute("aria-rowcount", this._adapter.list.length.toString());
+		if (this._adapter)
+			this.ariaRowCount = this._adapter.list.length.toString();
 	}
 
 	public notifyCurrentItemChanged(oldIndex: number, newIdex: number): void {
-		if (this.useVirtualItems) {
+		if (this._useVirtualItems) {
 			this.refreshVisibleItems();
-		} else if (!this.notifyCurrentItemChangedEnqueued) {
-			this.notifyCurrentItemChangedEnqueued = true;
-			queueMicrotask(this.boundNotifyCurrentItemChangedInternal);
+		} else if (!this._notifyCurrentItemChangedEnqueued) {
+			this._notifyCurrentItemChangedEnqueued = true;
+			queueMicrotask(this._boundNotifyCurrentItemChangedInternal);
 		}
 	}
 
 	private notifyCurrentItemChangedInternal(): void {
-		this.notifyCurrentItemChangedEnqueued = false;
+		this._notifyCurrentItemChangedEnqueued = false;
 
 		const adapter = this._adapter;
-
 		if (!adapter)
 			return;
 
-		if (this.currentItem) {
-			this.currentItem.current = false;
-			this.currentItem.element.classList.remove("current");
+		if (this._currentItem) {
+			this._currentItem.current = false;
+			this._currentItem.element.classList.remove("current");
 		}
 
 		const currentIndex = adapter.list.currentIndex;
 
-		if (currentIndex >= 0 && currentIndex < this.items.length) {
-			this.currentItem = this.items[currentIndex];
-			this.currentItem.current = true;
-			this.currentItem.element.classList.add("current");
+		if (currentIndex >= 0 && currentIndex < this._items.length) {
+			this._currentItem = this._items[currentIndex];
+			this._currentItem.current = true;
+			this._currentItem.element.classList.add("current");
 		} else {
-			this.currentItem = null;
+			this._currentItem = null;
 		}
 	}
+
+	public connectedCallback(): void {
+		if (this._initialized)
+			return;
+
+		this._initialized = true;
+
+		this.classList.add("scrollable");
+		this.style.padding = "0";
+		this.role = "grid";
+		this.ariaReadOnly = "true";
+		this.ariaRowCount = "0";
+		this.removeAttribute("aria-activedescendant");
+		if (!this.tabIndex || this.tabIndex <= 0)
+			this.tabIndex = 0;
+
+		if (this._useVirtualItems)
+			this.appendChild(this._container);
+
+		this.addEventListener("focus", this.elementFocus.bind(this));
+		this.addEventListener("keydown", this.elementKeyDown.bind(this));
+		this.addEventListener("keyup", this.elementKeyUp.bind(this));
+		this.addEventListener("blur", this.elementBlur.bind(this));
+
+		if (this._useVirtualItems)
+			this.addEventListener("scroll", this.elementScroll.bind(this), { passive: true });
+
+		this._resizeObserver.observe(this, { box: "border-box" });
+
+		this.addEventListener("click", this.elementClick.bind(this));
+		this.addEventListener("contextmenu", this.elementContextMenu.bind(this));
+
+		this.resize();
+
+		AppUI.addZoomHandler(this._boundZoomChanged);
+	}
 }
+
+customElements.define("f-list", ListControl);

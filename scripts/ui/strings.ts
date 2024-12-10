@@ -25,12 +25,12 @@
 //
 
 class Strings {
-	private static readonly regExpAmp = /\&/g;
-	private static readonly regExpLT = /</g;
-	private static readonly regExpGT = />/g;
-	private static readonly regExpQuot = /\"/g;
-	private static readonly regExpApos = /\'/g;
-	private static readonly regExpGrave = /\`/g;
+	private static readonly _regExpAmp = /\&/g;
+	private static readonly _regExpLT = /</g;
+	private static readonly _regExpGT = />/g;
+	private static readonly _regExpQuot = /\"/g;
+	private static readonly _regExpApos = /\'/g;
+	private static readonly _regExpGrave = /\`/g;
 
 	public static language = "en";
 
@@ -144,7 +144,7 @@ class Strings {
 		if (language && language.toLowerCase().indexOf("pt") === 0) {
 			Strings.language = "pt-br";
 
-			document.documentElement.setAttribute("lang", "pt-br");
+			document.documentElement.lang = "pt-br";
 
 			Strings.decimalSeparator = ",";
 			Strings.oppositeDecimalSeparator = ".";
@@ -239,8 +239,6 @@ class Strings {
 <p>Este projeto é licenciado sob a <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb/blob/master/LICENSE">MIT License</a>.</p>`;
 			Strings.DeleteModeHTML = `Clique as músicas para excluí-las.`;
 		}
-
-		Strings.translateChildren(document.body);
 	}
 
 	public static translate(key: string): string {
@@ -257,15 +255,15 @@ class Strings {
 			if (c.childNodes && c.childNodes.length)
 				Strings.translateChildren(c);
 
-			let d: string | null;
+			let d: string | null | undefined;
 
-			if ((d = c.getAttribute("title")))
-				c.setAttribute("title", Strings.translate(d));
+			if ((d = c.title))
+				c.title = Strings.translate(d);
 
-			if (!(d = c.getAttribute("data-string")))
+			if (!(d = c.dataset["string"]))
 				continue;
 
-			c.removeAttribute("data-string");
+			delete c.dataset["string"];
 
 			let start = 0;
 			do {
@@ -280,7 +278,7 @@ class Strings {
 				} else {
 					const attr = d.substring(start, idx),
 						key = d.substring(idx + 1, end);
-					c.setAttribute(attr, Strings.translate(key));
+					(c as any)[attr] = Strings.translate(key);
 				}
 
 				start = end + 1;
@@ -310,10 +308,10 @@ class Strings {
 	}
 
 	public static htmlEncode(text: string | null): string {
-		return (text ? text.replace(Strings.regExpAmp, "&amp;").replace(Strings.regExpLT, "&lt;").replace(Strings.regExpGT, "&gt;") : "");
+		return (text ? text.replace(Strings._regExpAmp, "&amp;").replace(Strings._regExpLT, "&lt;").replace(Strings._regExpGT, "&gt;") : "");
 	}
 
 	public static htmlEncodeValue(text: string | null): string {
-		return (text ? text.replace(Strings.regExpAmp, "&amp;").replace(Strings.regExpLT, "&lt;").replace(Strings.regExpGT, "&gt;").replace(Strings.regExpQuot, "&#34;").replace(Strings.regExpApos, "&#39;").replace(Strings.regExpGrave, "&#96;") : "");
+		return (text ? text.replace(Strings._regExpAmp, "&amp;").replace(Strings._regExpLT, "&lt;").replace(Strings._regExpGT, "&gt;").replace(Strings._regExpQuot, "&#34;").replace(Strings._regExpApos, "&#39;").replace(Strings._regExpGrave, "&#96;") : "");
 	}
 }

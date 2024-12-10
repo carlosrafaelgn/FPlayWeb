@@ -28,21 +28,21 @@ class InternalStorage {
 	// We avoid overwriting settings/playlists throughout this class if they have
 	// not changed, to try to spare the flash memory in devices that use them
 
-	private static readonly playlistCachePrefix = "https://fplay.com.br/";
-	private static readonly playlistCacheName = "playlists";
+	private static readonly _playlistCachePrefix = "https://fplay.com.br/";
+	private static readonly _playlistCacheName = "playlists";
 
-	private static readonly appSettingsName = "appSettings";
-	private static readonly graphicalFilterEditorSettingsName = "graphicalFilterEditorSettings";
-	private static readonly stereoPannerSettingsName = "stereoPannerSettings";
-	private static readonly defaultPlaylistName = "defaultPlaylist";
+	private static readonly _appSettingsName = "appSettings";
+	private static readonly _graphicalFilterEditorSettingsName = "graphicalFilterEditorSettings";
+	private static readonly _stereoPannerSettingsName = "stereoPannerSettings";
+	private static readonly _defaultPlaylistName = "defaultPlaylist";
 
 	private static async cacheGet(cacheName: string, name?: string | null): Promise<ArrayBuffer | null> {
 		const cache = await caches.open(cacheName);
 
 		if (!name)
-			name = InternalStorage.playlistCachePrefix;
+			name = InternalStorage._playlistCachePrefix;
 		else
-			name = InternalStorage.playlistCachePrefix + name;
+			name = InternalStorage._playlistCachePrefix + name;
 
 		const response = await cache.match(name);
 
@@ -53,16 +53,16 @@ class InternalStorage {
 		const cache = await caches.open(cacheName);
 
 		if (!name)
-			name = InternalStorage.playlistCachePrefix;
+			name = InternalStorage._playlistCachePrefix;
 		else
-			name = InternalStorage.playlistCachePrefix + name;
+			name = InternalStorage._playlistCachePrefix + name;
 
 		return cache.put(name, response);
 	}
 
 	public static loadAppSettings(): AppSettings {
 		try {
-			const s = localStorage.getItem(InternalStorage.appSettingsName);
+			const s = localStorage.getItem(InternalStorage._appSettingsName);
 			if (s) {
 				const appSettings = JSON.parse(s);
 				if (appSettings)
@@ -81,21 +81,21 @@ class InternalStorage {
 	}
 
 	public static saveAppSettings(appSettings: AppSettings | null): void {
-		const oldSettings = localStorage.getItem(InternalStorage.appSettingsName);
+		const oldSettings = localStorage.getItem(InternalStorage._appSettingsName);
 
 		if (appSettings) {
 			const newSettings = JSON.stringify(appSettings);
 
 			if (oldSettings !== newSettings)
-				localStorage.setItem(InternalStorage.appSettingsName, newSettings);
+				localStorage.setItem(InternalStorage._appSettingsName, newSettings);
 		} else if (oldSettings) {
-			localStorage.removeItem(InternalStorage.appSettingsName);
+			localStorage.removeItem(InternalStorage._appSettingsName);
 		}
 	}
 
 	public static loadGraphicalFilterEditorSettings(): GraphicalFilterEditorSettings {
 		try {
-			const s = localStorage.getItem(InternalStorage.graphicalFilterEditorSettingsName);
+			const s = localStorage.getItem(InternalStorage._graphicalFilterEditorSettingsName);
 			if (s) {
 				const graphicalFilterEditorSettings = JSON.parse(s);
 				if (graphicalFilterEditorSettings)
@@ -115,32 +115,32 @@ class InternalStorage {
 	}
 
 	public static saveGraphicalFilterEditorSettings(graphicalFilterEditorSettings: GraphicalFilterEditorSettings | null): void {
-		const oldSettings = localStorage.getItem(InternalStorage.graphicalFilterEditorSettingsName);
+		const oldSettings = localStorage.getItem(InternalStorage._graphicalFilterEditorSettingsName);
 
 		if (graphicalFilterEditorSettings) {
 			const newSettings = JSON.stringify(graphicalFilterEditorSettings);
 
 			if (oldSettings !== newSettings)
-				localStorage.setItem(InternalStorage.graphicalFilterEditorSettingsName, newSettings);
+				localStorage.setItem(InternalStorage._graphicalFilterEditorSettingsName, newSettings);
 		} else if (oldSettings) {
-			localStorage.removeItem(InternalStorage.graphicalFilterEditorSettingsName);
+			localStorage.removeItem(InternalStorage._graphicalFilterEditorSettingsName);
 		}
 	}
 
 	public static loadStereoPannerSettings(): number {
-		return Math.max(-StereoPannerControl.maxAbsoluteValue, Math.min(StereoPannerControl.maxAbsoluteValue, parseInt(localStorage.getItem(InternalStorage.stereoPannerSettingsName) as string) | 0));
+		return Math.max(-StereoPannerControl.maxAbsoluteValue, Math.min(StereoPannerControl.maxAbsoluteValue, parseInt(localStorage.getItem(InternalStorage._stereoPannerSettingsName) as string) | 0));
 	}
 
 	public static saveStereoPannerSettings(pan: number): void {
-		const oldSettings = localStorage.getItem(InternalStorage.stereoPannerSettingsName),
+		const oldSettings = localStorage.getItem(InternalStorage._stereoPannerSettingsName),
 			newSettings = (pan | 0).toString();
 
 		if (oldSettings !== newSettings)
-			localStorage.setItem(InternalStorage.stereoPannerSettingsName, newSettings);
+			localStorage.setItem(InternalStorage._stereoPannerSettingsName, newSettings);
 	}
 
 	public static async loadPlaylist(name?: string | null): Promise<Playlist | null> {
-		const arrayBuffer = await InternalStorage.cacheGet(InternalStorage.playlistCacheName, name);
+		const arrayBuffer = await InternalStorage.cacheGet(InternalStorage._playlistCacheName, name);
 
 		if (!arrayBuffer)
 			return null;
@@ -153,7 +153,7 @@ class InternalStorage {
 	}
 
 	public static loadPlaylistWeb(name?: string | null): Playlist | null {
-		const json = localStorage.getItem(name || InternalStorage.defaultPlaylistName);
+		const json = localStorage.getItem(name || InternalStorage._defaultPlaylistName);
 
 		return (json ? Playlist.deserializeWeb(json) : null);
 	}
@@ -166,7 +166,7 @@ class InternalStorage {
 			playlist.modified = false;
 		}
 
-		return InternalStorage.cachePut(InternalStorage.playlistCacheName, name, new Response(playlist.serialize().trimmedArrayBuffer));
+		return InternalStorage.cachePut(InternalStorage._playlistCacheName, name, new Response(playlist.serialize().trimmedArrayBuffer));
 	}
 
 	public static savePlaylistWeb(playlist: Playlist, name?: string | null): void {
@@ -177,6 +177,6 @@ class InternalStorage {
 			playlist.modified = false;
 		}
 
-		return localStorage.setItem(name || InternalStorage.defaultPlaylistName, JSON.stringify(playlist.serializeWeb()));
+		return localStorage.setItem(name || InternalStorage._defaultPlaylistName, JSON.stringify(playlist.serializeWeb()));
 	}
 }

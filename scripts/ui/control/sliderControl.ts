@@ -34,131 +34,106 @@ enum SliderControlValueChild {
 	RightChild = 2
 }
 
-class SliderControl {
+class SliderControl extends HTMLElement {
+	public static readonly disabledFeatures = ["shadow"];
+	public static readonly observedAttributes = ["disabled", "unfocusable", "value-child", "vertical", "manual-aria", "min", "max", "value"];
+
+	public static create(label: string, mapper: SliderControlValueMapper | null, valueChild: SliderControlValueChild, unfocusable: boolean, vertical: boolean, min: number, max: number, value?: number, className?: string, leftChild?: HTMLElement | null, rightChild?: HTMLElement | null, manualAria?: boolean): SliderControl {
+		const sliderControl = document.createElement("f-slider") as SliderControl;
+
+		if (label)
+			sliderControl.ariaLabel = label;
+
+		if (className)
+			sliderControl.className = className;
+
+		sliderControl.leftChild = leftChild || null;
+		sliderControl.rightChild = rightChild || null;
+		sliderControl.mapper = mapper;
+		sliderControl.valueChild = valueChild;
+		sliderControl.unfocusable = unfocusable;
+		sliderControl.vertical = vertical;
+		sliderControl.manualAria = !!manualAria;
+		min |= 0;
+		max |= 0;
+		if (max < min)
+			max = min;
+		sliderControl.min = min;
+		sliderControl.max = max;
+		sliderControl.value = Math.max(min, Math.min(max, (value === undefined) ? min : (value | 0)));
+
+		return sliderControl;
+	}
+
 	private _leftChild: HTMLElement | null;
 	private _rightChild: HTMLElement | null;
 
-	private focusContainer: HTMLSpanElement;
-	private container: HTMLSpanElement;
-	private innerContainer: HTMLSpanElement;
-	private ruler: HTMLSpanElement;
-	private filledRuler: HTMLSpanElement;
-	private thumb: HTMLSpanElement;
+	private _innerElements: {
+		focusContainer: HTMLSpanElement;
+		container: HTMLSpanElement;
+		innerContainer: HTMLSpanElement;
+		ruler: HTMLSpanElement;
+		filledRuler: HTMLSpanElement;
+		thumb: HTMLSpanElement;
+	} | null;
 
-	private pointerHandler: PointerHandler;
+	private _pointerHandler: PointerHandler | null;
 
+	private _onvaluechangeEnabled: boolean;
+	private _mapper: SliderControlValueMapper | null;
 	private _disabled: boolean;
+	private _unfocusable: boolean;
+	private _valueChild: SliderControlValueChild;
+	private _vertical: boolean;
+	private _manualAria: boolean;
 	private _min: number;
 	private _max: number;
 	private _value: number;
-	private delta: number;
-	private percent: number;
-	private forcedDragging: boolean;
-	private valueChangedDragging: boolean;
+	private _delta: number;
+	private _percent: number;
+	private _forcedDragging: boolean;
+	private _valueChangedDragging: boolean;
 
-	public readonly element: HTMLElement;
-	public readonly mapper: SliderControlValueMapper | null;
-	public readonly valueChild: SliderControlValueChild;
-	public readonly keyboardFocusable: boolean;
-	public readonly vertical: boolean;
-	public readonly manualAria: boolean;
+	private readonly _boundKeyDown: any;
+	private readonly _boundFocus: any;
+	private readonly _boundBlur: any;
 
 	public onvaluechange: ((value: number) => void) | null;
-	public ondragend: ((value: number) => void) | null;
+	public ondragchangecommit: ((value: number) => void) | null;
 	public onkeyboardchange: ((value: number) => void) | null;
 
-	public constructor(element: string | HTMLElement, label: string, mapper: SliderControlValueMapper | null, valueChild: SliderControlValueChild, keyboardFocusable: boolean, vertical: boolean, min: number, max: number, value?: number, leftChild?: HTMLElement | null, rightChild?: HTMLElement | null, manualAria?: boolean) {
-		this.element = (((typeof element) === "string") ? document.getElementById(element as string) : element) as HTMLElement;
-		this.element.classList.add("slider-control");
-		if (vertical)
-			this.element.classList.add("vertical");
-		this.element.setAttribute("role", "slider");
-		this.element.setAttribute("aria-label", label);
-		this.element.setAttribute("aria-orientation", vertical ? "vertical" : "horizontal");
-		if (keyboardFocusable)
-			this.element.setAttribute("tabindex", "0");
-
-		this.mapper = mapper;
-		this.valueChild = valueChild;
-		this.keyboardFocusable = keyboardFocusable;
-		this.vertical = vertical;
-		this.manualAria = !!manualAria;
-
-		const classSuffix = (vertical ? " vertical" : "");
-
-		const focusContainer = document.createElement("span");
-		focusContainer.className = "slider-control-focus-container" + classSuffix;
-		focusContainer.setAttribute("tabindex", "-1");
-		//focusContainer.setAttribute("aria-hidden", "true");
-		this.focusContainer = focusContainer;
-
-		this.onvaluechange = null;
-		this.ondragend = null;
-		this.onkeyboardchange = null;
-
-		const container = document.createElement("span");
-		container.className = "slider-control-container" + classSuffix;
-		focusContainer.appendChild(container);
-		this.container = container;
-
-		const innerContainer = document.createElement("span");
-		innerContainer.className = "slider-control-inner-container" + classSuffix;
-		container.appendChild(innerContainer);
-		this.innerContainer = innerContainer;
-
-		const ruler = document.createElement("span");
-		ruler.className = "slider-control-ruler" + classSuffix;
-		innerContainer.appendChild(ruler);
-		this.ruler = ruler;
-
-		const filledRuler = document.createElement("span");
-		filledRuler.className = "slider-control-color slider-control-filled-ruler" + classSuffix;
-		innerContainer.appendChild(filledRuler);
-		this.filledRuler = filledRuler;
-
-		const thumb = document.createElement("span");
-		thumb.className = "slider-control-color slider-control-thumb" + classSuffix;
-		innerContainer.appendChild(thumb);
-		this.thumb = thumb;
-
-		this.element.appendChild(focusContainer);
-
-		if (min > max) {
-			this._min = max | 0;
-			this._max = min | 0;
-		} else {
-			this._min = min | 0;
-			this._max = max | 0;
-		}
-
-		this.delta = this._max - this._min;
-		if (!this.delta)
-			this.delta = 1;
-
-		this._disabled = false;
-		this._value = min - 1;
-		this.percent = 0;
-		this.forcedDragging = false;
-		this.valueChangedDragging = false;
-		this.value = (value === undefined ? min : value);
-
-		this.pointerHandler = new PointerHandler(container, this.mouseDown.bind(this), this.mouseMove.bind(this), this.mouseUp.bind(this));
-
-		this.element.setAttribute("aria-valuemin", min.toString());
-		this.element.setAttribute("aria-valuemax", max.toString());
-
-		if (keyboardFocusable) {
-			this.element.addEventListener("keydown", this.keyDown.bind(this));
-			this.element.addEventListener("focus", this.focus.bind(this));
-			this.element.addEventListener("blur", this.blur.bind(this));
-		}
+	public constructor() {
+		super();
 
 		this._leftChild = null;
 		this._rightChild = null;
-		if (leftChild)
-			this.leftChild = leftChild;
-		if (rightChild)
-			this.rightChild = rightChild;
+
+		this._innerElements = null;
+
+		this._pointerHandler = null;
+
+		this._onvaluechangeEnabled = true;
+		this._mapper = null;
+		this._disabled = false;
+		this._unfocusable = false;
+		this._valueChild = SliderControlValueChild.None;
+		this._vertical = false;
+		this._manualAria = false;
+		this._min = 0;
+		this._max = 1;
+		this._value = 0;
+		this._delta = 1;
+		this._percent = 0;
+		this._forcedDragging = false;
+		this._valueChangedDragging = false;
+
+		this._boundKeyDown = this.elementKeyDown.bind(this);
+		this._boundFocus = this.elementFocus.bind(this);
+		this._boundBlur = this.elementBlur.bind(this);
+
+		this.onvaluechange = null;
+		this.ondragchangecommit = null;
+		this.onkeyboardchange = null;
 	}
 
 	public get leftChild(): HTMLElement | null {
@@ -166,22 +141,29 @@ class SliderControl {
 	}
 
 	public set leftChild(leftChild: HTMLElement | null) {
-		if (!this.focusContainer)
+		if (!this._innerElements) {
+			this._leftChild = leftChild;
 			return;
+		}
+
+		if (this._leftChild === leftChild)
+			return;
+
+		const focusContainer = this._innerElements.focusContainer;
 
 		if (leftChild) {
 			if (this._leftChild)
-				this.focusContainer.replaceChild(leftChild, this._leftChild);
+				focusContainer.replaceChild(leftChild, this._leftChild);
 			else
-				this.focusContainer.insertBefore(leftChild, this.focusContainer.firstChild);
+				focusContainer.insertBefore(leftChild, focusContainer.firstChild);
 		} else if (this._leftChild) {
-			this.focusContainer.removeChild(this._leftChild);
+			focusContainer.removeChild(this._leftChild);
 		}
 
 		this._leftChild = leftChild;
 
-		if (leftChild && this.valueChild === SliderControlValueChild.LeftChild && !this.manualAria)
-			Strings.changeText(leftChild, this.element.getAttribute("aria-valuetext") || this.element.getAttribute("aria-valuenow"));
+		if (leftChild && this._valueChild === SliderControlValueChild.LeftChild && !this._manualAria)
+			Strings.changeText(leftChild, this.ariaValueText || this.ariaValueNow);
 	}
 
 	public get rightChild(): HTMLElement | null {
@@ -189,26 +171,55 @@ class SliderControl {
 	}
 
 	public set rightChild(rightChild: HTMLElement | null) {
-		if (!this.focusContainer)
+		if (!this._innerElements) {
+			this._rightChild = rightChild;
 			return;
+		}
+
+		if (this._rightChild === rightChild)
+			return;
+
+		const focusContainer = this._innerElements.focusContainer;
 
 		if (rightChild) {
 			if (this._rightChild)
-				this.focusContainer.replaceChild(rightChild, this._rightChild);
+				focusContainer.replaceChild(rightChild, this._rightChild);
 			else
-				this.focusContainer.appendChild(rightChild);
+				focusContainer.appendChild(rightChild);
 		} else if (this._rightChild) {
-			this.focusContainer.removeChild(this._rightChild);
+			focusContainer.removeChild(this._rightChild);
 		}
 
 		this._rightChild = rightChild;
 
-		if (rightChild && this.valueChild === SliderControlValueChild.RightChild && !this.manualAria)
-			Strings.changeText(rightChild, this.element.getAttribute("aria-valuetext") || this.element.getAttribute("aria-valuenow"));
+		if (rightChild && this._valueChild === SliderControlValueChild.RightChild && !this._manualAria)
+			Strings.changeText(rightChild, this.ariaValueText || this.ariaValueNow);
 	}
 
 	public get dragging(): boolean {
-		return (this.forcedDragging || (this.pointerHandler ? this.pointerHandler.captured : false));
+		return (this._forcedDragging || (this._pointerHandler ? this._pointerHandler.captured : false));
+	}
+
+	public get mapper(): SliderControlValueMapper | null {
+		return this._mapper;
+	}
+
+	public set mapper(mapper: SliderControlValueMapper | null) {
+		if (!this._innerElements) {
+			this._mapper = mapper;
+			return;
+		}
+
+		if (this._mapper === mapper)
+			return;
+
+		this._mapper = mapper;
+
+		this._onvaluechangeEnabled = false;
+		const value = this._value;
+		this._value = this._min - 1;
+		this.value = value;
+		this._onvaluechangeEnabled = true;
 	}
 
 	public get disabled(): boolean {
@@ -216,16 +227,51 @@ class SliderControl {
 	}
 
 	public set disabled(disabled: boolean) {
-		if (this._disabled !== disabled) {
-			this._disabled = disabled;
+		if (disabled)
+			this.setAttribute("disabled", "");
+		else
+			this.removeAttribute("disabled");
+	}
 
-			if (this.element) {
-				if (this.keyboardFocusable)
-					this.element.setAttribute("tabindex", disabled ? "-1" : "0");
+	public get unfocusable(): boolean {
+		return this._unfocusable;
+	}
 
-				this.element.style.pointerEvents = (disabled ? "none" : "");
-			}
-		}
+	public set unfocusable(unfocusable: boolean) {
+		if (unfocusable)
+			this.setAttribute("unfocusable", "");
+		else
+			this.removeAttribute("unfocusable");
+	}
+
+	public get valueChild(): SliderControlValueChild {
+		return this._valueChild;
+	}
+
+	public set valueChild(valueChild: SliderControlValueChild) {
+		this.setAttribute("value-child", valueChild.toString());
+	}
+
+	public get vertical(): boolean {
+		return this._vertical;
+	}
+
+	public set vertical(vertical: boolean) {
+		if (vertical)
+			this.setAttribute("vertical", "");
+		else
+			this.removeAttribute("vertical");
+	}
+
+	public get manualAria(): boolean {
+		return this._manualAria;
+	}
+
+	public set manualAria(manualAria: boolean) {
+		if (manualAria)
+			this.setAttribute("manual-aria", "");
+		else
+			this.removeAttribute("manual-aria");
 	}
 
 	public get min(): number {
@@ -233,23 +279,7 @@ class SliderControl {
 	}
 
 	public set min(min: number) {
-		min |= 0;
-
-		this._min = min;
-
-		if (min > this._max) {
-			this._max = min;
-
-			this.element.setAttribute("aria-valuemax", min.toString());
-		}
-
-		this.delta = this._max - min;
-		if (!this.delta)
-			this.delta = 1;
-
-		this.element.setAttribute("aria-valuemin", min.toString());
-
-		this.value = this._value;
+		this.setAttribute("min", min.toString());
 	}
 
 	public get max(): number {
@@ -257,23 +287,7 @@ class SliderControl {
 	}
 
 	public set max(max: number) {
-		max |= 0;
-
-		this._max = max;
-
-		if (max < this._min) {
-			this._min = max;
-
-			this.element.setAttribute("aria-valuemin", max.toString());
-		}
-
-		this.delta = max - this._min;
-		if (!this.delta)
-			this.delta = 1;
-
-		this.element.setAttribute("aria-valuemax", max.toString());
-
-		this.value = this._value;
+		this.setAttribute("max", max.toString());
 	}
 
 	public get value(): number {
@@ -281,7 +295,15 @@ class SliderControl {
 	}
 
 	public set value(value: number) {
+		// Just like input's value, this IDL attribute is not synchronized with the content attribute
+		// https://developer.mozilla.org/en-US/docs/Glossary/IDL
+
 		value |= 0;
+
+		if (!this._innerElements) {
+			this._value = value;
+			return;
+		}
 
 		if (value < this._min)
 			value = this._min;
@@ -292,104 +314,87 @@ class SliderControl {
 
 		this._value = value;
 
-		this.percent = 100 * (value - this._min) / this.delta;
+		this._percent = 100 * (value - this._min) / this._delta;
 
-		const p = this.percent + "%";
+		const p = this._percent + "%";
 
-		if (this.filledRuler) {
+		const innerElements = this._innerElements;
+
+		if (innerElements) {
 			if (this.vertical)
-				this.filledRuler.style.top = (100 - this.percent) + "%";
+				innerElements.filledRuler.style.top = (100 - this._percent) + "%";
 			else
-				this.filledRuler.style.right = (100 - this.percent) + "%";
+				innerElements.filledRuler.style.right = (100 - this._percent) + "%";
+
+			if (this.vertical)
+				innerElements.ruler.style.bottom = p;
+			else
+				innerElements.ruler.style.left = p;
+
+			if (this.vertical)
+				innerElements.thumb.style.bottom = p;
+			else
+				innerElements.thumb.style.left = p;
 		}
 
-		if (this.ruler) {
-			if (this.vertical)
-				this.ruler.style.bottom = p;
-			else
-				this.ruler.style.left = p;
-		}
+		if (value === oldValue)
+			return;
 
-		if (this.thumb) {
-			if (this.vertical)
-				this.thumb.style.bottom = p;
-			else
-				this.thumb.style.left = p;
-		}
+		if (!this._manualAria) {
+			let valueText: string;
 
-		if (value !== oldValue) {
-			if (!this.manualAria) {
-				let valueText: string;
-
-				if (this.mapper) {
-					this.element.setAttribute("aria-valuetext", valueText = this.mapper(value));
-					this.element.setAttribute("aria-valuenow", value.toString());
-				} else {
-					this.element.setAttribute("aria-valuenow", valueText = value.toString());
-				}
-
-				switch (this.valueChild) {
-					case SliderControlValueChild.LeftChild:
-						if (this._leftChild)
-							Strings.changeText(this._leftChild, valueText);
-						break;
-					case SliderControlValueChild.RightChild:
-						if (this._rightChild)
-							Strings.changeText(this._rightChild, valueText);
-						break;
-				}
+			if (this._mapper) {
+				valueText = this._mapper(value);
+				this.ariaValueText = valueText;
+				this.ariaValueNow = value.toString();
+			} else {
+				valueText = value.toString();
+				this.ariaValueNow = valueText;
 			}
 
-			if (this.dragging)
-				this.valueChangedDragging = true;
-
-			if (this.onvaluechange)
-				this.onvaluechange(value);
+			switch (this._valueChild) {
+				case SliderControlValueChild.LeftChild:
+					if (this._leftChild)
+						Strings.changeText(this._leftChild, valueText);
+					break;
+				case SliderControlValueChild.RightChild:
+					if (this._rightChild)
+						Strings.changeText(this._rightChild, valueText);
+					break;
+			}
 		}
+
+		if (this.dragging)
+			this._valueChangedDragging = true;
+
+		if (this.onvaluechange && this._onvaluechangeEnabled)
+			this.onvaluechange(value);
 	}
 
-	public manuallyChangeAll(value: number, valueText: string, valueChild: SliderControlValueChild): void {
-		this.value = value;
-		this.manuallyChangeAria(valueText, valueChild);
-	}
-
-	public manuallyChangeAria(valueText: string, valueChild: SliderControlValueChild): void {
-		this.element.setAttribute("aria-valuetext", valueText);
-		this.element.setAttribute("aria-valuenow", this._value.toString());
-
-		switch (valueChild) {
-			case SliderControlValueChild.LeftChild:
-				if (this._leftChild)
-					Strings.changeText(this._leftChild, valueText);
-				break;
-			case SliderControlValueChild.RightChild:
-				if (this._rightChild)
-					Strings.changeText(this._rightChild, valueText);
-				break;
-		}
-	}
-
-	private mouseDown(e: MouseEvent): boolean {
-		if (e.button || this._disabled || !this.element)
+	private elementMouseDown(e: MouseEvent): boolean {
+		if (e.button || this._disabled || !this._innerElements)
 			return false;
 
-		this.focusContainer.focus();
+		this._innerElements.focusContainer.focus();
 
 		// Firefox ignores :active pseudo-class when event.preventDefault() is called
-		this.container.classList.add("active");
+		this._innerElements.container.classList.add("active");
 
-		this.forcedDragging = true;
-		this.valueChangedDragging = false;
+		this._forcedDragging = true;
+		this._valueChangedDragging = false;
 
-		this.mouseMove(e);
+		this.elementMouseMove(e);
 
-		this.forcedDragging = false;
+		this._forcedDragging = false;
 
 		return true;
 	}
 
-	private mouseMove(e: MouseEvent): void {
-		const rect = this.innerContainer.getBoundingClientRect();
+	private elementMouseMove(e: MouseEvent): void {
+		if (!this._innerElements)
+			return;
+
+		const rect = this._innerElements.innerContainer.getBoundingClientRect();
 
 		let dx: number, x: number;
 		if (this.vertical) {
@@ -400,21 +405,24 @@ class SliderControl {
 			x = e.clientX - (rect.left + 4);
 		}
 
-		this.value = ((dx <= 0) ? this._min : (this._min + (this.delta * x / dx)));
+		this.value = ((dx <= 0) ? this._min : (this._min + (this._delta * x / dx)));
 	}
 
-	private mouseUp(e: MouseEvent): void {
+	private elementMouseUp(e: MouseEvent): void {
+		if (!this._innerElements)
+			return;
+
 		// Firefox ignores :active pseudo-class when event.preventDefault() is called
-		this.container.classList.remove("active");
+		this._innerElements.container.classList.remove("active");
 
-		if (this.ondragend && this.valueChangedDragging)
-			this.ondragend(this._value);
+		if (this.ondragchangecommit && this._valueChangedDragging)
+			this.ondragchangecommit(this._value);
 
-		this.valueChangedDragging = false;
+		this._valueChangedDragging = false;
 	}
 
-	private keyDown(e: KeyboardEvent): any {
-		if (this.pointerHandler.captured || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey)
+	private elementKeyDown(e: KeyboardEvent): any {
+		if ((this._pointerHandler && this._pointerHandler.captured) || this._disabled || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey)
 			return;
 
 		const oldValue = this._value;
@@ -433,12 +441,12 @@ class SliderControl {
 					this.onkeyboardchange(this._value);
 				break;
 			case "PageDown":
-				this.value = oldValue - (this.delta * 0.1);
+				this.value = oldValue - (this._delta * 0.1);
 				if (this.onkeyboardchange && this._value !== oldValue)
 					this.onkeyboardchange(this._value);
 				break;
 			case "PageUp":
-				this.value = oldValue + (this.delta * 0.1);
+				this.value = oldValue + (this._delta * 0.1);
 				if (this.onkeyboardchange && this._value !== oldValue)
 					this.onkeyboardchange(this._value);
 				break;
@@ -449,11 +457,289 @@ class SliderControl {
 		return cancelEvent(e);
 	}
 
-	private focus(): void {
-		this.container.classList.add("active");
+	private elementFocus(): void {
+		this._innerElements?.container.classList.add("active");
 	}
 
-	private blur(): void {
-		this.container.classList.remove("active");
+	private elementBlur(): void {
+		this._innerElements?.container.classList.remove("active");
+	}
+
+	public manuallyChangeAll(value: number, valueText: string, valueChild: SliderControlValueChild): void {
+		this.value = value;
+		this.manuallyChangeAria(valueText, valueChild);
+	}
+
+	public manuallyChangeAria(valueText: string, valueChild: SliderControlValueChild): void {
+		this.ariaValueText = valueText;
+		this.ariaValueNow = this._value.toString();
+
+		switch (valueChild) {
+			case SliderControlValueChild.LeftChild:
+				if (this._leftChild)
+					Strings.changeText(this._leftChild, valueText);
+				break;
+			case SliderControlValueChild.RightChild:
+				if (this._rightChild)
+					Strings.changeText(this._rightChild, valueText);
+				break;
+		}
+	}
+
+	public connectedCallback(): void {
+		if (this._innerElements)
+			return;
+
+		this.role = "slider";
+
+		const classSuffix = (this._vertical ? " vertical" : "");
+
+		const focusContainer = document.createElement("span");
+		focusContainer.className = "f-slider-focus-container" + classSuffix;
+		focusContainer.tabIndex = -1;
+		//focusContainer.ariaHidden = "true";
+
+		const container = document.createElement("span");
+		container.className = "f-slider-container" + classSuffix;
+		focusContainer.appendChild(container);
+
+		const innerContainer = document.createElement("span");
+		innerContainer.className = "f-slider-inner-container" + classSuffix;
+		container.appendChild(innerContainer);
+
+		const ruler = document.createElement("span");
+		ruler.className = "f-slider-ruler" + classSuffix;
+		innerContainer.appendChild(ruler);
+
+		const filledRuler = document.createElement("span");
+		filledRuler.className = "f-slider-color f-slider-filled-ruler" + classSuffix;
+		innerContainer.appendChild(filledRuler);
+
+		const thumb = document.createElement("span");
+		thumb.className = "f-slider-color f-slider-thumb" + classSuffix;
+		innerContainer.appendChild(thumb);
+
+		this._innerElements = {
+			focusContainer,
+			container,
+			innerContainer,
+			ruler,
+			filledRuler,
+			thumb
+		};
+
+		this.appendChild(focusContainer);
+
+		this._pointerHandler = new PointerHandler(container, this.elementMouseDown.bind(this), this.elementMouseMove.bind(this), this.elementMouseUp.bind(this));
+
+		this._disabled = !this._disabled;
+		this.attributeChangedCallback("disabled", null, this._disabled ? null : "");
+
+		this._unfocusable = !this._unfocusable;
+		this.attributeChangedCallback("unfocusable", null, this._unfocusable ? null : "");
+
+		this.ariaValueMin = this._min.toString();
+		this.ariaValueMax = this._max.toString();
+		this._delta = this._max - this._min;
+		if (!this._delta)
+			this._delta = 1;
+
+		this._vertical = !this._vertical;
+		this.attributeChangedCallback("vertical", null, this._vertical ? null : "");
+
+		const leftChild = this._leftChild;
+		if (leftChild) {
+			this._leftChild = null;
+			this.leftChild = leftChild;
+		}
+
+		const rightChild = this._rightChild;
+		if (rightChild) {
+			this._rightChild = null;
+			this.rightChild = rightChild;
+		}
+	}
+
+	public attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
+		const innerElements = this._innerElements;
+
+		switch (name) {
+			case "disabled":
+				const disabled = (newValue !== null);
+
+				if (this._disabled === disabled)
+					return;
+
+				this._disabled = disabled;
+
+				if (!innerElements)
+					return;
+
+				if (disabled)
+					this.removeAttribute("tabindex");
+				else if (!this._unfocusable)
+					this.tabIndex = 0;
+
+				if (disabled)
+					this.classList.add("disabled");
+				else
+					this.classList.remove("disabled");
+				break;
+
+			case "unfocusable":
+				const unfocusable = (newValue !== null);
+
+				if (this._unfocusable === unfocusable)
+					return;
+
+				this._unfocusable = unfocusable;
+
+				if (!innerElements)
+					return;
+
+				if (unfocusable) {
+					this.removeAttribute("tabindex");
+					this.removeEventListener("keydown", this._boundKeyDown);
+					this.removeEventListener("focus", this._boundFocus);
+					this.removeEventListener("blur", this._boundBlur);
+				} else {
+					if (!this._disabled)
+						this.tabIndex = 0;
+					this.addEventListener("keydown", this._boundKeyDown);
+					this.addEventListener("focus", this._boundFocus);
+					this.addEventListener("blur", this._boundBlur);
+				}
+				break;
+
+			case "value-child":
+				let valueChild = parseInt(newValue as string) || 0;
+				if (valueChild < 1 || valueChild > 2)
+					valueChild = SliderControlValueChild.None;
+
+				if (this._valueChild === valueChild)
+					return;
+
+				this._valueChild = valueChild;
+
+				if (!this._manualAria) {
+					if (this._leftChild && this._valueChild === SliderControlValueChild.LeftChild)
+						Strings.changeText(this._leftChild, this.ariaValueText || this.ariaValueNow);
+					else if (this._rightChild && this._valueChild === SliderControlValueChild.RightChild)
+						Strings.changeText(this._rightChild, this.ariaValueText || this.ariaValueNow);
+				}
+				break;
+
+			case "vertical":
+				const vertical = (newValue !== null);
+
+				if (this._vertical === vertical)
+					return;
+
+				this._vertical = vertical;
+
+				if (!innerElements)
+					return;
+
+				if (vertical) {
+					this.classList.add("vertical");
+					innerElements.focusContainer.classList.add("vertical");
+					innerElements.container.classList.add("vertical");
+					innerElements.innerContainer.classList.add("vertical");
+					innerElements.ruler.classList.add("vertical");
+					innerElements.filledRuler.classList.add("vertical");
+					innerElements.thumb.classList.add("vertical");
+					innerElements.filledRuler.style.right = "";
+					innerElements.ruler.style.left = "";
+					innerElements.thumb.style.left = "";
+				} else {
+					this.classList.remove("vertical");
+					innerElements.focusContainer.classList.remove("vertical");
+					innerElements.container.classList.remove("vertical");
+					innerElements.innerContainer.classList.remove("vertical");
+					innerElements.ruler.classList.remove("vertical");
+					innerElements.filledRuler.classList.remove("vertical");
+					innerElements.thumb.classList.remove("vertical");
+					innerElements.filledRuler.style.top = "";
+					innerElements.ruler.style.bottom = "";
+					innerElements.thumb.style.bottom = "";
+				}
+
+				this.ariaOrientation = (vertical ? "vertical" : "horizontal");
+
+				this._onvaluechangeEnabled = false;
+				const value = this._value;
+				this._value = this._min - 1;
+				this.value = value;
+				this._onvaluechangeEnabled = true;
+				break;
+
+			case "manual-aria":
+				this._manualAria = (newValue != null);
+				break;
+
+			case "min":
+				const min = parseInt(newValue as string) || 0;
+
+				if (this._min === min)
+					return;
+
+				this._min = min;
+
+				if (!innerElements) {
+					if (this._max < min)
+						this._max = min;
+					return;
+				}
+
+				if (this._max < min) {
+					this._max = min;
+
+					this.ariaValueMax = min.toString();
+				}
+
+				this._delta = this._max - min;
+				if (!this._delta)
+					this._delta = 1;
+
+				this.ariaValueMin = min.toString();
+
+				this.value = this._value;
+				break;
+
+			case "max":
+				const max = parseInt(newValue as string) || 0;
+
+				if (this._max === max)
+					return;
+
+				this._max = max;
+
+				if (!innerElements) {
+					if (this._min > max)
+						this._min = max;
+					return;
+				}
+
+				if (this._min > max) {
+					this._min = max;
+
+					this.ariaValueMin = max.toString();
+				}
+
+				this._delta = max - this._min;
+				if (!this._delta)
+					this._delta = 1;
+
+				this.ariaValueMax = max.toString();
+
+				this.value = this._value;
+				break;
+
+			case "value":
+				this.value = parseInt(newValue as string) || 0;
+				break;
+		}
 	}
 }
+
+customElements.define("f-slider", SliderControl);

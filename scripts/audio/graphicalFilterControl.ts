@@ -32,12 +32,12 @@ class GraphicalFilterControl extends ConnectableNode { //extends HTMLElement {
 		"Powerful": "oaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGhoaGgoKCgoKCgoKCfn5+fn5+enp6enp2dnZ2cnJybm5qampqZmZmYmJiXl5eWlpWVlZSUlJOTkpKSkZGRkZCQkI+Pj46Ojo6NjY2NjYyMjIyLi4uLi4uKioqKioqKioqKiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmJiYmKioqKioqKioqKioqKiouLi4uLjIyMjIyNjY2Njo6Ojo+Pj4+QkJCRkpKSk5OTk5SUlJWVlZWWlpaXl5eXmJiYmZmZmZqampqbm5ubnJycnJ2dnZ2enp6enp+fn5+fn6CgoKCgoKCgoKGhoaGhoaGhoaGhoaGhoaE="
 	};
 
-	private static readonly simpleModeMinWidth = "280px";
-	private static readonly advancedModeMinWidth = "512px";
+	private static readonly _simpleModeMinWidth = "280px";
+	private static readonly _advancedModeMinWidth = "512px";
 
-	private readonly container: HTMLDivElement;
-	private readonly outerContainer: HTMLDivElement;
-	private readonly simpleEditor: SimpleFilterEditorControl;
+	private readonly _container: HTMLDivElement;
+	private readonly _outerContainer: HTMLDivElement;
+	private readonly _simpleEditor: SimpleFilterEditorControl;
 	public readonly editor: GraphicalFilterEditorControl;
 
 	private _simpleMode: boolean;
@@ -49,20 +49,20 @@ class GraphicalFilterControl extends ConnectableNode { //extends HTMLElement {
 		//	editorElement = document.createElement("div"),
 		//	style = document.createElement("link");
 
-		//style.setAttribute("rel", "stylesheet");
-		//style.setAttribute("type", "text/css");
-		//style.setAttribute("href", "assets/css/graphicalFilterEditor.css");
+		//style.rel = "stylesheet";
+		//style.type = "text/css";
+		//style.href = "assets/css/graphicalFilterEditor.css";
 		//shadowRoot.appendChild(style);
 		//shadowRoot.appendChild(editorElement);
 
 		this._simpleMode = !!simpleMode;
 
-		this.container = container;
-		this.outerContainer = outerContainer;
+		this._container = container;
+		this._outerContainer = outerContainer;
 
 		let element = document.createElement("div");
 		if (!this._simpleMode) {
-			outerContainer.style.minWidth = GraphicalFilterControl.advancedModeMinWidth;
+			outerContainer.style.minWidth = GraphicalFilterControl._advancedModeMinWidth;
 			container.appendChild(element);
 		}
 
@@ -75,20 +75,20 @@ class GraphicalFilterControl extends ConnectableNode { //extends HTMLElement {
 			fontSize: AppUI.smallFontSizeREM + "rem",
 			lineHeight: AppUI.smallContentsSizeREM + "rem",
 
-			radioHTML: Icon.createHTML("icon-radio", false, "menu-icon"),
-			checkHTML: Icon.createHTML("icon-check", false, "menu-icon"),
+			radioHTML: Icon.createHTML("icon-radio", null, false, "menu-icon"),
+			checkHTML: Icon.createHTML("icon-check", null, false, "menu-icon"),
 
-			openMenuHTML: '<span>' + Icon.createHTML("icon-expand-less", true) + '</span>',
-			closeMenuHTML: '<span>' + Icon.createHTML("icon-expand-more", true) + '</span>'
+			openMenuHTML: `<span>${Icon.createHTML("icon-expand-less", null, true)}</span>`,
+			closeMenuHTML: `<span>${Icon.createHTML("icon-expand-more", null, true)}</span>`
 		});
 
 		element = document.createElement("div");
 		element.className = "button-bottom-margin";
 		if (this._simpleMode) {
-			outerContainer.style.minWidth = GraphicalFilterControl.simpleModeMinWidth;
+			outerContainer.style.minWidth = GraphicalFilterControl._simpleModeMinWidth;
 			container.appendChild(element);
 		}
-		this.simpleEditor = new SimpleFilterEditorControl(element, this.editor);
+		this._simpleEditor = new SimpleFilterEditorControl(element, this.editor);
 
 		const labels = this.editor.element.querySelectorAll("div.GELBL");
 		for (let i = labels.length - 1; i >= 0; i--) {
@@ -134,22 +134,22 @@ class GraphicalFilterControl extends ConnectableNode { //extends HTMLElement {
 		let add: HTMLElement | null = null;
 
 		if (simpleMode) {
-			this.outerContainer.style.minWidth = GraphicalFilterControl.simpleModeMinWidth;
+			this._outerContainer.style.minWidth = GraphicalFilterControl._simpleModeMinWidth;
 			this.editor.editMode = GraphicalFilterEditorControl.editModeShelfEq;
-			this.simpleEditor.updateSliders();
+			this._simpleEditor.updateSliders();
 			remove = this.editor.element;
-			add = this.simpleEditor.element;
+			add = this._simpleEditor.element;
 		} else {
-			this.outerContainer.style.minWidth = GraphicalFilterControl.advancedModeMinWidth;
-			remove = this.simpleEditor.element;
+			this._outerContainer.style.minWidth = GraphicalFilterControl._advancedModeMinWidth;
+			remove = this._simpleEditor.element;
 			add = this.editor.element;
 		}
 
 		if (remove && remove.parentNode)
 			remove.parentNode.removeChild(remove);
 
-		if (this.container && add && !add.parentNode)
-			this.container.appendChild(add);
+		if (this._container && add && !add.parentNode)
+			this._container.appendChild(add);
 
 		this.filterChanged();
 	}

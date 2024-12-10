@@ -27,58 +27,65 @@
 class StereoPannerControl extends ConnectableNode {
 	public static readonly maxAbsoluteValue = 20;
 
-	private readonly channelSplitter: ChannelSplitterNode | null;
-	private readonly gain: GainNode | null;
-	private readonly channelMerger: ChannelMergerNode | null;
-	private readonly slider: SliderControl;
+	private readonly _channelSplitter: ChannelSplitterNode | null;
+	private readonly _gain: GainNode | null;
+	private readonly _channelMerger: ChannelMergerNode | null;
+	private readonly _slider: SliderControl;
 
 	private _pan: number;
 	private _appliedGain: number;
-	private leftGain: boolean;
-	private rightGain: boolean;
+	private _leftGain: boolean;
+	private _rightGain: boolean;
 
 	public onappliedgainchange: ((appliedGain: number) => void) | null;
 
-	public constructor(sliderElement: HTMLElement, audioContext: AudioContext) {
+	public constructor(slider: SliderControl, audioContext: AudioContext) {
 		super();
 
 		this._pan = InternalStorage.loadStereoPannerSettings();
 		this._appliedGain = 1;
 
-		this.channelSplitter = audioContext.createChannelSplitter(2);
-		this.gain = audioContext.createGain();
-		this.channelMerger = audioContext.createChannelMerger(2);
-		this.leftGain = false;
-		this.rightGain = false;
+		this._channelSplitter = audioContext.createChannelSplitter(2);
+		this._gain = audioContext.createGain();
+		this._channelMerger = audioContext.createChannelMerger(2);
+		this._leftGain = false;
+		this._rightGain = false;
 
 		this.onappliedgainchange = null;
 
 		const boundCommitChanges = this.commitChanges.bind(this);
 
-		this.slider = new SliderControl(sliderElement, Strings.Panning, function (value) {
-			return (!value ? "-0" : ((value < 0 ? Strings.RightAbbrev : Strings.LeftAbbrev) + " " + ((value = Math.abs(value)) >= StereoPannerControl.maxAbsoluteValue ? GraphicalFilterEditorStrings.MinusInfinity : ("-" + value)))) + " dB";
-		}, SliderControlValueChild.RightChild, true, false, -StereoPannerControl.maxAbsoluteValue, StereoPannerControl.maxAbsoluteValue, this._pan);
 		const label = document.createElement("span");
 		label.className = "db-label large small-left-margin";
-		this.slider.rightChild = label;
-		this.slider.ondragend = boundCommitChanges;
-		this.slider.onkeyboardchange = boundCommitChanges;
+
+		slider.ariaLabel = Strings.Panning;
+		slider.min = -StereoPannerControl.maxAbsoluteValue;
+		slider.max = StereoPannerControl.maxAbsoluteValue;
+		slider.value = this._pan;
+		slider.mapper = function (value) {
+			return (!value ? "-0" : ((value < 0 ? Strings.RightAbbrev : Strings.LeftAbbrev) + " " + ((value = Math.abs(value)) >= StereoPannerControl.maxAbsoluteValue ? GraphicalFilterEditorStrings.MinusInfinity : ("-" + value)))) + " dB";
+		};
+		slider.valueChild = SliderControlValueChild.RightChild;
+		slider.rightChild = label;
+		slider.ondragchangecommit = boundCommitChanges;
+		slider.onkeyboardchange = boundCommitChanges;
+		this._slider = slider;
 
 		this.commitChanges(this._pan);
 	}
 
 	protected get input(): AudioNode | null {
-		return this.channelSplitter;
+		return this._channelSplitter;
 	}
 
 	protected get output(): AudioNode | null {
-		return this.channelMerger;
+		return this._channelMerger;
 	}
 
 	private commitChanges(pan: number): void {
-		const channelSplitter = this.channelSplitter,
-			gain = this.gain,
-			channelMerger = this.channelMerger;
+		const channelSplitter = this._channelSplitter,
+			gain = this._gain,
+			channelMerger = this._channelMerger;
 
 		if (!channelSplitter || !gain || !channelMerger)
 			return;
@@ -90,8 +97,8 @@ class StereoPannerControl extends ConnectableNode {
 
 		if (!absPan) {
 			this._appliedGain = 1;
-			this.leftGain = false;
-			this.rightGain = false;
+			this._leftGain = false;
+			this._rightGain = false;
 			gain.disconnect();
 			channelSplitter.disconnect();
 			channelSplitter.connect(channelMerger, 0, 0);
@@ -103,12 +110,12 @@ class StereoPannerControl extends ConnectableNode {
 			this._appliedGain = (absPan >= StereoPannerControl.maxAbsoluteValue ? 0 : Math.pow(10, -absPan / 20));
 			gain.gain.value = this._appliedGain;
 
-			if (leftGain !== this.leftGain || rightGain !== this.rightGain) {
+			if (leftGain !== this._leftGain || rightGain !== this._rightGain) {
 				channelSplitter.disconnect();
 				gain.disconnect();
 
-				this.leftGain = leftGain;
-				this.rightGain = rightGain;
+				this._leftGain = leftGain;
+				this._rightGain = rightGain;
 
 				if (leftGain) {
 					channelSplitter.connect(gain, 0, 0);
@@ -155,7 +162,7 @@ class StereoPannerControl extends ConnectableNode {
 		if (this._pan === pan)
 			return;
 
-		this.slider.value = pan;
+		this._slider.value = pan;
 
 		this.commitChanges(pan);
 	}

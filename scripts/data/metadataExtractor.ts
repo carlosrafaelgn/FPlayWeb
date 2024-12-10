@@ -76,11 +76,11 @@ abstract class BufferedReader {
 }
 
 class BufferedFileReader extends BufferedReader {
-	private readonly file: File;
+	private readonly _file: File;
 
-	private readonly buffer: Uint8Array;
-	private position: number;
-	private bufferPosition: number;
+	private readonly _buffer: Uint8Array;
+	private _position: number;
+	private _bufferPosition: number;
 	private _bufferAvailable: number;
 	private _eof: boolean;
 
@@ -89,11 +89,11 @@ class BufferedFileReader extends BufferedReader {
 	}
 
 	public get bufferLength(): number {
-		return this.buffer.length;
+		return this._buffer.length;
 	}
 
 	public get readPosition(): number {
-		return this.position - this._bufferAvailable;
+		return this._position - this._bufferAvailable;
 	}
 
 	public get eof(): boolean {
@@ -106,10 +106,10 @@ class BufferedFileReader extends BufferedReader {
 		if (buffer.length < BufferedReader.minBufferLength)
 			throw new Error("Buffer length too small: " + buffer.length);
 
-		this.file = file;
-		this.buffer = buffer;
-		this.position = 0;
-		this.bufferPosition = 0;
+		this._file = file;
+		this._buffer = buffer;
+		this._position = 0;
+		this._bufferPosition = 0;
 		this._bufferAvailable = 0;
 		this._eof = false;
 	}
@@ -118,14 +118,14 @@ class BufferedFileReader extends BufferedReader {
 		if (position < 0)
 			throw new Error("Invalid position");
 
-		this.bufferPosition = 0;
+		this._bufferPosition = 0;
 		this._bufferAvailable = 0;
 
 		if (position >= this.totalLength) {
-			this.position = this.totalLength;
+			this._position = this.totalLength;
 			this._eof = true;
 		} else {
-			this.position = position;
+			this._position = position;
 			this._eof = false;
 		}
 	}
@@ -137,55 +137,55 @@ class BufferedFileReader extends BufferedReader {
 		if (bytes >= this._bufferAvailable) {
 			bytes -= this._bufferAvailable;
 
-			this.position += bytes;
+			this._position += bytes;
 
-			if (this.position >= this.totalLength) {
-				this.position = this.totalLength;
+			if (this._position >= this.totalLength) {
+				this._position = this.totalLength;
 				this._eof = true;
 			}
 
-			this.bufferPosition = 0;
+			this._bufferPosition = 0;
 			this._bufferAvailable = 0;
 		} else {
-			this.bufferPosition += bytes;
+			this._bufferPosition += bytes;
 			this._bufferAvailable -= bytes;
 		}
 	}
 
 	public fillBuffer(length: number): Promise<void | null> | null {
 		if (length <= 0)
-			length = this.buffer.length;
-		else if (length < 0 || length > this.buffer.length)
+			length = this._buffer.length;
+		else if (length < 0 || length > this._buffer.length)
 			throw new Error("Invalid length");
 
 		const avail = this._bufferAvailable;
 		if (length <= avail || this._eof)
 			return null;
 
-		length = this.buffer.length;
+		length = this._buffer.length;
 
-		if (avail && this.bufferPosition) {
-			this.buffer.copyWithin(0, this.bufferPosition, this.bufferPosition + avail);
-			this.bufferPosition = 0;
+		if (avail && this._bufferPosition) {
+			this._buffer.copyWithin(0, this._bufferPosition, this._bufferPosition + avail);
+			this._bufferPosition = 0;
 		}
 
 		length -= avail;
 
 		return new Promise((resolve, reject) => {
-			this.file.slice(this.position, this.position + length).arrayBuffer().then((value) => {
+			this._file.slice(this._position, this._position + length).arrayBuffer().then((value) => {
 				if (!value.byteLength) {
 					this._eof = true;
 				} else {
-					this.position += value.byteLength;
-					if (this.position >= this.totalLength) {
-						this.position = this.totalLength;
+					this._position += value.byteLength;
+					if (this._position >= this.totalLength) {
+						this._position = this.totalLength;
 						this._eof = true;
 					}
 
 					this._bufferAvailable += value.byteLength;
 				}
 
-				this.buffer.set(new Uint8Array(value), avail);
+				this._buffer.set(new Uint8Array(value), avail);
 
 				resolve();
 			}, reject);
@@ -197,7 +197,7 @@ class BufferedFileReader extends BufferedReader {
 			return -1;
 
 		this._bufferAvailable--;
-		return this.buffer[this.bufferPosition++];
+		return this._buffer[this._bufferPosition++];
 	}
 
 	public readUInt32BE(): number | null {
@@ -205,10 +205,10 @@ class BufferedFileReader extends BufferedReader {
 			return null;
 
 		this._bufferAvailable -= 4;
-		return ((this.buffer[this.bufferPosition++] << 24) |
-			(this.buffer[this.bufferPosition++] << 16) |
-			(this.buffer[this.bufferPosition++] << 8) |
-			this.buffer[this.bufferPosition++]);
+		return ((this._buffer[this._bufferPosition++] << 24) |
+			(this._buffer[this._bufferPosition++] << 16) |
+			(this._buffer[this._bufferPosition++] << 8) |
+			this._buffer[this._bufferPosition++]);
 	}
 
 	public readUInt32LE(): number | null {
@@ -216,10 +216,10 @@ class BufferedFileReader extends BufferedReader {
 			return null;
 
 		this._bufferAvailable -= 4;
-		return (this.buffer[this.bufferPosition++] |
-			(this.buffer[this.bufferPosition++] << 8) |
-			(this.buffer[this.bufferPosition++] << 16) |
-			(this.buffer[this.bufferPosition++] << 24));
+		return (this._buffer[this._bufferPosition++] |
+			(this._buffer[this._bufferPosition++] << 8) |
+			(this._buffer[this._bufferPosition++] << 16) |
+			(this._buffer[this._bufferPosition++] << 24));
 	}
 
 	public readUInt16BE(): number | null {
@@ -227,8 +227,8 @@ class BufferedFileReader extends BufferedReader {
 			return null;
 
 		this._bufferAvailable -= 2;
-		return ((this.buffer[this.bufferPosition++] << 8) |
-			this.buffer[this.bufferPosition++]);
+		return ((this._buffer[this._bufferPosition++] << 8) |
+			this._buffer[this._bufferPosition++]);
 	}
 
 	public readUInt16LE(): number | null {
@@ -236,8 +236,8 @@ class BufferedFileReader extends BufferedReader {
 			return null;
 
 		this._bufferAvailable -= 2;
-		return (this.buffer[this.bufferPosition++] |
-			(this.buffer[this.bufferPosition++] << 8));
+		return (this._buffer[this._bufferPosition++] |
+			(this._buffer[this._bufferPosition++] << 8));
 	}
 
 	public read(buffer: Uint8Array, offset: number, length: number): Promise<number> | number {
@@ -247,21 +247,21 @@ class BufferedFileReader extends BufferedReader {
 		const avail = this._bufferAvailable;
 
 		if (length <= avail) {
-			buffer.set(this.buffer.subarray(this.bufferPosition, this.bufferPosition += length), offset);
+			buffer.set(this._buffer.subarray(this._bufferPosition, this._bufferPosition += length), offset);
 			this._bufferAvailable -= length;
 			if (!this._bufferAvailable)
-				this.bufferPosition = 0;
+				this._bufferPosition = 0;
 			return length;
 		}
 
 		let totalRead = 0;
 
 		if (avail) {
-			buffer.set(this.buffer.subarray(this.bufferPosition, this.bufferPosition + avail), offset);
+			buffer.set(this._buffer.subarray(this._bufferPosition, this._bufferPosition + avail), offset);
 			totalRead += avail;
 			offset += avail;
 			length -= avail;
-			this.bufferPosition = 0;
+			this._bufferPosition = 0;
 			this._bufferAvailable = 0;
 		}
 
@@ -269,13 +269,13 @@ class BufferedFileReader extends BufferedReader {
 			return totalRead;
 
 		return new Promise((resolve, reject) => {
-			this.file.slice(this.position, this.position + length).arrayBuffer().then((value) => {
+			this._file.slice(this._position, this._position + length).arrayBuffer().then((value) => {
 				if (!value.byteLength) {
 					this._eof = true;
 				} else {
-					this.position += value.byteLength;
-					if (this.position >= this.totalLength) {
-						this.position = this.totalLength;
+					this._position += value.byteLength;
+					if (this._position >= this.totalLength) {
+						this._position = this.totalLength;
 						this._eof = true;
 					}
 				}

@@ -84,25 +84,25 @@ class App {
 	public static readonly hostTypeElectron = "Electron";
 	public static readonly hostTypeAndroid = "Android";
 
-	private static readonly ipcRenderer = ((window as any)["electronIpcRenderer"] as IpcRenderer || null);
-	private static readonly closeHandlers: AppCloseHandler[] = [];
+	private static readonly _ipcRenderer = ((window as any)["electronIpcRenderer"] as IpcRenderer || null);
+	private static readonly _closeHandlers: AppCloseHandler[] = [];
 	public static readonly frameless = !!(window as any)["electronIpcRenderer"];
 	public static readonly hostInterface: HostInterface | null = ((window as any)["hostInterface"] as HostInterface || null);
 	public static readonly hostType = ((App.hostInterface && App.hostInterface.getHostType()) || null);
 
-	private static readonly iconLoading = document.getElementById("icon-loading") as HTMLElement;
+	private static readonly _iconLoading = document.getElementById("icon-loading") as HTMLElement;
 
-	private static titleBar: HTMLHeadingElement | null = null;
-	private static iconRestore: HTMLElement | null = null;
-	private static iconMaximize: HTMLElement | null = null;
+	private static _titleBar: HTMLHeadingElement | null = null;
+	private static _iconRestore: HTMLElement | null = null;
+	private static _iconMaximize: HTMLElement | null = null;
 
-	private static installPrompt: any | null = null;
-	private static fileInputPromiseResolve: ((value: File[] | PromiseLike<File[] | null> | null) => void) | null = null;
+	private static _installPrompt: any | null = null;
+	private static _fileInputPromiseResolve: ((value: File[] | PromiseLike<File[] | null> | null) => void) | null = null;
 
 	private static _loading = true;
-	private static isMinimized = false;
-	private static isMaximized = false;
-	private static exitOnDestroy = false;
+	private static _isMinimized = false;
+	private static _isMaximized = false;
+	private static _exitOnDestroy = false;
 
 	public static player: Player | null;
 	public static graphicalFilterControl: GraphicalFilterControl | null;
@@ -141,23 +141,23 @@ class App {
 	}
 
 	private static mainWindowStateChanged(channel: string, isMinimized: boolean, isMaximized: boolean): void {
-		if (App.isMinimized !== isMinimized || App.isMaximized !== isMaximized) {
-			App.isMinimized = isMinimized;
-			App.isMaximized = isMaximized;
+		if (App._isMinimized !== isMinimized || App._isMaximized !== isMaximized) {
+			App._isMinimized = isMinimized;
+			App._isMaximized = isMaximized;
 			if (!isMinimized) {
-				if (App.titleBar)
-					App.titleBar.className = (isMaximized ? "maximized" : "");
-				if (App.iconRestore)
-					App.iconRestore.className = (isMaximized ? "" : "hidden");
-				if (App.iconMaximize)
-					App.iconMaximize.className = (isMaximized ? "hidden" : "");
+				if (App._titleBar)
+					App._titleBar.className = (isMaximized ? "maximized" : "");
+				if (App._iconRestore)
+					App._iconRestore.className = (isMaximized ? "" : "hidden");
+				if (App._iconMaximize)
+					App._iconMaximize.className = (isMaximized ? "hidden" : "");
 			}
 		}
 	}
 
 	private static mainWindowClosing(): void {
 		if (App.player && App.player.alive) {
-			const closeHandlers = App.closeHandlers,
+			const closeHandlers = App._closeHandlers,
 				promises: Promise<void>[] = [];
 
 			App.saveSettings(true);
@@ -190,8 +190,8 @@ class App {
 
 		AppUI.destroy();
 
-		const ipcRenderer = App.ipcRenderer;
-		const hostInterface = (App.exitOnDestroy ? App.hostInterface : null);
+		const ipcRenderer = App._ipcRenderer;
+		const hostInterface = (App._exitOnDestroy ? App.hostInterface : null);
 
 		zeroObject(App);
 
@@ -203,8 +203,8 @@ class App {
 	}
 
 	public static updateLoadingIcon(): void {
-		if (App.iconLoading)
-			App.iconLoading.style.display = (App.loading ? "" : "none");
+		if (App._iconLoading)
+			App._iconLoading.style.display = (App.loading ? "" : "none");
 	}
 
 	public static get loading(): boolean {
@@ -221,14 +221,14 @@ class App {
 	}
 
 	public static get installPromptReady(): boolean {
-		return !!App.installPrompt;
+		return !!App._installPrompt;
 	}
 
 	public static showInstallPrompt(): void {
-		const p = App.installPrompt;
+		const p = App._installPrompt;
 		if (p && p["prompt"]) {
 			try {
-				App.installPrompt = null;
+				App._installPrompt = null;
 				p["prompt"]();
 			} catch (ex) {
 				// Just ignore...
@@ -239,7 +239,7 @@ class App {
 	private static beforeInstallPrompt(e: Event): void {
 		if ("preventDefault" in e)
 			e.preventDefault();
-		App.installPrompt = e;
+		App._installPrompt = e;
 	}
 
 	private static sortFiles(files: File[]): File[] {
@@ -259,7 +259,6 @@ class App {
 
 	public static async preInit(): Promise<void> {
 		Strings.init();
-		Icon.init();
 		GraphicalFilterEditorStrings.init(Strings.language);
 		Strings.toFixed = GraphicalFilterEditorStrings.toFixed;
 		if (!App.hostInterface && FileSystemAPI.isSupported()) {
@@ -273,7 +272,7 @@ class App {
 		const appSettings = InternalStorage.loadAppSettings(),
 			webFrame = (window as any)["electronWebFrame"] as WebFrame;
 
-		if (App.ipcRenderer)
+		if (App._ipcRenderer)
 			delete (window as any)["electronIpcRenderer"];
 		if (webFrame)
 			delete (window as any)["electronWebFrame"];
@@ -302,9 +301,9 @@ class App {
 			}
 		}
 
-		if (App.ipcRenderer) {
-			App.ipcRenderer.on("mainWindowStateChanged", App.mainWindowStateChanged);
-			App.ipcRenderer.on("mainWindowClosing", App.mainWindowClosing);
+		if (App._ipcRenderer) {
+			App._ipcRenderer.on("mainWindowStateChanged", App.mainWindowStateChanged);
+			App._ipcRenderer.on("mainWindowClosing", App.mainWindowClosing);
 
 			App.triggerMainWindowStateChanged();
 		} else if (!App.hostInterface) {
@@ -318,18 +317,18 @@ class App {
 		}
 
 		if (App.frameless) {
-			App.titleBar = document.createElement("h1");
-			App.titleBar.className = "title-bar";
-			App.titleBar.innerHTML = `
+			App._titleBar = document.createElement("h1");
+			App._titleBar.className = "title-bar";
+			App._titleBar.innerHTML = `
 				<div></div>
 				<i id="icon-main"></i>
 				FPlay
-				<span><span role="button" onclick="App.mainWindowMinimize()">${Icon.createHTML("icon-minimize", false)}</span><span role="button" onclick="App.mainWindowRestoreOrMaximize()">${Icon.createHTML("icon-restore", false, "hidden", "icon-restore-i")}${Icon.createHTML("icon-maximize", false, null, "icon-maximize-i")}</span><span role="button" class="close" onclick="App.mainWindowClose()">${Icon.createHTML("icon-close", false)}</span></span>
+				<span><span role="button" onclick="App.mainWindowMinimize()">${Icon.createHTML("icon-minimize")}</span><span role="button" onclick="App.mainWindowRestoreOrMaximize()">${Icon.createHTML("icon-restore", null, false, "hidden", "icon-restore-i")}${Icon.createHTML("icon-maximize", null, false, null, "icon-maximize-i")}</span><span role="button" class="close" onclick="App.mainWindowClose()">${Icon.createHTML("icon-close")}</span></span>
 			`;
-			document.body.insertBefore(App.titleBar, document.body.firstChild);
+			document.body.insertBefore(App._titleBar, document.body.firstChild);
 
-			App.iconRestore = document.getElementById("icon-restore-i") as HTMLElement;
-			App.iconMaximize = document.getElementById("icon-maximize-i") as HTMLElement;
+			App._iconRestore = document.getElementById("icon-restore-i") as HTMLElement;
+			App._iconMaximize = document.getElementById("icon-maximize-i") as HTMLElement;
 		}
 
 		AppUI.preInit(webFrame, appSettings);
@@ -353,7 +352,7 @@ class App {
 			},
 
 			function (audioContext) {
-				App.stereoPannerControl = new StereoPannerControl(document.getElementById("stereo-panner-slider") as HTMLSpanElement, audioContext);
+				App.stereoPannerControl = new StereoPannerControl(document.getElementById("stereo-panner-slider") as SliderControl, audioContext);
 				App.stereoPannerControl.enabled = !!appSettings.stereoPannerControlEnabled;
 				App.stereoPannerControl.onappliedgainchange = function (appliedGain) {
 					if (App.monoDownMixerControl)
@@ -375,49 +374,49 @@ class App {
 	}
 
 	private static triggerMainWindowStateChanged(): void {
-		if (App.ipcRenderer)
-			App.ipcRenderer.invoke("triggerMainWindowStateChanged");
+		if (App._ipcRenderer)
+			App._ipcRenderer.invoke("triggerMainWindowStateChanged");
 	}
 
 	public static mainWindowMinimize(): void {
-		if (App.ipcRenderer)
-			App.ipcRenderer.invoke("mainWindowMinimize");
+		if (App._ipcRenderer)
+			App._ipcRenderer.invoke("mainWindowMinimize");
 	}
 
 	public static mainWindowRestoreOrMaximize(): void {
-		if (App.ipcRenderer)
-			App.ipcRenderer.invoke(App.isMaximized ? "mainWindowRestore" : "mainWindowMaximize");
+		if (App._ipcRenderer)
+			App._ipcRenderer.invoke(App._isMaximized ? "mainWindowRestore" : "mainWindowMaximize");
 	}
 
 	public static mainWindowClose(): void {
-		if (App.ipcRenderer)
-			App.ipcRenderer.invoke("mainWindowClose");
+		if (App._ipcRenderer)
+			App._ipcRenderer.invoke("mainWindowClose");
 	}
 
 	public static extractMetadata(urlOrAbsolutePath: string, fileSize?: number): Promise<Metadata | null> {
-		return App.ipcRenderer.invoke("extractMetadata", urlOrAbsolutePath, fileSize);
+		return App._ipcRenderer.invoke("extractMetadata", urlOrAbsolutePath, fileSize);
 	}
 
 	public static showOpenDialogWeb(directory?: boolean, skipSort?: boolean): Promise<File[] | null> {
 		const fileInput = document.createElement("input");
-		fileInput.setAttribute("type", "file");
-		fileInput.setAttribute("multiple", "multiple");
-		fileInput.setAttribute("aria-label", Strings.AddSongs);
+		fileInput.type = "file";
+		fileInput.multiple = true;
+		fileInput.ariaLabel = Strings.AddSongs;
 
 		if (directory) {
-			fileInput.setAttribute("webkitdirectory", "webkitdirectory");
-			fileInput.setAttribute("directory", "directory");
+			(fileInput as any).webkitdirectory = true;
+			(fileInput as any).directory = true;
 		// A few online browsers stopped allowing any kind of file selection after flac or ogg has been added...
 		//} else {
-		//	fileInput.setAttribute("accept", FileUtils.concatenatedSupportedExtensions);
+		//	fileInput.accept = FileUtils.concatenatedSupportedExtensions;
 		}
 
 		fileInput.onchange = function () {
-			if (!App.fileInputPromiseResolve)
+			if (!App._fileInputPromiseResolve)
 				return;
 
-			const resolve = App.fileInputPromiseResolve;
-			App.fileInputPromiseResolve = null;
+			const resolve = App._fileInputPromiseResolve;
+			App._fileInputPromiseResolve = null;
 
 			if (!fileInput.files || !fileInput.files.length || (fileInput.files.length === 1 && !FileUtils.isTypeSupported(fileInput.files[0].name))) {
 				resolve(null);
@@ -434,11 +433,11 @@ class App {
 			resolve(skipSort ? files : App.sortFiles(files));
 		};
 
-		const resolve = App.fileInputPromiseResolve;
-		App.fileInputPromiseResolve = null;
+		const resolve = App._fileInputPromiseResolve;
+		App._fileInputPromiseResolve = null;
 
 		const promise = new Promise<File[] | null>(function (resolve) {
-			App.fileInputPromiseResolve = resolve;
+			App._fileInputPromiseResolve = resolve;
 		});
 
 		fileInput.click();
@@ -451,7 +450,7 @@ class App {
 
 	public static exit(): void {
 		// Called only by the host interface
-		App.exitOnDestroy = true;
+		App._exitOnDestroy = true;
 		App.mainWindowClosing();
 	}
 }

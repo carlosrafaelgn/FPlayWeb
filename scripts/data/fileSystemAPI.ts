@@ -40,11 +40,11 @@ class FileSystemAPI {
 		return (("FileSystemHandle" in window) && ("showDirectoryPicker" in window));
 	}
 
-	private static readonly dbName = "fplay";
-	private static readonly dbStoreName = "fplay-roots";
+	private static readonly _dbName = "fplay";
+	private static readonly _dbStoreName = "fplay-roots";
 
-	private static readonly roots: [string, FileSystemDirectoryHandle][] = [];
-	private static readonly directoryHandles: Map<string, FileSystemDirectoryHandle> = new Map();
+	private static readonly _roots: [string, FileSystemDirectoryHandle][] = [];
+	private static readonly _directoryHandles: Map<string, FileSystemDirectoryHandle> = new Map();
 
 	private static openDatabase<T>(mode: IDBTransactionMode, callback: (db: IDBDatabase, store: IDBObjectStore, close: (value?: T | null, error?: any) => void) => void): Promise<T> {
 		return new Promise<T>(function (resolve, reject) {
@@ -66,13 +66,13 @@ class FileSystemAPI {
 			}
 
 			try {
-				const request = indexedDB.open(FileSystemAPI.dbName);
-				request.onupgradeneeded = function () { request.result.createObjectStore(FileSystemAPI.dbStoreName); };
+				const request = indexedDB.open(FileSystemAPI._dbName);
+				request.onupgradeneeded = function () { request.result.createObjectStore(FileSystemAPI._dbStoreName); };
 				request.onsuccess = function () {
 					db = request.result;
 
 					try {
-						callback(db, db.transaction(FileSystemAPI.dbStoreName, mode).objectStore(FileSystemAPI.dbStoreName), close);
+						callback(db, db.transaction(FileSystemAPI._dbStoreName, mode).objectStore(FileSystemAPI._dbStoreName), close);
 					} catch (ex: any) {
 						close(null, ex);
 					}
@@ -91,7 +91,7 @@ class FileSystemAPI {
 				const cursor = request.result;
 				if (!cursor) {
 					const comparer = Strings.comparer;
-					FileSystemAPI.roots.sort(function (a, b) { return comparer(a[0], b[0]); });
+					FileSystemAPI._roots.sort(function (a, b) { return comparer(a[0], b[0]); });
 					close();
 					return;
 				}
@@ -100,8 +100,8 @@ class FileSystemAPI {
 					value = cursor.value as FileSystemDirectoryHandle;
 
 				if (key && value) {
-					FileSystemAPI.roots.push([key, value]);
-					FileSystemAPI.directoryHandles.set(key, value);
+					FileSystemAPI._roots.push([key, value]);
+					FileSystemAPI._directoryHandles.set(key, value);
 				}
 
 				cursor.continue();
@@ -135,7 +135,7 @@ class FileSystemAPI {
 
 			transaction.onabort = function () { close(); };
 			transaction.oncomplete = function () {
-				const roots = FileSystemAPI.roots,
+				const roots = FileSystemAPI._roots,
 					name = directoryHandle.name;
 
 				let found = false;
@@ -154,7 +154,7 @@ class FileSystemAPI {
 					roots.sort(function (a, b) { return comparer(a[0], b[0]); });
 				}
 
-				FileSystemAPI.directoryHandles.set(name, directoryHandle);
+				FileSystemAPI._directoryHandles.set(name, directoryHandle);
 
 				close();
 			};
@@ -173,7 +173,7 @@ class FileSystemAPI {
 
 			transaction.onabort = function () { close(); };
 			transaction.oncomplete = function () {
-				const roots = FileSystemAPI.roots;
+				const roots = FileSystemAPI._roots;
 
 				for (let i = roots.length - 1; i >= 0; i--) {
 					if (roots[i][0] === name) {
@@ -189,7 +189,7 @@ class FileSystemAPI {
 	}
 
 	public static getRootHandles(): FileSystemDirectoryHandle[] {
-		const roots = FileSystemAPI.roots,
+		const roots = FileSystemAPI._roots,
 			rootHandles: FileSystemDirectoryHandle[] = new Array(roots.length);
 
 		for (let i = roots.length - 1; i >= 0; i--)
@@ -206,7 +206,7 @@ class FileSystemAPI {
 		if (i > 0)
 			path = path.substring(0, i);
 
-		const directoryHandle = FileSystemAPI.directoryHandles.get(path);
+		const directoryHandle = FileSystemAPI._directoryHandles.get(path);
 		if (!directoryHandle)
 			return 0;
 
@@ -230,7 +230,7 @@ class FileSystemAPI {
 	}
 
 	public static async getDirectoryHandle(path: string, parentHandle?: FileSystemDirectoryHandle | null): Promise<FileSystemDirectoryHandle | null> {
-		let directoryHandle: FileSystemDirectoryHandle | null | undefined = FileSystemAPI.directoryHandles.get(path);
+		let directoryHandle: FileSystemDirectoryHandle | null | undefined = FileSystemAPI._directoryHandles.get(path);
 		if (directoryHandle)
 			return directoryHandle;
 
@@ -247,7 +247,7 @@ class FileSystemAPI {
 			if (!directoryHandle)
 				return null;
 
-			FileSystemAPI.directoryHandles.set(path, directoryHandle);
+			FileSystemAPI._directoryHandles.set(path, directoryHandle);
 
 			return directoryHandle;
 		} catch (ex: any) {

@@ -25,85 +25,85 @@
 //
 
 class FocusBlocker {
-	private changedElements: { element: HTMLElement, tabindex: string | null }[] | null;
-	private oldBodyOverflow: string | null;
-	private parentContainer: HTMLElement | null;
-	private cover: HTMLDivElement | null;
-	private coverTimeout: number;
+	private _changedElements: { element: HTMLElement, tabIndex: number | null }[] | null;
+	private _oldBodyOverflow: string | null;
+	private _parentContainer: HTMLElement | null;
+	private _cover: HTMLDivElement | null;
+	private _coverTimeout: number;
 
 	public constructor() {
-		this.changedElements = null;
-		this.oldBodyOverflow = null;
-		this.parentContainer = null;
-		this.cover = null;
-		this.coverTimeout = 0;
+		this._changedElements = null;
+		this._oldBodyOverflow = null;
+		this._parentContainer = null;
+		this._cover = null;
+		this._coverTimeout = 0;
 	}
 
 	public block(parentContainer?: HTMLElement | null): void {
 		this.unblock();
 
-		const elementsToDisable = (parentContainer || document).querySelectorAll("button,input,select,textarea,.btn,.slider-control,.list"),
-			changedElements: { element: HTMLElement, tabindex: string | null }[] = new Array();
+		const elementsToDisable = (parentContainer || document).querySelectorAll("button,input,select,textarea,f-button,f-slider,f-list"),
+			changedElements: { element: HTMLElement, tabIndex: number | null }[] = new Array();
 
 		for (let i = elementsToDisable.length - 1; i >= 0; i--) {
 			const element = elementsToDisable[i] as HTMLElement,
-				tabindex = element.getAttribute("tabindex");
+				tabIndex = element.tabIndex;
 
-			if (tabindex !== "-1") {
-				element.setAttribute("tabindex", "-1");
-				changedElements.push({ element, tabindex });
+			if (tabIndex !== -1) {
+				element.tabIndex = -1;
+				changedElements.push({ element, tabIndex });
 			}
 		}
 
-		this.changedElements = changedElements;
+		this._changedElements = changedElements;
 
 		if (parentContainer) {
-			this.parentContainer = parentContainer;
-			this.cover = document.createElement("div");
-			this.cover.className = "blocker fade";
-			parentContainer.appendChild(this.cover);
-			this.coverTimeout = DelayControl.delayShortCB(() => {
-				if (this.coverTimeout && this.cover)
-					this.cover.classList.add("in");
+			this._parentContainer = parentContainer;
+			this._cover = document.createElement("div");
+			this._cover.className = "blocker fade";
+			parentContainer.appendChild(this._cover);
+			this._coverTimeout = DelayControl.delayShortCB(() => {
+				if (this._coverTimeout && this._cover)
+					this._cover.classList.add("in");
 			});
 		} else {
-			this.oldBodyOverflow = document.body.style.overflow;
+			this._oldBodyOverflow = document.body.style.overflow;
 			document.body.style.overflow = "hidden";
 		}
 	}
 
 	public unblock(): void {
-		const changedElements = this.changedElements;
+		const changedElements = this._changedElements;
 		if (changedElements) {
-			this.changedElements = null;
+			this._changedElements = null;
 
 			for (let i = changedElements.length - 1; i >= 0; i--) {
 				const changedElement = changedElements[i],
-					tabindex = changedElement.tabindex;
+					tabIndex = changedElement.tabIndex;
 
-				if (tabindex)
-					changedElement.element.setAttribute("tabindex", tabindex);
+				if (tabIndex !== null)
+					changedElement.element.tabIndex = tabIndex;
 				else
 					changedElement.element.removeAttribute("tabindex");
 			}
 		}
 
-		if (this.oldBodyOverflow) {
-			document.body.style.overflow = this.oldBodyOverflow;
-			this.oldBodyOverflow = null;
+		if (this._oldBodyOverflow) {
+			document.body.style.overflow = this._oldBodyOverflow;
+			this._oldBodyOverflow = null;
 		}
 
-		if (this.coverTimeout) {
-			clearTimeout(this.coverTimeout);
-			this.coverTimeout = 0;
+		if (this._coverTimeout) {
+			clearTimeout(this._coverTimeout);
+			this._coverTimeout = 0;
 		}
 
-		if (this.parentContainer) {
-			const parentContainer = this.parentContainer,
-				cover = this.cover;
+		if (this._parentContainer) {
+			const parentContainer = this._parentContainer,
+				cover = this._cover;
 
-			this.parentContainer = null;
-			this.cover = null;
+			this._parentContainer = null;
+			this._cover = null;
 
 			if (cover) {
 				cover.classList.remove("in");

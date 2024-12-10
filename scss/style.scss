@@ -69,7 +69,7 @@ p + p {
 	margin-top: $s2;
 }
 
-.icon {
+f-icon {
 	display: inline-block;
 	width: $contents-size;
 	height: $contents-size;
@@ -77,11 +77,11 @@ p + p {
 	vertical-align: top;
 }
 
-.icon.large {
+f-icon.large {
 	padding: var(--large-icon-padding);
 }
 
-.icon > svg {
+f-icon > svg {
 	display: inline-block;
 	width: var(--icon-size);
 	height: var(--icon-size);
@@ -91,7 +91,7 @@ p + p {
 	fill: currentColor;
 }
 
-.icon.large > svg {
+f-icon.large > svg {
 	width: var(--large-icon-size);
 	height: var(--large-icon-size);
 	margin-top: var(--large-icon-margin);
@@ -113,8 +113,8 @@ p + p {
 
 .title-bar,
 .modal-header,
-.slider-control-ruler,
-.list-item {
+.f-slider-ruler,
+.f-list-item {
 	background-color: $color-highlight;
 }
 
@@ -159,7 +159,7 @@ p + p {
 }
 
 .title-bar > span > span:active,
-.list-item:active {
+.f-list-item:active {
 	background-color: $color-highlight-active;
 }
 
@@ -203,7 +203,7 @@ p + p {
 	z-index: 99997;
 }
 
-.btn, input, textarea, select, i, .slider-control, .toolbar-sep {
+.btn, input, textarea, select, f-icon, f-slider, .toolbar-sep {
 	vertical-align: top;
 }
 
@@ -227,9 +227,9 @@ select, select:focus,
 a, a:focus,
 .modal, .modal:focus,
 .alert, .alert:focus,
-.list, .list:focus,
-.slider-control, .slider-control:focus,
-.slider-control-focus-container, .slider-control-focus-container:focus {
+f-list, f-list:focus,
+f-slider, f-slider:focus,
+.f-slider-focus-container, .f-slider-focus-container:focus {
 	outline: 0 none transparent;
 }
 
@@ -340,7 +340,7 @@ select.btn option {
 	padding: var(--button-padding) $s2 0;
 }
 
-.btn > span > i {
+.btn > span > f-icon {
 	pointer-events: none;
 }
 
@@ -357,29 +357,8 @@ select.btn option {
 	padding-right: 0;
 }
 
-input[type="checkbox"] {
-	color: inherit;
-	display: inline-block;
-	vertical-align: top;
-	width: 0;
-	height: 0;
-	pointer-events: none;
-}
-
-input[type="checkbox"] + .icon + .icon {
-	display: none;
-}
-
-input[type="checkbox"]:checked + .icon {
-	display: none;
-}
-
-input[type="checkbox"]:checked + .icon + .icon {
-	display: inline-block;
-}
-
 .btn,
-.slider-control-thumb {
+.f-slider-thumb {
 	color: $color-text-on-blue;
 	background-color: $color-blue;
 }
@@ -407,7 +386,7 @@ input[type="checkbox"]:checked + .icon + .icon {
 
 .btn:hover,
 .btn:focus,
-.slider-control-container:hover .slider-control-thumb {
+.f-slider-container:hover .f-slider-thumb {
 	background-color: $color-blue-hover;
 }
 
@@ -428,7 +407,7 @@ input[type="checkbox"]:checked + .icon + .icon {
 // https://drafts.csswg.org/mediaqueries-4/#hover
 @media (pointer: coarse) {
 	.btn:hover,
-	.slider-control-container:hover .slider-control-thumb {
+	.f-slider-container:hover .f-slider-thumb {
 		background-color: $color-blue;
 	}
 
@@ -439,8 +418,8 @@ input[type="checkbox"]:checked + .icon + .icon {
 }
 
 .btn:active,
-.slider-control-container.active:hover .slider-control-thumb,
-.slider-control-container.active .slider-control-thumb {
+.f-slider-container.active:hover .f-slider-thumb,
+.f-slider-container.active .f-slider-thumb {
 	background-color: $color-blue-active;
 }
 
@@ -468,9 +447,9 @@ input[type="checkbox"]:checked + .icon + .icon {
 	}
 }
 
-.btn.transparent:hover > span > .icon,
-.btn.transparent:focus > span > .icon,
-.btn.transparent:active > span > .icon {
+.btn.transparent:hover > span > f-icon,
+.btn.transparent:focus > span > f-icon,
+.btn.transparent:active > span > f-icon {
 	color: inherit;
 }
 
@@ -479,7 +458,7 @@ input[type="checkbox"]:checked + .icon + .icon {
 		background-color: transparent;
 	}
 
-	.btn.transparent:hover:not(:active):not(:focus) > span > .icon.blue {
+	.btn.transparent:hover:not(:active):not(:focus) > span > f-icon.blue {
 		color: $color-blue;
 	}
 
@@ -488,26 +467,26 @@ input[type="checkbox"]:checked + .icon + .icon {
 			color: $color-text;
 		}
 
-		.btn.transparent:hover:not(:active):not(:focus) > span > .icon.#{list.nth($color-names, $i)} {
+		.btn.transparent:hover:not(:active):not(:focus) > span > f-icon.#{list.nth($color-names, $i)} {
 			color: list.nth($colors, $i);
 		}
 	}
 }
 
-.slider-control {
+f-slider {
 	display: inline-block;
 	touch-action: none;
 }
 
-.slider-control:not(.vertical) {
+f-slider:not(.vertical) {
 	height: var(--button-size);
 }
 
-.slider-control.vertical {
+f-slider.vertical {
 	width: var(--button-size);
 }
 
-.slider-control-focus-container {
+.f-slider-focus-container {
 	display: inline-flex;
     flex-wrap: nowrap;
 	align-items: center;
@@ -515,50 +494,50 @@ input[type="checkbox"]:checked + .icon + .icon {
 	height: 100%;
 }
 
-.slider-control-focus-container:not(.vertical) {
+.f-slider-focus-container:not(.vertical) {
 	flex-direction: row;
 	padding: var(--button-padding) 0;
 }
 
-.slider-control-focus-container.vertical {
+.f-slider-focus-container.vertical {
 	flex-direction: column-reverse;
 	padding: 0 var(--button-padding);
 }
 
-.slider-control-focus-container > span {
+.f-slider-focus-container > span {
 	display: inline-block;
 }
 
-.slider-control-container {
+.f-slider-container {
 	display: inline-block;
 	position: relative;
 	flex: 1 1 auto;
 	z-index: 0;
 }
 
-.slider-control-container:not(.vertical) {
+.f-slider-container:not(.vertical) {
 	height: $contents-size;
 	padding: 0 $slider-internal-unit 0 0;
 }
 
-.slider-control-container.vertical {
+.f-slider-container.vertical {
 	width: $contents-size;
 	// padding: $slider-internal-unit 0 0 0; // See comment below
 	padding: 0;
 }
 
-.slider-control-inner-container {
+.f-slider-inner-container {
 	display: inline-block;
 	position: relative;
 	pointer-events: none;
 }
 
-.slider-control-inner-container:not(.vertical) {
+.f-slider-inner-container:not(.vertical) {
 	height: $contents-size;
 	width: 100%;
 }
 
-.slider-control-inner-container.vertical {
+.f-slider-inner-container.vertical {
 	width: $contents-size;
 	// height: 100%; // Safari 13 does not like this...
 	position: absolute;
@@ -567,81 +546,81 @@ input[type="checkbox"]:checked + .icon + .icon {
 	bottom: 0;
 }
 
-.slider-control-filled-ruler,
-.slider-control-ruler {
+.f-slider-filled-ruler,
+.f-slider-ruler {
 	display: block;
 	position: absolute;
 	z-index: -1;
 }
 
-.slider-control-filled-ruler:not(.vertical),
-.slider-control-ruler:not(.vertical) {
+.f-slider-filled-ruler:not(.vertical),
+.f-slider-ruler:not(.vertical) {
 	top: $slider-internal-unit;
 	height: $slider-internal-unit;
 }
 
-.slider-control-filled-ruler.vertical,
-.slider-control-ruler.vertical {
+.f-slider-filled-ruler.vertical,
+.f-slider-ruler.vertical {
 	left: $slider-internal-unit;
 	width: $slider-internal-unit;
 }
 
-.slider-control-filled-ruler:not(.vertical) {
+.f-slider-filled-ruler:not(.vertical) {
 	left: 0;
 }
 
-.slider-control-filled-ruler.vertical {
+.f-slider-filled-ruler.vertical {
 	bottom: 0;
 }
 
-.slider-control-ruler:not(.vertical) {
+.f-slider-ruler:not(.vertical) {
 	right: -#{$slider-internal-unit};
 }
 
-.slider-control-ruler.vertical {
+.f-slider-ruler.vertical {
 	top: -#{$slider-internal-unit};
 }
 
-.slider-control-thumb {
+.f-slider-thumb {
 	display: block;
 	position: absolute;
 	z-index: 1;
 }
 
-.slider-control-thumb:not(.vertical) {
+.f-slider-thumb:not(.vertical) {
 	top: 0;
 	height: $contents-size;
 	width: $slider-internal-unit;
 }
 
-.slider-control-thumb.vertical {
+.f-slider-thumb.vertical {
 	left: 0;
 	width: $contents-size;
 	height: $slider-internal-unit;
 }
 
-.slider-control-filled-ruler,
-.list-item.current {
+.f-slider-filled-ruler,
+.f-list-item.current {
 	background-color: $color-blue-on-dark-50;
 }
 
-.slider-control-container:hover .slider-control-filled-ruler {
+.f-slider-container:hover .f-slider-filled-ruler {
 	background-color: $color-blue-hover-on-dark-50;
 }
 
 @media (pointer: coarse) {
-	.slider-control-container:hover .slider-control-filled-ruler {
+	.f-slider-container:hover .f-slider-filled-ruler {
 		background-color: $color-blue-on-dark-50;
 	}
 }
 
-.slider-control-container.active:hover .slider-control-filled-ruler,
-.slider-control-container.active .slider-control-filled-ruler,
-.list-item.current:active {
+.f-slider-container.active:hover .f-slider-filled-ruler,
+.f-slider-container.active .f-slider-filled-ruler,
+.f-list-item.current:active {
 	background-color: $color-blue-active-on-dark-50;
 }
 
-.list {
+f-list {
 	position: relative;
 	width: 100%;
 	text-align: left;
@@ -660,14 +639,14 @@ input[type="checkbox"]:checked + .icon + .icon {
 	height: var(--scrollbar-size);
 }
 
-.list-container {
+.f-list-container {
 	padding: 0;
 	width: 1px;
 	height: 1px;
 	visibility: hidden;
 }
 
-.list-item {
+.f-list-item {
 	height: var(--button-size);
 	line-height: var(--button-size);
 	white-space: nowrap;
@@ -675,27 +654,27 @@ input[type="checkbox"]:checked + .icon + .icon {
 	text-overflow: ellipsis;
 }
 
-.list-item.keyboard {
+.f-list-item.keyboard {
 	box-shadow: $color-blue 0 0 0 var(--thick-border) inset;
 }
 
-.list-item > .icon,
-.list-item > span {
+.f-list-item > f-icon,
+.f-list-item > span {
 	pointer-events: none;
 }
 
-.list-item.virtual {
+.f-list-item.virtual {
 	position: absolute;
 	left: 0;
 	top: 0;
 	right: 0;
 }
 
-.list.virtual-padding > .list-item.virtual {
+f-list.virtual-padding > .f-list-item.virtual {
 	right: var(--thick-border);
 }
 
-.list-item.real {
+.f-list-item.real {
 	position: relative;
 	margin-bottom: var(--thick-border);
 	width: 100%;
@@ -865,7 +844,7 @@ input[type="checkbox"]:checked + .icon + .icon {
 }
 
 .small-right-margin,
-.icon.margin {
+f-icon.margin {
 	margin-right: $s1;
 }
 
@@ -1114,6 +1093,11 @@ body.rgb-extra .bottom-border, body.rgb-extra .modal-header {
 
 .behind {
 	z-index: -1;
+}
+
+.disabled {
+	pointer-events: none;
+	opacity: 0.25;
 }
 
 .sr-only {

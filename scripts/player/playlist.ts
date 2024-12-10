@@ -39,7 +39,7 @@ class PlaylistAdapter extends ListAdapter<Song> {
 
 		const row1 = document.createElement("span");
 		row1.className = "playlist-item-row1";
-		row1.appendChild(Icon.create("icon-title", "playlist-item-icon pink margin", null, Strings.TitleLabel));
+		row1.appendChild(Icon.create("icon-title", "pink", false, "playlist-item-icon margin", null, Strings.TitleLabel));
 		row1.appendChild(document.createTextNode(Formatter.none));
 		div.appendChild(row1);
 
@@ -51,19 +51,19 @@ class PlaylistAdapter extends ListAdapter<Song> {
 
 		const row2 = document.createElement("span");
 		row2.className = "playlist-item-row2";
-		row2.appendChild(Icon.create("icon-artist", "playlist-item-icon orange margin", null, Strings.ArtistLabel));
+		row2.appendChild(Icon.create("icon-artist", "orange", false, "playlist-item-icon margin", null, Strings.ArtistLabel));
 		row2.appendChild(document.createTextNode(Formatter.none));
 		div.appendChild(row2);
 
 		const row3 = document.createElement("span");
 		row3.className = "playlist-item-row3";
-		row3.appendChild(Icon.create("icon-album", "playlist-item-icon green margin", null, Strings.AlbumLabel));
+		row3.appendChild(Icon.create("icon-album", "green", false, "playlist-item-icon margin", null, Strings.AlbumLabel));
 		row3.appendChild(document.createTextNode(Formatter.none));
 		div.appendChild(row3);
 
 		const srow3 = document.createElement("span");
 		srow3.className = "playlist-item-s-row3";
-		srow3.setAttribute("aria-hidden", "true");
+		srow3.ariaHidden = "true";
 		srow3.appendChild(document.createTextNode(Formatter.none));
 		div.appendChild(srow3);
 
@@ -123,7 +123,7 @@ class Playlist extends List<Song> {
 		}
 	}
 
-	private missingSongs: Map<string, Song> | null;
+	private _missingSongs: Map<string, Song> | null;
 	private _currentIndexResumeTimeS: number;
 
 	public onsonglengthchange: ((song: Song) => void) | null;
@@ -132,7 +132,7 @@ class Playlist extends List<Song> {
 		super(songs, currentIndex);
 
 		this._currentIndexResumeTimeS = currentIndexResumeTimeS || 0;
-		this.missingSongs = missingSongs || null;
+		this._missingSongs = missingSongs || null;
 		this.onsonglengthchange = null;
 	}
 
@@ -194,26 +194,26 @@ class Playlist extends List<Song> {
 	}
 
 	public clear(): void {
-		if (this.missingSongs) {
-			this.missingSongs.clear();
-			this.missingSongs = null;
+		if (this._missingSongs) {
+			this._missingSongs.clear();
+			this._missingSongs = null;
 		}
 
 		super.clear();
 	}
 
 	public changeItems(items: Song[] | null): void {
-		if (this.missingSongs) {
-			this.missingSongs.clear();
-			this.missingSongs = null;
+		if (this._missingSongs) {
+			this._missingSongs.clear();
+			this._missingSongs = null;
 		}
 
 		super.changeItems(items);
 	}
 
 	public removeItems(firstIndex: number, lastIndex?: number): number {
-		if (this.missingSongs && this.items && firstIndex >= 0 && firstIndex < this.items.length) {
-			const missingSongs = this.missingSongs,
+		if (this._missingSongs && this.items && firstIndex >= 0 && firstIndex < this.items.length) {
+			const missingSongs = this._missingSongs,
 				items = this.items;
 
 			if (lastIndex === undefined || lastIndex >= items.length)
@@ -227,7 +227,7 @@ class Playlist extends List<Song> {
 					missingSongs.delete(song.fileName + song.fileSize);
 
 					if (!missingSongs.size) {
-						this.missingSongs = null;
+						this._missingSongs = null;
 						break;
 					}
 				}
@@ -265,16 +265,16 @@ class Playlist extends List<Song> {
 		if (!FileUtils.isTypeSupported(file.name))
 			return false;
 
-		if (this.missingSongs) {
+		if (this._missingSongs) {
 			const key = file.name + file.size,
-				song = this.missingSongs.get(key);
+				song = this._missingSongs.get(key);
 
 			if (song) {
 				song.file = file;
-				this.missingSongs.delete(key);
+				this._missingSongs.delete(key);
 
-				if (!this.missingSongs.size)
-					this.missingSongs = null;
+				if (!this._missingSongs.size)
+					this._missingSongs = null;
 
 				return true;
 			}

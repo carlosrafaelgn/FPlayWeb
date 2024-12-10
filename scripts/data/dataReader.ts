@@ -25,17 +25,17 @@
 //
 
 class DataReader {
-	private readonly arrayBuffer: ArrayBuffer;
-	private readonly dataView: DataView;
-	private readonly textDecoder: TextDecoder;
+	private readonly _arrayBuffer: ArrayBuffer;
+	private readonly _dataView: DataView;
+	private readonly _textDecoder: TextDecoder;
 	private _position: number;
 
 	public readonly length: number;
 
 	public constructor(arrayBuffer: ArrayBuffer) {
-		this.arrayBuffer = arrayBuffer;
-		this.dataView = new DataView(arrayBuffer);
-		this.textDecoder = new TextDecoder("utf-8", { ignoreBOM: true });
+		this._arrayBuffer = arrayBuffer;
+		this._dataView = new DataView(arrayBuffer);
+		this._textDecoder = new TextDecoder("utf-8", { ignoreBOM: true });
 		this._position = 0;
 		this.length = arrayBuffer.byteLength;
 	}
@@ -53,46 +53,46 @@ class DataReader {
 	}
 
 	public readInt8(): number {
-		return this.dataView.getInt8(this._position++);
+		return this._dataView.getInt8(this._position++);
 	}
 
 	public readUint8(): number {
-		return this.dataView.getUint8(this._position++);
+		return this._dataView.getUint8(this._position++);
 	}
 
 	public readInt16(): number {
-		const r = this.dataView.getInt16(this._position, true);
+		const r = this._dataView.getInt16(this._position, true);
 		this._position += 2;
 		return r;
 	}
 
 	public readUint16(): number {
-		const r = this.dataView.getUint16(this._position, true);
+		const r = this._dataView.getUint16(this._position, true);
 		this._position += 2;
 		return r;
 	}
 
 	public readInt32(): number {
-		const r = this.dataView.getInt32(this._position, true);
+		const r = this._dataView.getInt32(this._position, true);
 		this._position += 4;
 		return r;
 	}
 
 	public readFloat32(): number {
-		const r = this.dataView.getFloat32(this._position, true);
+		const r = this._dataView.getFloat32(this._position, true);
 		this._position += 4;
 		return r;
 	}
 
 	public readFloat64(): number {
-		const r = this.dataView.getFloat64(this._position, true);
+		const r = this._dataView.getFloat64(this._position, true);
 		this._position += 8;
 		return r;
 	}
 
 	public readString(): string {
-		const len = this.dataView.getUint16(this._position, true);
+		const len = this._dataView.getUint16(this._position, true);
 		this._position += 2;
-		return (len ? this.textDecoder.decode(this.arrayBuffer.slice(this._position, this._position += len)) : "");
+		return (len ? this._textDecoder.decode(this._arrayBuffer.slice(this._position, this._position += len)) : "");
 	}
 }

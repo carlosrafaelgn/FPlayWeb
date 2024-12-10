@@ -25,10 +25,10 @@
 //
 
 class FilePickerFileSystemAPIProvider implements FilePickerProvider {
-	private version: number;
+	private _version: number;
 
 	public constructor() {
-		this.version = 0;
+		this._version = 0;
 	}
 
 	public editableRoots(): boolean {
@@ -46,7 +46,7 @@ class FilePickerFileSystemAPIProvider implements FilePickerProvider {
 	private async getDirectoryFiles(version: number, files: File[], directoryPath: string, directoryHandle: FileSystemDirectoryHandle): Promise<void> {
 		const items = await FileSystemAPI.enumerate(directoryPath, directoryHandle);
 
-		if (!items || version !== this.version)
+		if (!items || version !== this._version)
 			return;
 
 		const comparer = Strings.comparer;
@@ -56,7 +56,7 @@ class FilePickerFileSystemAPIProvider implements FilePickerProvider {
 		if (!directoryPath.endsWith("/"))
 			directoryPath += "/";
 
-		for (let i = 0; i < items.length && version === this.version; i++) {
+		for (let i = 0; i < items.length && version === this._version; i++) {
 			const item = items[i],
 				itemPath = directoryPath + item.name;
 
@@ -76,15 +76,15 @@ class FilePickerFileSystemAPIProvider implements FilePickerProvider {
 		this.cancel();
 
 		const items: File[] = [],
-			version = this.version;
+			version = this._version;
 
 		if (directories) {
-			for (let i = 0; i < directories.length && version === this.version; i++)
+			for (let i = 0; i < directories.length && version === this._version; i++)
 				await this.getDirectoryFiles(version, items, directories[i].path, directories[i].handle as FileSystemDirectoryHandle);
 		}
 
 		if (files) {
-			for (let i = 0; i < files.length && version === this.version; i++) {
+			for (let i = 0; i < files.length && version === this._version; i++) {
 				const path = files[i].path,
 					file = await FileSystemAPI.getFile(path, files[i].handle as FileSystemFileHandle);
 
@@ -118,10 +118,10 @@ class FilePickerFileSystemAPIProvider implements FilePickerProvider {
 			return items;
 		}
 
-		const version = this.version,
+		const version = this._version,
 			systemHandles = await FileSystemAPI.enumerate(path);
 
-		if (!systemHandles || !systemHandles.length || version !== this.version)
+		if (!systemHandles || !systemHandles.length || version !== this._version)
 			return null;
 
 		if (!path.endsWith("/"))
@@ -144,7 +144,7 @@ class FilePickerFileSystemAPIProvider implements FilePickerProvider {
 	}
 
 	public cancel(): void {
-		this.version++;
+		this._version++;
 	}
 
 	public destroy(): void {

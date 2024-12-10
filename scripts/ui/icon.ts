@@ -24,74 +24,215 @@
 // https://github.com/carlosrafaelgn/FPlayWeb
 //
 
-class Icon {
+class Icon extends HTMLElement {
+	public static readonly disabledFeatures = ["shadow"];
+	public static readonly observedAttributes = ["name", "color", "large", "sr-title"];
+
 	public static readonly baseSizePX = 12;
 
-	public static init(): void {
-		const icons = document.getElementsByTagName("i");
-		if (icons) {
-			for (let i = icons.length - 1; i >= 0; i--)
-				Icon.prepare(icons[i]);
-		}
+	public static createHTML(name: string, color?: string | null, large?: boolean, className?: string | null, id?: string | null, srTitle?: string | null): string {
+		return `<f-icon name="${name}"${color ? (' color="' + color + '"') : ''}${large ? (' large') : ''}${className ? (' class="' + className + '"') : ''}${id ? (' id="' + id + '"') : ''}${srTitle ? (' sr-title="' + srTitle + '"') : ""} />`;
 	}
 
-	public static prepare(icon: HTMLElement | null): HTMLElement | null {
-		if (!icon)
-			return null;
+	public static create(name: string, color?: string | null, large?: boolean, className?: string | null, id?: string | null, srTitle?: string | null): Icon {
+		const icon = document.createElement("f-icon") as Icon;
 
-		const className = icon.className;
+		icon.name = name;
 
-		let i: number;
+		if (color)
+			icon.color = color;
 
-		if (className && (i = className.indexOf("icon-")) >= 0 && icon.parentNode) {
-			const j = className.indexOf(" ", i);
+		if (large)
+			icon.large = large;
 
-			return Icon.create(
-				(j > i) ? className.substring(i, j) : className.substring(i),
-				(j > i) ? (className.substring(0, i) + className.substring(j + 1)) : className.substring(0, i),
-				null,
-				null,
-				icon
-			);
-		}
-
-		return null;
-	}
-
-	public static createHTML(name: string, large: boolean, className?: string | null, id?: string | null): string {
-		return `<i class="icon ${large ? "large" : ""} ${className || ""}" ${id ? ("id=" + id) : ""}><svg aria-hidden="true"><use href="#${name}" /></svg></i>`;
-	}
-
-	public static create(name: string, className?: string | null, id?: string | null, title?: string | null, existingElement?: HTMLElement | null): HTMLElement {
-		const i = existingElement || document.createElement("i"),
-			svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"),
-			use = document.createElementNS("http://www.w3.org/2000/svg", "use");
-
-		svg.setAttribute("aria-hidden", "true");
-		use.setAttribute("href", "#" + name);
-		svg.appendChild(use);
+		if (className)
+			icon.className = className;
 
 		if (id)
-			i.setAttribute("id", id);
+			icon.id = id;
 
-		i.className = (className ? ("icon " + className) : "icon");
+		if (srTitle)
+			icon.srTitle = srTitle;
 
-		if (existingElement && !title) {
-			title = existingElement.getAttribute("data-title");
-			existingElement.removeAttribute("data-title");
+		return icon;
+	}
+
+	private _name: string | null;
+	private _color: string | null;
+	private _large: boolean;
+	private _srTitle: string | null;
+	private _srTitleElement: HTMLSpanElement | null;
+	private _svg: SVGSVGElement | null;
+	private _use: SVGUseElement | null;
+
+	public constructor() {
+		super();
+
+		this._name = null;
+		this._color = null;
+		this._large = false;
+		this._srTitle = null;
+		this._srTitleElement = null;
+		this._svg = null;
+		this._use = null;
+	}
+
+	public get name(): string | null {
+		return this._name;
+	}
+
+	public set name(name: string | null) {
+		if (name !== null)
+			this.setAttribute("name", name);
+		else
+			this.removeAttribute("name");
+	}
+
+	public get color(): string | null {
+		return this._color;
+	}
+
+	public set color(color: string | null) {
+		if (color !== null)
+			this.setAttribute("color", color);
+		else
+			this.removeAttribute("color");
+	}
+
+	public get large(): boolean {
+		return this._large;
+	}
+
+	public set large(large: boolean) {
+		if (large)
+			this.setAttribute("large", "");
+		else
+			this.removeAttribute("large");
+	}
+
+	public get srTitle(): string | null {
+		return this._srTitle;
+	}
+
+	public set srTitle(srTitle: string | null) {
+		if (srTitle !== null)
+			this.setAttribute("sr-title", srTitle);
+		else
+			this.removeAttribute("sr-title");
+	}
+
+	public connectedCallback(): void {
+		if (this._use)
+			return;
+
+		this._svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"),
+		this._use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+		this._svg.ariaHidden = "true";
+		this._svg.appendChild(this._use);
+
+		const name = this._name;
+		if (name) {
+			this._name = null;
+			this.attributeChangedCallback("name", null, name);
 		}
 
-		if (title)
-			i.appendChild(Strings.createSrOnlyText(title));
-		else
-			i.setAttribute("aria-hidden", "true");
+		const color = this._color;
+		if (color) {
+			this._color = null;
+			this.attributeChangedCallback("color", null, color);
+		}
 
-		i.appendChild(svg);
+		this._large	 = !this._large;
+		this.attributeChangedCallback("large", null, this._large ? null : "");
 
-		return i;
+		const srTitle = this._srTitle;
+		if (srTitle) {
+			this._srTitle = null;
+			this.attributeChangedCallback("sr-title", null, srTitle);
+		}
+
+		this.appendChild(this._svg);
 	}
 
-	public static createLarge(name: string, className?: string | null, id?: string | null, title?: string | null): HTMLElement {
-		return Icon.create(name, className ? (className + " large") : "large", id, title);
+	public attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
+		const use = this._use;
+
+		switch (name) {
+			case "name":
+				if (this._name === newValue)
+					return;
+
+				this._name = newValue;
+
+				if (!use)
+					return;
+
+				use.setAttribute("href", "#" + newValue);
+				break;
+
+			case "color":
+				if (this._color === newValue)
+					return;
+
+				if (!use) {
+					this._color = newValue;
+					return;
+				}
+
+				if (this._color)
+					this.classList.remove(this._color);
+
+				this._color = newValue;
+
+				if (newValue)
+					this.classList.add(newValue);
+				break;
+
+			case "large":
+				const large = (newValue !== null);
+
+				if (this._large === large)
+					return;
+
+				if (!use) {
+					this._large = large;
+					return;
+				}
+
+				if (this._large)
+					this.classList.remove("large");
+
+				this._large = large;
+
+				if (large)
+					this.classList.add("large");
+				break;
+
+			case "sr-title":
+				if (this._srTitle === newValue)
+					return;
+
+				this._srTitle = newValue;
+
+				if (!use)
+					return;
+
+				if (!newValue) {
+					if (this._srTitleElement) {
+						this.removeChild(this._srTitleElement);
+						this._srTitleElement = null;
+					}
+				} else {
+					if (!this._srTitleElement) {
+						this._srTitleElement = Strings.createSrOnlyText(newValue);
+						this.insertAdjacentElement("afterbegin", this._srTitleElement);
+					} else {
+						Strings.changeText(this._srTitleElement, newValue);
+					}
+				}
+				break;
+		}
 	}
 }
+
+customElements.define("f-icon", Icon);
