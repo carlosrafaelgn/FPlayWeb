@@ -83,6 +83,7 @@ self.addEventListener("install", (event) => {
 			"assets/images/favicons/favicon.ico",
 			"assets/images/favicons/favicon.png",
 			"assets/images/favicons/manifest.webmanifest",
+			"assets/images/rgb.gif",
 			"assets/images/spinner.gif",
 			"assets/js/monodownmixerprocessor.js?" + CACHE_VERSION,
 			"assets/js/scripts.min.js?" + CACHE_VERSION,
