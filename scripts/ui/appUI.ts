@@ -456,7 +456,7 @@ class AppUI {
 				<div>
 					<f-button square onclick="App.player && App.player.previous()" text="${Strings.Previous}" icon-name="icon-previous">
 					</f-button><f-button id="play-button" square onclick="App.player && App.player.playPause()" text="${Strings.PlayPause}" icon-name="icon-play">
-					</f-button><f-button square onclick="App.player && App.player.stop()" text="${Strings.Stop}" icon-name="icon-stop">
+					</f-button><f-button square onclick="App.player && App.player.stop()" text="${Strings.Stop}" icon-name="icon-stop" id="button-stop">
 					</f-button><f-button square onclick="App.player && App.player.next()" text="${Strings.Next}" icon-name="icon-next">
 					</f-button><f-slider id="volume-slider" aria-label="${Strings.Volume}" min="${Player.minVolume}" max="0" value="${appSettings.playerVolume}" value-child="${SliderControlValueChild.RightChild}" class="left-margin"></f-slider>
 				</div>
