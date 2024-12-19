@@ -545,6 +545,7 @@ class AppUI {
 		AppUI._playlistControl = document.getElementById("playlist-control") as ListControl<Song>;
 		AppUI._playlistControl.onitemclick = AppUI.playlistControlItemClick;
 		AppUI._playlistControl.onitemcontextmenu = AppUI.playlistControlItemContextMenu;
+		AppUI._playlistControl.onitemcontrolclick = AppUI.playlistControlItemControlClick;
 
 		AppUI._graphicalFilterControlType = document.getElementById("graphical-filter-control-type") as ButtonControl;
 		AppUI._graphicalFilterControlType.text = (appSettings.graphicalFilterControlSimpleMode ? Strings.TraditionalFilter : Strings.AdvancedFilter);
@@ -901,10 +902,14 @@ class AppUI {
 	}
 
 	private static playlistControlItemContextMenu(item: Song, index: number): void {
-		if (!App.player)
+		if (!App.player || !item || !AppUI._playlistControl || AppUI._playlistControl.deleteMode)
 			return;
 
-		//App.player.play(index);
+		AppUI.showSongInfo(item);
+	}
+
+	private static playlistControlItemControlClick(item: Song, index: number, button: number, target: HTMLElement): void {
+		AppUI.playlistControlItemContextMenu(item, index);
 	}
 
 	private static graphicalFilterControlTypeClick(): void {

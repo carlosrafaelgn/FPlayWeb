@@ -160,10 +160,17 @@ class SliderControl extends HTMLElement {
 			focusContainer.removeChild(this._leftChild);
 		}
 
+		if (this._leftChild)
+			this._leftChild.classList.remove("f-slider-extra-child");
+
 		this._leftChild = leftChild;
 
-		if (leftChild && this._valueChild === SliderControlValueChild.LeftChild && !this._manualAria)
-			Strings.changeText(leftChild, this.ariaValueText || this.ariaValueNow);
+		if (leftChild) {
+			leftChild.classList.add("f-slider-extra-child");
+
+			if (this._valueChild === SliderControlValueChild.LeftChild && !this._manualAria)
+				Strings.changeText(leftChild, this.ariaValueText || this.ariaValueNow);
+		}
 	}
 
 	public get rightChild(): HTMLElement | null {
@@ -190,10 +197,17 @@ class SliderControl extends HTMLElement {
 			focusContainer.removeChild(this._rightChild);
 		}
 
+		if (this._rightChild)
+			this._rightChild.classList.remove("f-slider-extra-child");
+
 		this._rightChild = rightChild;
 
-		if (rightChild && this._valueChild === SliderControlValueChild.RightChild && !this._manualAria)
-			Strings.changeText(rightChild, this.ariaValueText || this.ariaValueNow);
+		if (rightChild) {
+			rightChild.classList.add("f-slider-extra-child");
+
+			if (rightChild && this._valueChild === SliderControlValueChild.RightChild && !this._manualAria)
+				Strings.changeText(rightChild, this.ariaValueText || this.ariaValueNow);
+		}
 	}
 
 	public get dragging(): boolean {
@@ -528,8 +542,6 @@ class SliderControl extends HTMLElement {
 			thumb
 		};
 
-		this.appendChild(focusContainer);
-
 		this._pointerHandler = new PointerHandler(container, this.elementMouseDown.bind(this), this.elementMouseMove.bind(this), this.elementMouseUp.bind(this));
 
 		this._disabled = !this._disabled;
@@ -558,6 +570,8 @@ class SliderControl extends HTMLElement {
 			this._rightChild = null;
 			this.rightChild = rightChild;
 		}
+
+		this.appendChild(focusContainer);
 	}
 
 	public attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {

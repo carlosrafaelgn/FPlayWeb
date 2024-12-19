@@ -74,7 +74,6 @@ f-icon {
 	width: $contents-size;
 	height: $contents-size;
 	padding: var(--icon-padding);
-	vertical-align: top;
 }
 
 f-icon.large {
@@ -89,6 +88,7 @@ f-icon > svg {
 	stroke-width: 0;
 	stroke: transparent;
 	fill: currentColor;
+	pointer-events: none;
 }
 
 f-icon.large > svg {
@@ -504,10 +504,6 @@ f-slider.vertical {
 	padding: 0 var(--button-padding);
 }
 
-.f-slider-focus-container > span {
-	display: inline-block;
-}
-
 .f-slider-container {
 	display: inline-block;
 	position: relative;
@@ -526,7 +522,7 @@ f-slider.vertical {
 	padding: 0;
 }
 
-.f-slider-inner-container {
+.f-slider-inner-container, .f-slider-extra-child {
 	display: inline-block;
 	position: relative;
 	pointer-events: none;
