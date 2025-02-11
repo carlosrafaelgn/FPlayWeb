@@ -64,6 +64,7 @@ interface AppSettings {
 	filePickerLastPath?: string | null;
 	filePickerRootLength?: number;
 	rgbMode?: boolean;
+	animatedRGBMode?: boolean;
 	extraRGBMode?: boolean;
 	neonMode?: boolean;
 }
@@ -126,6 +127,7 @@ class App {
 			filePickerLastPath: FilePicker.lastPath,
 			filePickerRootLength: FilePicker.lastRootLength,
 			rgbMode: AppUI.rgbMode,
+			animatedRGBMode: AppUI.animatedRGBMode,
 			extraRGBMode: AppUI.extraRGBMode,
 			neonMode: AppUI.neonMode
 		});

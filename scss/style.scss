@@ -893,7 +893,11 @@ body.neon {
 }
 
 body.rgb .top-border, body.rgb .bottom-border, body.rgb .modal-header {
-	border-image: url(../images/rgb.gif) 1;
+	border-image: url(../images/rgb.png) 1;
+}
+
+body.rgb-animated .top-border, body.rgb-animated .bottom-border, body.rgb-animated .modal-header {
+	border-image: url(../images/rgb-animated.gif) 1;
 }
 
 body.rgb-extra .top-border {

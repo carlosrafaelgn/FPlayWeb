@@ -125,6 +125,7 @@ class Strings {
 	public static UpdateAvailable = "Update available!";
 	public static PleaseRefresh = "Please, refresh the page to update the app. 😊";
 	public static RGBMode = "RGB Mode";
+	public static AnimatedRGBMode = "Animated RGB Mode";
 	public static ExtraRGBMode = "Extra RGB Mode";
 	public static NeonMode = "Neon Mode";
 	public static AboutHTML = `<p>FPlay Web is an experimental audio player. 😊</p>
@@ -232,6 +233,7 @@ class Strings {
 			Strings.UpdateAvailable = "Atualização disponível!";
 			Strings.PleaseRefresh = "Por favor, recarregue a página para atualizar a aplicação. 😊";
 			Strings.RGBMode = "Modo RGB";
+			Strings.AnimatedRGBMode = "Modo RGB Animado";
 			Strings.ExtraRGBMode = "Modo RGB Extra";
 			Strings.NeonMode = "Modo Neon";
 			Strings.AboutHTML = `<p>FPlay Web é um player de áudio experimental. 😊</p>

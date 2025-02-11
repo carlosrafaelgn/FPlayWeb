@@ -99,6 +99,7 @@ class AppUI {
 	private static _contentsSizePX = 1;
 	private static _playlistItemSizePX = 1;
 	private static _rgbMode = false;
+	private static _animatedRGBMode = false;
 	private static _extraRGBMode = false;
 	private static _neonMode = false;
 
@@ -574,6 +575,7 @@ class AppUI {
 		window.addEventListener("resize", AppUI.adjustWindow, { passive: true });
 
 		AppUI.rgbMode = appSettings.rgbMode || false;
+		AppUI.animatedRGBMode = appSettings.animatedRGBMode || false;
 		AppUI.extraRGBMode = appSettings.extraRGBMode || false;
 		AppUI.neonMode = appSettings.neonMode || false;
 
@@ -689,11 +691,32 @@ class AppUI {
 		AppUI._rgbMode = rgbMode;
 
 		if (!rgbMode) {
+			AppUI._animatedRGBMode = false;
 			AppUI._extraRGBMode = false;
 			document.body.classList.remove("rgb");
+			document.body.classList.remove("rgb-animated");
 			document.body.classList.remove("rgb-extra");
 		} else {
 			document.body.classList.add("rgb");
+		}
+	}
+
+	public static get animatedRGBMode(): boolean {
+		return AppUI._animatedRGBMode;
+	}
+
+	public static set animatedRGBMode(animatedRGBMode: boolean) {
+		if (AppUI._animatedRGBMode === animatedRGBMode)
+			return;
+
+		AppUI._animatedRGBMode = animatedRGBMode;
+
+		if (!animatedRGBMode) {
+			document.body.classList.remove("rgb-animated");
+		} else {
+			AppUI._rgbMode = true;
+			document.body.classList.add("rgb");
+			document.body.classList.add("rgb-animated");
 		}
 	}
 
@@ -1279,6 +1302,12 @@ class AppUI {
 	public static showAbout(): void {
 		const body = document.createElement("div");
 
+		const updateRGBCheckboxes = function () {
+			rgbModeCheckbox.checked = AppUI.rgbMode;
+			animatedRGBModeCheckbox.checked = AppUI.animatedRGBMode;
+			extraRGBModeCheckbox.checked = AppUI.extraRGBMode;
+		};
+
 		const rgbModeCheckbox = ButtonControl.create({
 			text: Strings.RGBMode,
 			checkable: true,
@@ -1286,7 +1315,18 @@ class AppUI {
 			parent: body,
 			onclick: function () {
 				AppUI.rgbMode = rgbModeCheckbox.checked;
-				extraRGBModeCheckbox.checked = AppUI.extraRGBMode;
+				updateRGBCheckboxes();
+			}
+		});
+
+		const animatedRGBModeCheckbox = ButtonControl.create({
+			text: Strings.AnimatedRGBMode,
+			checkable: true,
+			checked: AppUI.animatedRGBMode,
+			parent: body,
+			onclick: function () {
+				AppUI.animatedRGBMode = animatedRGBModeCheckbox.checked;
+				updateRGBCheckboxes();
 			}
 		});
 
@@ -1297,7 +1337,7 @@ class AppUI {
 			parent: body,
 			onclick: function () {
 				AppUI.extraRGBMode = extraRGBModeCheckbox.checked;
-				rgbModeCheckbox.checked = AppUI.rgbMode;
+				updateRGBCheckboxes();
 			}
 		});
 
