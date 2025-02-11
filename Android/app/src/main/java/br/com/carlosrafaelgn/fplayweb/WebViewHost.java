@@ -35,6 +35,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.graphics.Insets;
 import android.graphics.PixelFormat;
 import android.net.Uri;
 import android.os.Build;
@@ -46,6 +47,7 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.webkit.ConsoleMessage;
 import android.webkit.GeolocationPermissions;
@@ -641,7 +643,22 @@ public class WebViewHost {
 			WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
 
 			webView = new WebView(application);
-			webView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+			// No solution available yet: https://stackoverflow.com/q/79406826/3569421
+			if (Build.VERSION.SDK_INT >= 35) {
+				webView.setOnApplyWindowInsetsListener((v, windowInsets) -> {
+					final Insets insets = windowInsets.getInsets(WindowInsets.Type.systemBars());
+					final FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+					layoutParams.leftMargin = insets.left;
+					layoutParams.topMargin = insets.top;
+					layoutParams.rightMargin = insets.right;
+					layoutParams.bottomMargin = insets.bottom;
+					v.setLayoutParams(layoutParams);
+					return WindowInsets.CONSUMED;
+				});
+			}
+
+			webView.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 			webView.setWebViewClient(new LibWebViewClient());
 			webView.setWebChromeClient(new LibWebChromeClient());
 			webView.setHorizontalScrollBarEnabled(false);
