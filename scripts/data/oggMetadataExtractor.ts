@@ -450,7 +450,7 @@ class OggBufferedReader extends BufferedFileReader {
 }
 
 class OggMetadataExtractor extends VorbisCommentExtractor {
-	public static async extract(file: File, buffer: Uint8Array, tmpPtr: Uint8Array[]): Promise<Metadata | null> {
+	public static async extract(file: File, buffer: Uint8Array, tmpBuffer: ResizeableBuffer, fetchAlbumArt: boolean): Promise<Metadata | null> {
 		try {
 			const f = new OggBufferedReader(file, buffer);
 
@@ -459,7 +459,7 @@ class OggMetadataExtractor extends VorbisCommentExtractor {
 			if (!await f.findInitialVorbisCommentPage(metadata))
 				return null;
 
-			return (await VorbisCommentExtractor.extractVorbisComment(f.totalLength - f.readPosition, metadata, f, tmpPtr) ? metadata : null);
+			return (await VorbisCommentExtractor.extractVorbisComment(f.totalLength - f.readPosition, metadata, f, tmpBuffer, fetchAlbumArt) ? metadata : null);
 		} catch (ex) {
 			return null;
 		}

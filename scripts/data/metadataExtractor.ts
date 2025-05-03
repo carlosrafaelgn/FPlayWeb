@@ -40,10 +40,28 @@ interface Metadata {
 	year?: number;
 	sampleRate?: number;
 	channels?: number;
+	albumArt?: Uint8Array | null;
 
 	file?: File;
 	fileName?: string;
 	fileSize?: number;
+}
+
+class ResizeableBuffer {
+	public buffer: Uint8Array;
+
+	public constructor(capacity: number) {
+		this.buffer = new Uint8Array(capacity);
+	}
+
+	public resizeCapacity(capacity: number): void {
+		if (capacity <= this.buffer.length)
+			return;
+
+		const buffer = new Uint8Array(capacity);
+		buffer.set(this.buffer);
+		this.buffer = buffer;
+	}
 }
 
 abstract class BufferedReader {
@@ -685,7 +703,7 @@ class MetadataExtractor {
 		return ((!ret || !ret.length) ? null : ret);
 	}
 
-	private static readV2Frame(f: BufferedReader, frameSize: number, tmpPtr: Uint8Array[]): Promise<string | null> | string | null {
+	private static readV2Frame(f: BufferedReader, frameSize: number, tmpBuffer: ResizeableBuffer): Promise<string | null> | string | null {
 		if (frameSize < 2) {
 			f.skip(frameSize);
 			return null;
@@ -700,12 +718,8 @@ class MetadataExtractor {
 			return null;
 		}
 
-		let tmp = tmpPtr[0];
-
-		if (frameSize > tmp.length) {
-			tmp = new Uint8Array(frameSize + 16);
-			tmpPtr[0] = tmp;
-		}
+		tmpBuffer.resizeCapacity(frameSize);
+		const tmp = tmpBuffer.buffer;
 
 		const p = f.read(tmp, 0, frameSize);
 		if ((typeof p) === "number")
@@ -996,7 +1010,7 @@ class MetadataExtractor {
 		}
 	}
 
-	private static async extractID3v2Andv1(file: File, f: BufferedReader, tmpPtr: Uint8Array[], aac: boolean, fetchSampleRateAndChannels: boolean): Promise<Metadata | null> {
+	private static async extractID3v2Andv1(file: File, f: BufferedReader, tmpBuffer: ResizeableBuffer, aac: boolean, fetchSampleRateAndChannels: boolean, fetchAlbumArt: boolean): Promise<Metadata | null> {
 		const metadata = MetadataExtractor.createBasicMetadata(file);
 
 		if (!metadata.url) {
@@ -1021,7 +1035,7 @@ class MetadataExtractor {
 			hdr |= f.readByte();
 			if (hdr === 0x52494646) { // RIFF
 				fetchSampleRateAndChannels = false;
-				const riffResult = await MetadataExtractor.extractRIFF(metadata, f, tmpPtr[0]);
+				const riffResult = await MetadataExtractor.extractRIFF(metadata, f, tmpBuffer.buffer);
 				// Codec/file type not supported
 				if (!riffResult)
 					return null;
@@ -1033,7 +1047,7 @@ class MetadataExtractor {
 			} else {
 				if (fetchSampleRateAndChannels)
 					await MetadataExtractor.extractSampleRateAndChannels(metadata, f, 0, aac);
-				await MetadataExtractor.extractID3v1(metadata, f, 0, tmpPtr[0]);
+				await MetadataExtractor.extractID3v1(metadata, f, 0, tmpBuffer.buffer);
 				return metadata;
 			}
 		}
@@ -1082,7 +1096,7 @@ class MetadataExtractor {
 				switch (frameId) {
 					case 0x54495432: // title - TIT2
 						if (!(found & MetadataExtractor.TITLE_B)) {
-							const p = MetadataExtractor.readV2Frame(f, frameSize, tmpPtr);
+							const p = MetadataExtractor.readV2Frame(f, frameSize, tmpBuffer);
 							if (p && (p as Promise<string | null>).then)
 								metadata.title = await p;
 							else
@@ -1096,7 +1110,7 @@ class MetadataExtractor {
 
 					case 0x54504531: // artist - TPE1
 						if (!(found & MetadataExtractor.ARTIST_B)) {
-							const p = MetadataExtractor.readV2Frame(f, frameSize, tmpPtr);
+							const p = MetadataExtractor.readV2Frame(f, frameSize, tmpBuffer);
 							if (p && (p as Promise<string | null>).then)
 								metadata.artist = await p;
 							else
@@ -1110,7 +1124,7 @@ class MetadataExtractor {
 
 					case 0x54414c42: // album - TALB
 						if (!(found & MetadataExtractor.ALBUM_B)) {
-							const p = MetadataExtractor.readV2Frame(f, frameSize, tmpPtr);
+							const p = MetadataExtractor.readV2Frame(f, frameSize, tmpBuffer);
 							if (p && (p as Promise<string | null>).then)
 								metadata.album = await p;
 							else
@@ -1124,7 +1138,7 @@ class MetadataExtractor {
 
 					case 0x5452434b: // track - TRCK
 						if (!(found & MetadataExtractor.TRACK_B)) {
-							const p = MetadataExtractor.readV2Frame(f, frameSize, tmpPtr);
+							const p = MetadataExtractor.readV2Frame(f, frameSize, tmpBuffer);
 							if (p && (p as Promise<string | null>).then)
 								metadata.track = parseInt(await (p as Promise<string>));
 							else
@@ -1140,7 +1154,7 @@ class MetadataExtractor {
 
 					case 0x544c454e: // length - TLEN
 						if (!(found & MetadataExtractor.LENGTH_B)) {
-							const p = MetadataExtractor.readV2Frame(f, frameSize, tmpPtr);
+							const p = MetadataExtractor.readV2Frame(f, frameSize, tmpBuffer);
 							if (p && (p as Promise<string | null>).then)
 								metadata.lengthMS = parseInt(await (p as Promise<string>));
 							else
@@ -1157,7 +1171,7 @@ class MetadataExtractor {
 					case 0x54594552: // year - TYER
 					case 0x54445243: // Recording time - TDRC
 						if (!(found & MetadataExtractor.YEAR_B)) {
-							const p = MetadataExtractor.readV2Frame(f, frameSize, tmpPtr);
+							const p = MetadataExtractor.readV2Frame(f, frameSize, tmpBuffer);
 							if (p && (p as Promise<string | null>).then)
 								metadata.year = parseInt(await (p as Promise<string>));
 							else
@@ -1166,6 +1180,47 @@ class MetadataExtractor {
 								found |= MetadataExtractor.YEAR_B;
 							else
 								metadata.year = 0;
+						} else {
+							f.skip(frameSize);
+						}
+						break;
+
+					case 0x41504943: // Attached Picture - APIC
+						if (fetchAlbumArt) {
+							const p = f.fillBuffer(-1);
+							if (p)
+								await p;
+
+							let bytesRead = 0;
+
+							// MIME type encoding
+							f.skip(1);
+							bytesRead++;
+
+							// MIME type
+							let b = f.readByte();
+							bytesRead++;
+							while (b > 0) {
+								b = f.readByte();
+								bytesRead++;
+							}
+
+							// Description encoding
+							f.skip(1);
+							bytesRead++;
+
+							// Description
+							b = f.readByte();
+							bytesRead++;
+							while (b > 0) {
+								b = f.readByte();
+								bytesRead++;
+							}
+
+							const image = new Uint8Array(frameSize - bytesRead);
+							bytesRead = await f.read(image, 0, image.length);
+							if (bytesRead === image.length)
+								metadata.albumArt = image;
 						} else {
 							f.skip(frameSize);
 						}
@@ -1184,7 +1239,7 @@ class MetadataExtractor {
 
 			// Try to extract ID3v1 only if there are any blank fields
 			if ((found & MetadataExtractor.ALL_BUT_LENGTH_B) !== MetadataExtractor.ALL_BUT_LENGTH_B)
-				await MetadataExtractor.extractID3v1(metadata, f, found, tmpPtr[0]);
+				await MetadataExtractor.extractID3v1(metadata, f, found, tmpBuffer.buffer);
 		}
 
 		return metadata;
@@ -1197,15 +1252,15 @@ class MetadataExtractor {
 		};
 	}
 
-	public static async extract(file: File, buffer?: Uint8Array | null, tempBuffer?: Uint8Array[] | null): Promise<Metadata | null> {
+	public static async extract(file: File, buffer?: Uint8Array | null, tmpBuffer?: ResizeableBuffer | null, fetchAlbumArt: boolean = false): Promise<Metadata | null> {
 		if (!file)
 			return null;
 
 		if (!buffer)
 			buffer = new Uint8Array(BufferedReader.minBufferLength);
 
-		if (!tempBuffer)
-			tempBuffer = [new Uint8Array(256)];
+		if (!tmpBuffer)
+			tmpBuffer = new ResizeableBuffer(2048);
 
 		let aac = false;
 
@@ -1214,9 +1269,9 @@ class MetadataExtractor {
 			!file.name.endsWith(".wav")) {
 
 			if (file.name.endsWith(".flac"))
-				return FLACMetadataExtractor.extract(file, buffer, tempBuffer);
+				return FLACMetadataExtractor.extract(file, buffer, tmpBuffer, fetchAlbumArt);
 			if (file.name.endsWith(".ogg"))
-				return OggMetadataExtractor.extract(file, buffer, tempBuffer);
+				return OggMetadataExtractor.extract(file, buffer, tmpBuffer, fetchAlbumArt);
 
 			const lcase = file.name.toLowerCase();
 			if (!lcase.endsWith(".mp3") &&
@@ -1224,9 +1279,9 @@ class MetadataExtractor {
 				!lcase.endsWith(".wav")) {
 
 				if (lcase.endsWith(".flac"))
-					return FLACMetadataExtractor.extract(file, buffer, tempBuffer);
+					return FLACMetadataExtractor.extract(file, buffer, tmpBuffer, fetchAlbumArt);
 				if (lcase.endsWith(".ogg"))
-					return OggMetadataExtractor.extract(file, buffer, tempBuffer);
+					return OggMetadataExtractor.extract(file, buffer, tmpBuffer, fetchAlbumArt);
 
 				return null;
 			}
@@ -1244,7 +1299,7 @@ class MetadataExtractor {
 			// stream.cancel() is called inside finally, which could happen before
 			// MetadataExtractor.extractID3v2Andv1() has had a chance to actually read
 			// the metadata...
-			return await MetadataExtractor.extractID3v2Andv1(file, f, tempBuffer, aac, true);
+			return await MetadataExtractor.extractID3v2Andv1(file, f, tmpBuffer, aac, true, fetchAlbumArt);
 		} catch (ex) {
 			return null;
 		}

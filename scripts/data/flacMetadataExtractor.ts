@@ -81,9 +81,10 @@ class FLACMetadataExtractor extends VorbisCommentExtractor {
 		return (lastBlock ? -1 : 1);
 	}
 
-	private static async readMetadataBlock(metadata: Metadata, f: BufferedReader, tmpPtr: Uint8Array[]): Promise<number> {
+	private static async readMetadataBlock(metadata: Metadata, f: BufferedReader, tmpBuffer: ResizeableBuffer, fetchAlbumArt: boolean): Promise<number> {
 		// https://xiph.org/flac/format.html#metadata_block_header
 		// https://xiph.org/flac/format.html#metadata_block_vorbis_comment
+		// https://xiph.org/flac/format.html#metadata_block_picture
 		// https://www.xiph.org/vorbis/doc/v-comment.html
 
 		let p = f.fillBuffer(4);
@@ -105,14 +106,72 @@ class FLACMetadataExtractor extends VorbisCommentExtractor {
 			return 0;
 
 		if (type === 4) // VORBIS_COMMENT
-			return (await VorbisCommentExtractor.extractVorbisComment(typeAndLength, metadata, f, tmpPtr) ? -1 : 0);
+			return (await VorbisCommentExtractor.extractVorbisComment(typeAndLength, metadata, f, tmpBuffer, fetchAlbumArt) ? -2 : 0);
 
-		f.skip(typeAndLength);
+		if (type === 6 && fetchAlbumArt) { // PICTURE
+			let p = f.fillBuffer(4);
+			if (p)
+				await p;
+
+			const pictureType = f.readUInt32BE(); // The picture type according to Table 13
+			if (pictureType === null)
+				return 0;
+
+			if (pictureType !== 3) {
+				f.skip(typeAndLength - 4);
+				return 1;
+			}
+
+			p = f.fillBuffer(-1);
+			if (p)
+				await p;
+
+			const mimeTypeLength = f.readUInt32BE(); // The length of the media type string in bytes.
+			if (mimeTypeLength === null)
+				return 0;
+
+			f.skip(mimeTypeLength);	
+
+			const descriptionLength = f.readUInt32BE(); // The length of the description string in bytes.
+			if (descriptionLength === null)
+				return 0;
+
+			f.skip(descriptionLength);
+
+			const width = f.readUInt32BE(); // The width of the picture in pixels.
+			if (width === null)
+				return 0;
+
+			const height = f.readUInt32BE(); // The height of the picture in pixels.
+			if (height === null)
+				return 0;
+
+			const colorDepth = f.readUInt32BE(); // The color depth of the picture in bits per pixel.
+			if (colorDepth === null)
+				return 0;
+
+			const colorsUsed = f.readUInt32BE(); // For indexed-color pictures (e.g., GIF), the number of colors used; 0 for non-indexed pictures.
+			if (colorsUsed === null)
+				return 0;
+
+			const dataLength = f.readUInt32BE(); // The length of the picture data in bytes.
+			if (dataLength === null)
+				return 0;
+
+			const image = new Uint8Array(dataLength);
+			const bytesRead = await f.read(image, 0, image.length);
+			if (bytesRead === image.length)
+				metadata.albumArt = image;
+
+			return -3;
+		} else {
+			f.skip(typeAndLength);
+		}
 
 		return (lastBlock ? -1 : 1);
 	}
 
-	public static async extract(file: File, buffer: Uint8Array, tmpPtr: Uint8Array[]): Promise<Metadata | null> {
+	public static async extract(file: File, buffer: Uint8Array, tmpBuffer: ResizeableBuffer, fetchAlbumArt: boolean): Promise<Metadata | null> {
 		try {
 			const f = new BufferedFileReader(file, buffer);
 
@@ -122,17 +181,37 @@ class FLACMetadataExtractor extends VorbisCommentExtractor {
 
 			// The header and stream info, together, should have less than 256 bytes. Therefore,
 			// since f is filled with enough data, readHeaderAndStreamInfo() does not need to be async.
-			let r = FLACMetadataExtractor.readHeaderAndStreamInfo(metadata, f, tmpPtr[0]);
+			let r = FLACMetadataExtractor.readHeaderAndStreamInfo(metadata, f, tmpBuffer.buffer);
 			if (!r)
 				return null;
 			if (r < 0)
 				return metadata;
 
-			do {
-				r = await FLACMetadataExtractor.readMetadataBlock(metadata, f, tmpPtr);
-				if (!r)
-					return null;
-			} while (r > 0);
+			if (!fetchAlbumArt) {
+				do {
+					r = await FLACMetadataExtractor.readMetadataBlock(metadata, f, tmpBuffer, fetchAlbumArt);
+					if (!r)
+						return null;
+				} while (r > 0);
+			} else {
+				let metadataOK = false;
+				let pictureOK = false;
+
+				do {
+					r = await FLACMetadataExtractor.readMetadataBlock(metadata, f, tmpBuffer, fetchAlbumArt);
+					if (!r)
+						return null;
+					if (r === -2) {
+						r = 1;
+						metadataOK = true;
+					} else if (r === -3) {
+						r = 1;
+						pictureOK = true;
+					}
+					if (metadataOK && pictureOK)
+						break;
+				} while (r > 0);
+			}
 
 			return metadata;
 		} catch (ex) {

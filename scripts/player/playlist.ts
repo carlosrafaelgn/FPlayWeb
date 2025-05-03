@@ -261,7 +261,7 @@ class Playlist extends List<Song> {
 		return true;
 	}
 
-	public async addSongWeb(file: File, buffer?: Uint8Array | null, tempArray?: Uint8Array[] | null, position?: number): Promise<boolean> {
+	public async addSongWeb(file: File, buffer?: Uint8Array | null, tmpBuffer?: ResizeableBuffer | null, position?: number): Promise<boolean> {
 		if (!FileUtils.isTypeSupported(file.name))
 			return false;
 
@@ -280,7 +280,7 @@ class Playlist extends List<Song> {
 			}
 		}
 
-		const metadata = await MetadataExtractor.extract(file, buffer, tempArray);
+		const metadata = await MetadataExtractor.extract(file, buffer, tmpBuffer);
 
 		if (!metadata)
 			return false;

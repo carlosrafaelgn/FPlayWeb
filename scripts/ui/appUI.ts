@@ -1061,7 +1061,7 @@ class AppUI {
 
 			const playlist = App.player.playlist,
 				buffer = (electron ? null : new Uint8Array(BufferedReader.minBufferLength)),
-				tempBuffer = (electron ? null : [new Uint8Array(2048)]);
+				tmpBuffer = (electron ? null : new ResizeableBuffer(2048));
 
 			let missingSongWasAdded = false;
 
@@ -1095,7 +1095,7 @@ class AppUI {
 						}
 					} else {
 						const oldLength = playlist.length;
-						if (await playlist.addSongWeb(filePaths[i] as File, buffer, tempBuffer)) {
+						if (await playlist.addSongWeb(filePaths[i] as File, buffer, tmpBuffer)) {
 							if (oldLength == playlist.length) {
 								missingSongWasAdded = true;
 							} else if (playAfterAdding) {
