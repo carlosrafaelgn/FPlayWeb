@@ -233,7 +233,7 @@ class FilePicker {
 		pathDiv.appendChild(pathElement);
 
 		const listElement = document.createElement("f-list") as ListControl<FilePickerListItem>;
-		listElement.className = "file-picker-list fade";
+		listElement.className = "full-height-list fade";
 
 		this._callback = callback || null;
 		this._resolve = resolve;

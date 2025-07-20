@@ -255,6 +255,20 @@ a:active {
 	color: $color-orange-active;
 }
 
+input[type="text"] {
+	color: $color-text;
+	background-color: $color-background;
+	padding: var(--button-padding) $s2;
+	text-align: center;
+}
+
+input[type="text"]::placeholder,
+input[type="text"]::-webkit-input-placeholder,
+input[type="text"]::-moz-placeholder,
+input[type="text"]::-ms-input-placeholder {
+	color: $color-text-secondary;
+}
+
 .modal,
 .alert {
 	display: block;
@@ -732,7 +746,7 @@ f-list.virtual-padding > .f-list-item.virtual {
 	flex: 1 1 auto;
 }
 
-.file-picker-list {
+.full-height-list {
 	flex: 1 1 auto;
 }
 

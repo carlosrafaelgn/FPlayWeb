@@ -289,4 +289,25 @@ class Playlist extends List<Song> {
 
 		return true;
 	}
+
+	public findItems(searchText: string): Song[] {
+		const normalizedTerms = Strings.removeDiacritics(searchText.trim()).split(" ");
+		for (let i = normalizedTerms.length - 1; i >= 0; i--) {
+			if (!normalizedTerms[i])
+				normalizedTerms.splice(i, 1);
+		}
+
+		const filteredItems: Song[] = [];
+
+		if (normalizedTerms.length) {
+			const items = this.items;
+
+			for (let i = 0; i < items.length; i++) {
+				if (items[i].normalizedInfoContainsAllTerms(normalizedTerms))
+					filteredItems.push(items[i]);
+			}
+		}
+
+		return filteredItems;
+	}
 }

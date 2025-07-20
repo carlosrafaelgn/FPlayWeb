@@ -447,6 +447,7 @@ class AppUI {
 				</f-button><f-button square color="green" class="no-left-margin" onclick="AppUI.addFiles()" text="${Strings.AddSongs}" icon-name="icon-add-title">
 				</f-button><f-button id="add-folder-button" square color="orange" onclick="AppUI.addFiles(true)" text="${Strings.AddFolders}" icon-name="icon-add-folder">
 				</f-button><f-button id="info-button" square color="gray" onclick="AppUI.showSongInfo()" text="${Strings.ShowInfo}" icon-name="icon-info">
+				</f-button><f-button id="search-button" square color="gray" onclick="AppUI.showSearch()" text="${Strings.Search}" icon-name="icon-search">
 				</f-button><f-button square color="red" onclick="AppUI.toggleDeleteMode(true)" text="${Strings.DeleteSongs}" icon-name="icon-clear">
 				</f-button><f-button square class="toolbar-right" onclick="AppUI.showAbout()" text="${Strings.Menu}" icon-name="icon-menu">
 				</f-button>
@@ -1296,6 +1297,50 @@ class AppUI {
 			</div>`,
 			title: Strings.SongInfo,
 			returnFocusElement: AppUI._playlistControl
+		});
+	}
+
+	public static showSearch(): void {
+		if (!App.player || !App.player.playlist || !AppUI._playlistControl)
+			return;
+
+		const filteredPlaylist = new Playlist();
+		const filteredPlaylistControl = document.createElement("f-list") as ListControl<Song>;
+		filteredPlaylistControl.className = "full-height-list";
+		filteredPlaylistControl.ariaLabel = Strings.SearchResults;
+		filteredPlaylistControl.adapter = new PlaylistAdapter(filteredPlaylist);
+
+		filteredPlaylistControl.onitemclick = function (item: Song, index: number, button: number): void {
+			if (!App.player || !App.player.playlist || button)
+				return;
+
+			index = App.player.playlist.findIndexById(item.id);
+			if (index >= 0)
+				App.player.play(index);
+		}
+	
+		const searchInput = document.createElement("input");
+		searchInput.type = "text";
+		searchInput.className = "bottom-border";
+		searchInput.placeholder = Strings.SearchPlaceholder;
+		searchInput.oninput = function () {
+			filteredPlaylist.clear();
+			if (App.player && App.player.playlist) {
+				const filteredItems = App.player.playlist.findItems(searchInput.value);
+				if (filteredItems.length)
+					filteredPlaylist.addItems(filteredItems);
+			}
+		};
+
+		Modal.show({
+			html: [searchInput, filteredPlaylistControl],
+			skipBody: true,
+			fullHeight: true,
+			title: Strings.Search,
+			returnFocusElement: AppUI._playlistControl,
+			onshown: function () {
+				return searchInput;
+			}
 		});
 	}
 

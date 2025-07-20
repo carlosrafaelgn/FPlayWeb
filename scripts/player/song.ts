@@ -71,6 +71,8 @@ class Song implements SerializableListItem, SongInfo {
 	public readonly fileName: string | null;
 	public readonly fileSize: number;
 
+	private _normalizedInfo?: string;
+
 	public constructor(urlOrMetadata: string | Metadata, flags?: MetadataFlags, title?: string | null, artist?: string | null, album?: string | null, track?: number, lengthMS?: number, year?: number, sampleRate?: number | null, channels?: number | null, fileName?: string | null, fileSize?: number) {
 		if ((typeof urlOrMetadata) !== "string") {
 			const metadata = urlOrMetadata as Metadata;
@@ -170,5 +172,29 @@ class Song implements SerializableListItem, SongInfo {
 			fileName: this.fileName,
 			fileSize: this.fileSize
 		};
+	}
+
+	public normalizedInfoContainsAllTerms(normalizedTerms: string[]): boolean {
+		let normalizedInfo = this._normalizedInfo;
+		if (normalizedInfo === undefined) {
+			const temp: string[] = [];
+			if (this.title && this.title !== Formatter.none)
+				temp.push(this.title);
+			if (this.artist && this.artist !== Formatter.none)
+				temp.push(this.artist);
+			if (this.album && this.album !== Formatter.none)
+				temp.push(this.album);
+			if (this.year && this.year > 0)
+				temp.push(this.year.toString());
+			if (this.fileName)
+				temp.push(this.fileName);
+			normalizedInfo = Strings.removeDiacritics(temp.join(" "));
+			this._normalizedInfo = normalizedInfo;
+		}
+		for (let i = normalizedTerms.length - 1; i >= 0; i--) {
+			if (!normalizedInfo.includes(normalizedTerms[i]))
+				return false;
+		}
+		return true;
 	}
 }

@@ -31,6 +31,7 @@ class Strings {
 	private static readonly _regExpQuot = /\"/g;
 	private static readonly _regExpApos = /\'/g;
 	private static readonly _regExpGrave = /\`/g;
+	private static readonly _regExpDiacritics = /[\u0300-\u036f]/g;
 
 	public static language = "en";
 
@@ -100,6 +101,9 @@ class Strings {
 	public static ChannelsLabel = "Channels: ";
 	public static ShowInfo = "Show information";
 	public static SongInfo = "Song information";
+	public static Search = "Search";
+	public static SearchResults = "Search results";
+	public static SearchPlaceholder = "Title, artist, album, year or path";
 	public static NoSongPlaying = "No song playing! 😅";
 	public static Playlist = "Playlist";
 	public static FileList = "File list";
@@ -208,6 +212,9 @@ class Strings {
 			Strings.ChannelsLabel = "Canais: ";
 			Strings.ShowInfo = "Exibir informações";
 			Strings.SongInfo = "Informações da música";
+			Strings.Search = "Pesquisar";
+			Strings.SearchResults = "Resultados da pesquisa";
+			Strings.SearchPlaceholder = "Título, artista, álbum, ano ou caminho";
 			Strings.NoSongPlaying = "Nenhuma música tocando! 😅";
 			Strings.Playlist = "Playlist";
 			Strings.FileList = "Lista de arquivos";
@@ -315,5 +322,11 @@ class Strings {
 
 	public static htmlEncodeValue(text: string | null): string {
 		return (text ? text.replace(Strings._regExpAmp, "&amp;").replace(Strings._regExpLT, "&lt;").replace(Strings._regExpGT, "&gt;").replace(Strings._regExpQuot, "&#34;").replace(Strings._regExpApos, "&#39;").replace(Strings._regExpGrave, "&#96;") : "");
+	}
+
+	public static removeDiacritics(text: string | null): string {
+		return (text ? text.normalize("NFD") // Decompose characters with diacritics into their base character plus combining diacritic marks (ã" becomes "a" + combining tilde)
+			.replace(Strings._regExpDiacritics, "") // Remove combining diacritic marks
+			.toLowerCase() : "");
 	}
 }
