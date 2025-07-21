@@ -212,9 +212,9 @@ f-icon.large > svg {
 	border-radius: 0;
 	border: 0 none transparent;
 	box-shadow: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    -ms-appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	-ms-appearance: none;
 	appearance: none;
 	// transition: background-color ease-in-out 0.3s, color ease-in-out 0.3s;
 }
@@ -262,18 +262,27 @@ input[type="text"] {
 	text-align: center;
 }
 
-input[type="text"]::placeholder,
-input[type="text"]::-webkit-input-placeholder,
-input[type="text"]::-moz-placeholder,
-input[type="text"]::-ms-input-placeholder {
+input::-webkit-input-placeholder {
+	color: $color-text-secondary;
+}
+
+input::-moz-placeholder {
+	color: $color-text-secondary;
+}
+
+input::-ms-input-placeholder {
+	color: $color-text-secondary;
+}
+
+input::placeholder {
 	color: $color-text-secondary;
 }
 
 .modal,
 .alert {
 	display: block;
-    border: 0 none transparent;
-    box-shadow: 0 var(--thin-border) $s2 $color-modal-shadow;
+	border: 0 none transparent;
+	box-shadow: 0 var(--thin-border) $s2 $color-modal-shadow;
 }
 
 .modal {
@@ -295,7 +304,7 @@ input[type="text"]::-ms-input-placeholder {
 
 .modal-header {
 	font-weight: 700;
-    border-bottom: var(--thin-border) solid $color-border-secondary;
+	border-bottom: var(--thin-border) solid $color-border-secondary;
 }
 
 .modal-body {
@@ -337,9 +346,9 @@ input[type="text"]::-ms-input-placeholder {
 
 select.btn {
 	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAAUCAAAAAA/s+ULAAAAAnRSTlMAAHaTzTgAAAA+SURBVHjarcyxDQAwCMAw//90UT9AItljb5l1tUftUXvUHrVH7VF71B61R+1Re9QetUftUXvUHrVH7X3xMA8B2qJs1mnhcwAAAABJRU5ErkJggg==);
-    background-repeat: no-repeat;
-    background-size: $s4 $s1;
-    background-position: right center;
+	background-repeat: no-repeat;
+	background-size: $s4 $s1;
+	background-position: right center;
 	text-align: left;
 	padding-left: $s2;
 	padding-right: $s6;
@@ -347,7 +356,7 @@ select.btn {
 
 select.btn option {
 	color: $color-text;
-    background-color: $color-background;
+	background-color: $color-background;
 }
 
 .btn > span {
@@ -502,7 +511,7 @@ f-slider.vertical {
 
 .f-slider-focus-container {
 	display: inline-flex;
-    flex-wrap: nowrap;
+	flex-wrap: nowrap;
 	align-items: center;
 	width: 100%;
 	height: 100%;
@@ -647,6 +656,19 @@ f-list {
 .scrollable::-webkit-scrollbar {
 	width: var(--scrollbar-size);
 	height: var(--scrollbar-size);
+}
+
+.f-list-empty-message {
+	position: absolute;
+	left: 0;
+	top: 50%;
+	width: 100%;
+	padding: 0 8px;
+	margin-top: -$font-size;
+	text-align: center;
+	font-size: $font-size;
+	color: $color-text-secondary;
+	pointer-events: none;
 }
 
 .f-list-container {
@@ -1086,7 +1108,7 @@ body.rgb-extra .bottom-border, body.rgb-extra .modal-header {
 }
 
 .modal-container.background {
-    background-color: $color-modal-background;
+	background-color: $color-modal-background;
 }
 
 .no-left-margin {

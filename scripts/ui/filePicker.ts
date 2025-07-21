@@ -234,6 +234,7 @@ class FilePicker {
 
 		const listElement = document.createElement("f-list") as ListControl<FilePickerListItem>;
 		listElement.className = "full-height-list fade";
+		listElement.emptyMessage = Strings.NoSongsInFolder;
 
 		this._callback = callback || null;
 		this._resolve = resolve;
@@ -402,10 +403,9 @@ class FilePicker {
 
 		this.updateIconLoading(false);
 
-		if (items.length) {
+		if (items.length)
 			this._list.addItems(items);
-			this._listControl.classList.add("in");
-		}
+		this._listControl.classList.add("in");
 	}
 
 	private navigate(path: string | null): void {

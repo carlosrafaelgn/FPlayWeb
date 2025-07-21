@@ -186,8 +186,8 @@ class Song implements SerializableListItem, SongInfo {
 				temp.push(this.album);
 			if (this.year && this.year > 0)
 				temp.push(this.year.toString());
-			if (this.fileName)
-				temp.push(this.fileName);
+			if (this.url)
+				temp.push(this.url);
 			normalizedInfo = Strings.removeDiacritics(temp.join(" "));
 			this._normalizedInfo = normalizedInfo;
 		}

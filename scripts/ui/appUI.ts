@@ -545,6 +545,7 @@ class AppUI {
 		AppUI._volumeSlider.onvaluechange = AppUI.volumeSliderValueChange;
 
 		AppUI._playlistControl = document.getElementById("playlist-control") as ListControl<Song>;
+		AppUI._playlistControl.emptyMessage = Strings.PlaylistControlEmptyMessage;
 		AppUI._playlistControl.onitemclick = AppUI.playlistControlItemClick;
 		AppUI._playlistControl.onitemcontextmenu = AppUI.playlistControlItemContextMenu;
 		AppUI._playlistControl.onitemcontrolclick = AppUI.playlistControlItemControlClick;
@@ -1306,6 +1307,7 @@ class AppUI {
 
 		const filteredPlaylist = new Playlist();
 		const filteredPlaylistControl = document.createElement("f-list") as ListControl<Song>;
+		filteredPlaylistControl.emptyMessage = Strings.NoSongsFoundInPlaylist;
 		filteredPlaylistControl.className = "full-height-list";
 		filteredPlaylistControl.ariaLabel = Strings.SearchResults;
 		filteredPlaylistControl.adapter = new PlaylistAdapter(filteredPlaylist);
@@ -1322,7 +1324,9 @@ class AppUI {
 		const searchInput = document.createElement("input");
 		searchInput.type = "text";
 		searchInput.className = "bottom-border";
+		searchInput.ariaLabel = Strings.SearchPlaceholder;
 		searchInput.placeholder = Strings.SearchPlaceholder;
+		searchInput.spellcheck = false;
 		searchInput.oninput = function () {
 			filteredPlaylist.clear();
 			if (App.player && App.player.playlist) {

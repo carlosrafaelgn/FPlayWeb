@@ -126,6 +126,9 @@ class Strings {
 	public static AddMoreFolders = "Add more folders\u2026";
 	public static ShowEffects = "Show effects";
 	public static ShowPlaylist = "Show playlist";
+	public static NoSongsInFolder = "No songs in folder. 😳";
+	public static NoSongsFoundInPlaylist = "No songs found in the playlist. 😳";
+	public static PlaylistControlEmptyMessage = `Use the \"${Strings.AddSongs}\" button to add songs to the playlist. 😊`;
 	public static UpdateAvailable = "Update available!";
 	public static PleaseRefresh = "Please, refresh the page to update the app. 😊";
 	public static RGBMode = "RGB Mode";
@@ -237,6 +240,9 @@ class Strings {
 			Strings.AddMoreFolders = "Adicionar mais pastas\u2026";
 			Strings.ShowEffects = "Exibir efeitos";
 			Strings.ShowPlaylist = "Exibir playlist";
+			Strings.NoSongsInFolder = "Nenhuma música na pasta. 😳";
+			Strings.NoSongsFoundInPlaylist = "Nenhuma música encontrada na playlist. 😳";
+			Strings.PlaylistControlEmptyMessage = `Utilize o botão \"${Strings.AddSongs}\" para adicionar músicas à playlist. 😊`;
 			Strings.UpdateAvailable = "Atualização disponível!";
 			Strings.PleaseRefresh = "Por favor, recarregue a página para atualizar a aplicação. 😊";
 			Strings.RGBMode = "Modo RGB";

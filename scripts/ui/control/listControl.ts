@@ -73,6 +73,7 @@ class ListControlItem<T> {
 
 class ListControl<T extends Object> extends HTMLElement {
 	private readonly _container: HTMLDivElement;
+	private readonly _emptyMessage: HTMLDivElement;
 	private readonly _resizeObserver: ResizeObserver;
 	private readonly _useVirtualItems: boolean;
 
@@ -96,6 +97,7 @@ class ListControl<T extends Object> extends HTMLElement {
 	private _items: ListControlItem<T>[];
 	private _refreshVisibleItemsEnqueued: boolean;
 	private _notifyCurrentItemChangedEnqueued: boolean;
+	private _emptyMessageAdded: boolean;
 
 	private _initialized: boolean;
 	private _focused: boolean;
@@ -132,6 +134,11 @@ class ListControl<T extends Object> extends HTMLElement {
 		container.className = "f-list-container";
 		//container.role = "rowgroup";
 		this._container = container;
+
+		const emptyMessage = document.createElement("div");
+		emptyMessage.className = "f-list-empty-message";
+		this._emptyMessageAdded = false;
+		this._emptyMessage = emptyMessage;
 
 		if (!this._useVirtualItems)
 			this._boundNotifyCurrentItemChangedInternal = this.notifyCurrentItemChangedInternal.bind(this);
@@ -212,6 +219,15 @@ class ListControl<T extends Object> extends HTMLElement {
 		}
 	}
 
+	public get emptyMessage(): string {
+		return (this._emptyMessage ? this._emptyMessage.textContent : null) || "";
+	}
+
+	public set emptyMessage(message: string) {
+		if (this._emptyMessage)
+			this._emptyMessage.textContent = message;
+	}
+
 	private prepareAdapter(): void {
 		const adapter = this._adapter;
 		if (!adapter)
@@ -285,6 +301,16 @@ class ListControl<T extends Object> extends HTMLElement {
 			container.style.height = containerHeight + "px";
 
 			this.adjustScrollbarPadding();
+
+			if (itemCount) {
+				if (this._emptyMessageAdded) {
+					this._emptyMessageAdded = false;
+					this.removeChild(this._emptyMessage);
+				}
+			} else if (!this._emptyMessageAdded) {
+				this._emptyMessageAdded = true;
+				this.appendChild(this._emptyMessage);
+			}
 		}
 	}
 
@@ -319,6 +345,11 @@ class ListControl<T extends Object> extends HTMLElement {
 		this.scrollTop = 0;
 		this._containerHeight = 0;
 		this._container.style.height = "0";
+
+		if (!this._emptyMessageAdded) {
+			this._emptyMessageAdded = true;
+			this.appendChild(this._emptyMessage);
+		}
 
 		if (this._keyboardIndex > 0) {
 			this._keyboardIndex = 0;
@@ -1040,6 +1071,11 @@ class ListControl<T extends Object> extends HTMLElement {
 
 		if (this._useVirtualItems)
 			this.appendChild(this._container);
+
+		if (!this._emptyMessageAdded) {
+			this._emptyMessageAdded = true;
+			this.appendChild(this._emptyMessage);
+		}
 
 		this.addEventListener("focus", this.elementFocus.bind(this));
 		this.addEventListener("keydown", this.elementKeyDown.bind(this));
