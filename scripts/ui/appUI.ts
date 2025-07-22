@@ -1294,7 +1294,7 @@ class AppUI {
 					<p class="no-top-margin"><b>${Strings.SampleRate}</b><br/>${((song.sampleRate > 0) ? (song.sampleRate + " Hz") : Formatter.none)}</p>
 					<p class="no-top-margin large-left-margin"><b>${Strings.Channels}</b><br/>${((song.channels > 0) ? song.channels : Formatter.none)}</p>
 				</div>
-				${(song.url ? `<p class="top-margin"><b>${Strings.Path}</b><br/>${Strings.htmlEncode(song.url.startsWith(FileUtils.localURLPrefix) ? song.url.substring(FileUtils.localURLPrefix.length) : (song.url.startsWith(FileUtils.fileURLPrefix) ? decodeURI(song.url.substring(FileUtils.fileURLPrefix.length)) : song.url))}</p>` : '')}
+				${(song.url ? `<p class="top-margin"><b>${Strings.Path}</b><br/>${Strings.htmlEncode(song.absolutePath)}</p>` : '')}
 			</div>`,
 			title: Strings.SongInfo,
 			returnFocusElement: AppUI._playlistControl

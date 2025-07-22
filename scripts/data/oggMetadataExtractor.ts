@@ -460,7 +460,7 @@ class OggMetadataExtractor extends VorbisCommentExtractor {
 				return null;
 
 			return (await VorbisCommentExtractor.extractVorbisComment(f.totalLength - f.readPosition, metadata, f, tmpBuffer, fetchAlbumArt) ? metadata : null);
-		} catch (ex) {
+		} catch (ex: any) {
 			return null;
 		}
 	}

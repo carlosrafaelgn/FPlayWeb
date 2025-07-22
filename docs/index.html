@@ -148,6 +148,16 @@
 						xhr.onload = function () {
 							var arrayBuffer = xhr.response;
 							resolve({
+								body: null,
+								bodyUsed: false,
+								headers: {},
+								ok: true,
+								redirected: false,
+								status: 200,
+								statusText: "OK",
+								type: "basic",
+								url: url,
+								clone: function () { return this; },
 								arrayBuffer: function () {
 									// Instead of returning a value, return a Promise, because
 									// this is what the spec actually says arrayBuffer() returns!

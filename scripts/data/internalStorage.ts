@@ -68,7 +68,7 @@ class InternalStorage {
 				if (appSettings)
 					return appSettings;
 			}
-		} catch (ex) {
+		} catch (ex: any) {
 			// Just ignore...
 		}
 		return {
@@ -101,7 +101,7 @@ class InternalStorage {
 				if (graphicalFilterEditorSettings)
 					return graphicalFilterEditorSettings;
 			}
-		} catch (ex) {
+		} catch (ex: any) {
 			// Just ignore...
 		}
 		return {
@@ -147,7 +147,7 @@ class InternalStorage {
 
 		try {
 			return Playlist.deserialize(new DataReader(arrayBuffer));
-		} catch (ex) {
+		} catch (ex: any) {
 			return null;
 		}
 	}

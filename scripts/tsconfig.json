@@ -27,6 +27,8 @@
 		"data/filePickerProvider.ts",
 		"data/filePickerFileSystemAPIProvider.ts",
 		"data/filePickerAndroidProvider.ts",
+		"player/customProvider/customProvider.ts",
+		"player/customProvider/libMikModCustomProvider.ts",
 		"player/song.ts",
 		"player/playlist.ts",
 		"graphicalFilterEditor/lib/lib.ts",

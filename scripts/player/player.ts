@@ -719,7 +719,7 @@ class Player {
 
 		this._nextSongAlreadyChecked = nextSong;
 
-		if (!nextSong || !nextSong.url || (!nextSong.url.startsWith(FileUtils.localURLPrefix) && !nextSong.url.startsWith(FileUtils.fileURLPrefix)))
+		if (!nextSong || nextSong.customProvider || (!nextSong.isLocalURL && !nextSong.isFileURL))
 			return;
 
 		try {
@@ -761,12 +761,10 @@ class Player {
 				}
 			};
 
-			const fileURL = (nextSong.url.startsWith(FileUtils.fileURLPrefix) ? nextSong.url : null);
-
-			if (nextSong.file || fileURL) {
-				finishSourceSetup(nextSong.file ? null : fileURL);
+			if (nextSong.file || nextSong.isFileURL) {
+				finishSourceSetup(nextSong.file ? null : nextSong.url);
 			} else {
-				FileSystemAPI.getFile(nextSong.url.substring(FileUtils.localURLPrefix.length)).then((file) => {
+				FileSystemAPI.getFile(nextSong.absolutePath).then((file) => {
 					if (!this._playlist || currentVersion !== this._nextSongVersion)
 						return;
 
@@ -903,7 +901,7 @@ class Player {
 							this._nextSongToPlayAfterLoading = currentPlaylistSong;
 						} else {
 							// The next song has already been successfully loaded
-							// Do not call this.pause() in order not to Simply pause current audio
+							// Do not call this.pause() in order not to pause current audio
 							this._audio.pause();
 						}
 
@@ -942,7 +940,7 @@ class Player {
 				this._audio.removeChild(this._audio.firstChild);
 
 			const source = document.createElement("source");
-			if (currentPlaylistSong.url && !currentPlaylistSong.url.startsWith(FileUtils.localURLPrefix)) {
+			if (currentPlaylistSong.url && !currentPlaylistSong.isLocalURL) {
 				source.src = currentPlaylistSong.url;
 			} else if (currentPlaylistSong.file) {
 				if (this._lastObjectURL)
@@ -955,7 +953,7 @@ class Player {
 				const lastCurrentIndex = this._playlist.currentIndex,
 					lastCurrentPlaylistSong = this._playlist.currentItem;
 
-				FileSystemAPI.getFile(currentPlaylistSong.url.substring(FileUtils.localURLPrefix.length)).then((file) => {
+				FileSystemAPI.getFile(currentPlaylistSong.absolutePath).then((file) => {
 					if (lastCurrentPlaylistSong && !lastCurrentPlaylistSong.file && file)
 						lastCurrentPlaylistSong.file = file;
 

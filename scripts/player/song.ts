@@ -43,10 +43,6 @@ interface SongInfo {
 class Song implements SerializableListItem, SongInfo {
 	private static _lastId = 0;
 
-	public static isPathHttp(path: string): boolean {
-		return (path.startsWith("http:") || path.startsWith("https:") || path.startsWith("icy:"));
-	}
-
 	public static deserialize(reader: DataReader): Song {
 		// NEVER change this order! (changing will destroy existing playlists)
 		reader.readUint8(); // version
@@ -54,9 +50,13 @@ class Song implements SerializableListItem, SongInfo {
 	}
 
 	public readonly id: number;
+	public readonly customProvider: CustomProvider | null;
 	public readonly url: string;
+	public readonly fileExtension: string | null;
 	public readonly flags: MetadataFlags;
-	public readonly isHttp: boolean;
+	public readonly isHttpURL: boolean;
+	public readonly isLocalURL: boolean;
+	public readonly isFileURL: boolean;
 	public readonly title: string;
 	public readonly artist: string;
 	public readonly album: string;
@@ -101,14 +101,18 @@ class Song implements SerializableListItem, SongInfo {
 		this.id = ++Song._lastId;
 		this.url = urlOrMetadata as string;
 		this.flags = flags || 0;
-		this.isHttp = Song.isPathHttp(this.url);
+		this.isHttpURL = (this.url.startsWith("http:") || this.url.startsWith("https:") || this.url.startsWith("icy:"));
+		this.isLocalURL = this.url.startsWith(FileUtils.localURLPrefix);
+		this.isFileURL = this.url.startsWith(FileUtils.fileURLPrefix);
+		const extensionIndex = this.url.lastIndexOf(".");
+		this.fileExtension = ((this.isLocalURL || this.isFileURL) && extensionIndex >= 0) ? (this.url.substring(extensionIndex).toLowerCase() || null) : null;
 
 		if (!title) {
 			// Extract file name from url/path
 			urlOrMetadata = decodeURI(urlOrMetadata as string);
 			let i = urlOrMetadata.lastIndexOf("/");
 			title = ((i >= 0) ? urlOrMetadata.substring(i + 1) : urlOrMetadata);
-			if (!this.isHttp) {
+			if (!this.isHttpURL) {
 				i = title.lastIndexOf(".");
 				if (i > 0)
 					title = title.substring(0, i);
@@ -126,10 +130,16 @@ class Song implements SerializableListItem, SongInfo {
 		this.length = Formatter.formatTimeMS(this.lengthMS);
 		this.fileName = fileName || null;
 		this.fileSize = fileSize || 0;
+
+		this.customProvider = (this.fileExtension && FileUtils.getCustomProviderByExtension(this.fileExtension)) || null;
 	}
 
 	public get isSeekable(): boolean {
 		return ((this.flags & MetadataFlags.Seekable) ? true : false);
+	}
+
+	public get absolutePath(): string {
+		return (this.isLocalURL ? this.url.substring(FileUtils.localURLPrefix.length) : (this.isFileURL ? decodeURI(this.url.substring(FileUtils.fileURLPrefix.length)) : this.url));
 	}
 
 	public estimateSerializedLength(): number {
@@ -196,5 +206,25 @@ class Song implements SerializableListItem, SongInfo {
 				return false;
 		}
 		return true;
+	}
+
+	public async readAsArrayBuffer(): Promise<ArrayBuffer | null> {
+		if (!this.file) {
+			if (this.isLocalURL) {
+				const file = await FileSystemAPI.getFile(this.absolutePath);
+				if (!file)
+					return null;
+
+				this.file = file;
+			} else {
+				const response = await fetch(this.url);
+				if (!response.ok)
+					return null;
+
+				return response.arrayBuffer();
+			}
+		}
+
+		return (this.file as File).arrayBuffer();
 	}
 }

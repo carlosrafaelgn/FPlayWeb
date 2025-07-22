@@ -24,6 +24,12 @@
 // https://github.com/carlosrafaelgn/FPlayWeb
 //
 
+interface SupportedExtensionInfo {
+	extension: string;
+	mimeType: string;
+	customProvider: CustomProvider | null;
+}
+
 class FileUtils {
 	public static readonly separator = "\u0004";
 	public static readonly httpURLPrefix = "http";
@@ -33,28 +39,36 @@ class FileUtils {
 	private static readonly _regExpSepWindows = /\\/g;
 	private static readonly _regExpHash = /\#/g;
 
-	private static readonly supportedExtensions: { [extension: string]: boolean } = {
-		".aac": true,
-		".flac": true,
-		".mp3": true,
-		".ogg": true,
-		".wav": true
-	};
+	private static readonly supportedExtensions: Map<string, SupportedExtensionInfo> = new Map([
+		[".aac", { extension: ".aac", mimeType: "audio/aac", customProvider: null }],
+		[".flac", { extension: ".flac", mimeType: "audio/flac", customProvider: null }],
+		[".mp3", { extension: ".mp3", mimeType: "audio/mpeg", customProvider: null }],
+		[".ogg", { extension: ".ogg", mimeType: "audio/ogg", customProvider: null }],
+		[".wav", { extension: ".wav", mimeType: "audio/wav", customProvider: null }],
+	]);
 
-	public static readonly concatenatedSupportedExtensions = (function () {
-		let c = "";
-		for (let ext in FileUtils.supportedExtensions)
-			c = (c ? (c + "," + ext) : ext)
-		return c;
-	})();
+	public static concatenatedSupportedExtensions: string;
 
-	public static isTypeSupported(urlOrAbsolutePath: string): boolean {
+	public static init(): void {
+		FileUtils.concatenatedSupportedExtensions = Array.from(FileUtils.supportedExtensions.keys()).join(",");
+	}
+
+	public static addSupportedExtension(extension: string, mimeType: string, customProvider: CustomProvider | null) {
+		FileUtils.supportedExtensions.set(extension, { extension, mimeType, customProvider });
+	}
+
+	public static getSupportedExtensionInfoByPath(urlOrAbsolutePath: string): SupportedExtensionInfo | null {
 		const i = urlOrAbsolutePath.lastIndexOf(".");
 		if (i < 0)
-			return false;
+			return null;
 
 		const ext = urlOrAbsolutePath.substring(i);
-		return (FileUtils.supportedExtensions[ext] || FileUtils.supportedExtensions[ext.toLowerCase()] || false);
+		return (FileUtils.supportedExtensions.get(ext) || FileUtils.supportedExtensions.get(ext.toLowerCase()) || null);
+	}
+
+	public static getCustomProviderByExtension(extension: string): CustomProvider | null {
+		const supportedExtension = FileUtils.supportedExtensions.get(extension);
+		return (supportedExtension ? supportedExtension.customProvider : null);
 	}
 
 	public static urlOrPathToURL(urlOrAbsolutePath: string): string {

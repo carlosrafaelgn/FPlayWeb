@@ -802,7 +802,7 @@ class MetadataExtractor {
 
 			if (!(found & MetadataExtractor.TRACK_B) && !tmp[128 - 3] && tmp[128 - 2])
 				metadata.track = tmp[128 - 2] & 0xff;
-		} catch (ex) {
+		} catch (ex: any) {
 			// Ignore all exceptions while reading ID3v1, in favor of
 			// everything that has already been read in ID3v2
 		}
@@ -1012,14 +1012,6 @@ class MetadataExtractor {
 
 	private static async extractID3v2Andv1(file: File, f: BufferedReader, tmpBuffer: ResizeableBuffer, aac: boolean, fetchSampleRateAndChannels: boolean, fetchAlbumArt: boolean): Promise<Metadata | null> {
 		const metadata = MetadataExtractor.createBasicMetadata(file);
-
-		if (!metadata.url) {
-			metadata.file = file;
-			metadata.fileSize = file.size;
-			metadata.fileName = file.name;
-		} else if (metadata.url.startsWith(FileUtils.localURLPrefix)) {
-			metadata.file = file;
-		}
 
 		//struct _ID3v2TagHdr {
 		//public:
@@ -1246,13 +1238,23 @@ class MetadataExtractor {
 	}
 
 	protected static createBasicMetadata(file: File): Metadata {
-		return {
+		const metadata: Metadata = {
 			url: FileUtils.urlOrPathToURL((file as any)["data-path"]) || "",
 			flags: MetadataFlags.Seekable
 		};
+
+		if (!metadata.url) {
+			metadata.file = file;
+			metadata.fileSize = file.size;
+			metadata.fileName = file.name;
+		} else if (metadata.url.startsWith(FileUtils.localURLPrefix)) {
+			metadata.file = file;
+		}
+
+		return metadata;
 	}
 
-	public static async extract(file: File, buffer?: Uint8Array | null, tmpBuffer?: ResizeableBuffer | null, fetchAlbumArt: boolean = false): Promise<Metadata | null> {
+	public static async extract(file: File, buffer?: Uint8Array | null, tmpBuffer?: ResizeableBuffer | null, fetchAlbumArt: boolean = false, customProvider: CustomProvider | null = null): Promise<Metadata | null> {
 		if (!file)
 			return null;
 
@@ -1261,6 +1263,14 @@ class MetadataExtractor {
 
 		if (!tmpBuffer)
 			tmpBuffer = new ResizeableBuffer(2048);
+
+		if (customProvider) {
+			try {
+				return await customProvider.extractMetadata(MetadataExtractor.createBasicMetadata(file), file, buffer, tmpBuffer, fetchAlbumArt);
+			} catch (ex: any) {
+				return null;
+			}
+		}
 
 		let aac = false;
 
@@ -1300,7 +1310,7 @@ class MetadataExtractor {
 			// MetadataExtractor.extractID3v2Andv1() has had a chance to actually read
 			// the metadata...
 			return await MetadataExtractor.extractID3v2Andv1(file, f, tmpBuffer, aac, true, fetchAlbumArt);
-		} catch (ex) {
+		} catch (ex: any) {
 			return null;
 		}
 	}

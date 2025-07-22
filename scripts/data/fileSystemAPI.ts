@@ -287,7 +287,7 @@ class FileSystemAPI {
 			const items: FileSystemHandle[] = [];
 
 			for await (const item of directoryHandle.values()) {
-				if (item.kind !== "file" || FileUtils.isTypeSupported(item.name))
+				if (item.kind !== "file" || FileUtils.getSupportedExtensionInfoByPath(item.name))
 					items.push(item);
 			}
 

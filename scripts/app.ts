@@ -232,7 +232,7 @@ class App {
 			try {
 				App._installPrompt = null;
 				p["prompt"]();
-			} catch (ex) {
+			} catch (ex: any) {
 				// Just ignore...
 			}
 		}
@@ -263,6 +263,8 @@ class App {
 		Strings.init();
 		GraphicalFilterEditorStrings.init(Strings.language);
 		Strings.toFixed = GraphicalFilterEditorStrings.toFixed;
+		LibMikModCustomProvider.init();
+		FileUtils.init();
 		if (!App.hostInterface && FileSystemAPI.isSupported()) {
 			try {
 				await FileSystemAPI.init();
@@ -420,7 +422,7 @@ class App {
 			const resolve = App._fileInputPromiseResolve;
 			App._fileInputPromiseResolve = null;
 
-			if (!fileInput.files || !fileInput.files.length || (fileInput.files.length === 1 && !FileUtils.isTypeSupported(fileInput.files[0].name))) {
+			if (!fileInput.files || !fileInput.files.length || (fileInput.files.length === 1 && !FileUtils.getSupportedExtensionInfoByPath(fileInput.files[0].name))) {
 				resolve(null);
 				return;
 			}

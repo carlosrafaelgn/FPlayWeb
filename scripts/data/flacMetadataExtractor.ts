@@ -214,7 +214,7 @@ class FLACMetadataExtractor extends VorbisCommentExtractor {
 			}
 
 			return metadata;
-		} catch (ex) {
+		} catch (ex: any) {
 			return null;
 		}
 	}

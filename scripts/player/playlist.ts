@@ -248,7 +248,7 @@ class Playlist extends List<Song> {
 			urlOrAbsolutePath = urlOrAbsolutePathOrFile as string;
 		}
 
-		if (!FileUtils.isTypeSupported(urlOrAbsolutePath))
+		if (!FileUtils.getSupportedExtensionInfoByPath(urlOrAbsolutePath))
 			return false;
 
 		const metadata = await App.extractMetadata(urlOrAbsolutePath, fileSize);
@@ -262,7 +262,8 @@ class Playlist extends List<Song> {
 	}
 
 	public async addSongWeb(file: File, buffer?: Uint8Array | null, tmpBuffer?: ResizeableBuffer | null, position?: number): Promise<boolean> {
-		if (!FileUtils.isTypeSupported(file.name))
+		const supportedExtensionInfo = FileUtils.getSupportedExtensionInfoByPath(file.name);
+		if (!supportedExtensionInfo)
 			return false;
 
 		if (this._missingSongs) {
@@ -280,7 +281,7 @@ class Playlist extends List<Song> {
 			}
 		}
 
-		const metadata = await MetadataExtractor.extract(file, buffer, tmpBuffer);
+		const metadata = await MetadataExtractor.extract(file, buffer, tmpBuffer, false, supportedExtensionInfo.customProvider);
 
 		if (!metadata)
 			return false;
