@@ -10,7 +10,14 @@
         <item name="android:colorAccent">@color/colorAccent</item>
         <item name="android:colorControlNormal">@color/colorControlNormal</item>
         <item name="android:windowBackground">@color/colorControlNormal</item>
+        <!--
+        This destroys the transparency around WebView's popup windows, and
+        in the activity itself, this is drawn on top of the windowBackground.
+        Removing android:background fixes the transparency around WebView's
+        popup windows and also does not cause any impacts on the status/navigation
+        bar, which keep displaying the windowBackground.
         <item name="android:background">@color/colorControlNormal</item>
+        -->
         <item name="android:statusBarColor">@color/navigationBarColor</item>
         <item name="android:navigationBarColor">@color/navigationBarColor</item>
         <item name="android:windowTranslucentStatus">false</item>
