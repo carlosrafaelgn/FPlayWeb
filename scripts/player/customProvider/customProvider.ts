@@ -36,4 +36,6 @@ abstract class CustomProvider {
 	}
 
 	public abstract extractMetadata(metadata: Metadata, file: File, buffer: Uint8Array, tmpBuffer: ResizeableBuffer, fetchAlbumArt: boolean): Promise<Metadata | null>;
+
+	public abstract createAudioElement(audioContext: AudioContext, song: Song, suspendAudioContext: () => void, resumeAudioContext: () => void): AudioElement;
 }

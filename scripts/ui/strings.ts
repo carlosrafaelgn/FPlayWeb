@@ -140,6 +140,11 @@ class Strings {
 <p>This project is licensed under the <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb/blob/master/LICENSE">MIT License</a>.</p>`;
 	// Click, press, tap, push, hit.... Which one to use for BOTH touch and non-touch devices!!! Ahhhhhhhhhhh!!!!!!!!!!
 	public static DeleteModeHTML = `Click songs to delete them.`;
+	public static LibMikModNotSupported = "LibMikMod not supported";
+	public static LibMikModFailedToInitialize = "LibMikMod failed to initialize";
+	public static LibMikModErrorInitializing = "Error initializing LibMikMod";
+	public static LibMikModErrorReadingModuleFile = "Error reading module file";
+	public static LibMikModErrorLoadingModule = "Error loading module";
 
 	public static toFixed(x: number, fractionDigits: number): string { return x.toFixed(fractionDigits); }
 
@@ -253,6 +258,11 @@ class Strings {
 <p>Para mais informações sobre o projeto, seu código-fonte e dependências, confira seu repositório em <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb">github.com/carlosrafaelgn/FPlayWeb</a>.</p>
 <p>Este projeto é licenciado sob a <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb/blob/master/LICENSE">MIT License</a>.</p>`;
 			Strings.DeleteModeHTML = `Clique as músicas para excluí-las.`;
+			Strings.LibMikModNotSupported = "LibMikMod não suportada";
+			Strings.LibMikModFailedToInitialize = "LibMikMod falhou ao inicializar";
+			Strings.LibMikModErrorInitializing = "Erro ao inicializar a LibMikMod";
+			Strings.LibMikModErrorReadingModuleFile = "Erro ao ler o arquivo do módulo";
+			Strings.LibMikModErrorLoadingModule = "Erro ao carregar o módulo";
 		}
 	}
 

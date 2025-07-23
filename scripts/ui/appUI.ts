@@ -820,11 +820,12 @@ class AppUI {
 			Strings.changeText(AppUI._assistiveSongLengthLabel, song.length);
 
 			if (AppUI._seekSlider) {
-				if (song.lengthMS > 0) {
+				if (song.lengthMS > 0 && song.isSeekable) {
 					AppUI._seekSlider.disabled = false;
 					AppUI._seekSlider.max = song.lengthMS;
 				} else {
 					AppUI._seekSlider.disabled = true;
+					AppUI._seekSlider.max = Math.max(1, song.lengthMS);
 				}
 
 				AppUI._seekSlider.manuallyChangeAll(currentTimeS * 1000, Formatter.formatTimeS(AppUI._currentTimeS), SliderControlValueChild.LeftChild);
@@ -881,12 +882,13 @@ class AppUI {
 			Strings.changeText(AppUI._assistiveSongLengthLabel, song.length);
 
 			if (AppUI._seekSlider) {
-				if (song.lengthMS > 0) {
+				if (song.lengthMS > 0 && song.isSeekable) {
 					AppUI._seekSlider.disabled = false;
 					AppUI._seekSlider.max = song.lengthMS;
 				} else {
-					AppUI._seekSlider.value = 0;
 					AppUI._seekSlider.disabled = true;
+					AppUI._seekSlider.value = 0;
+					AppUI._seekSlider.max = Math.max(1, song.lengthMS);
 				}
 			}
 		}

@@ -111,6 +111,27 @@ public final class FileFetcher implements Runnable, ArraySorter.Comparer<FileSt>
 		supportedTypes.put(".wav", "audio/wav"); //audio/vnd.wave ?
 		supportedTypes.put(".flac", "audio/flac");
 		supportedTypes.put(".ogg", "audio/ogg");
+		supportedTypes.put(".669", "application/octet-stream");
+		supportedTypes.put(".amf", "application/octet-stream");
+		supportedTypes.put(".asy", "application/octet-stream");
+		supportedTypes.put(".dsm", "application/octet-stream");
+		supportedTypes.put(".far", "application/octet-stream");
+		supportedTypes.put(".gdm", "application/octet-stream");
+		supportedTypes.put(".gt2", "application/octet-stream");
+		supportedTypes.put(".imf", "application/octet-stream");
+		supportedTypes.put(".it", "application/octet-stream");
+		supportedTypes.put(".m15", "application/octet-stream");
+		supportedTypes.put(".med", "application/octet-stream");
+		supportedTypes.put(".mod", "application/octet-stream");
+		supportedTypes.put(".mtm", "application/octet-stream");
+		supportedTypes.put(".okt", "application/octet-stream");
+		supportedTypes.put(".s3m", "application/octet-stream");
+		supportedTypes.put(".stm", "application/octet-stream");
+		supportedTypes.put(".stx", "application/octet-stream");
+		supportedTypes.put(".ult", "application/octet-stream");
+		supportedTypes.put(".umx", "application/octet-stream");
+		supportedTypes.put(".uni", "application/octet-stream");
+		supportedTypes.put(".xm", "application/octet-stream");
 	}
 
 	private static boolean accept(File file) {

@@ -29,7 +29,7 @@ interface IntermediateNodeFactory {
 }
 
 interface AudioBundle {
-	audio: HTMLAudioElement;
+	audio: AudioElement | HTMLAudioElement;
 	sourceNode: SourceNode;
 	nextSong: Song | null;
 	boundPlaybackError: (e: Event | string, source?: string, lineno?: number, colno?: number, error?: Error) => void,
@@ -44,7 +44,7 @@ class Player {
 	private readonly _intermediateNodes: ConnectableNode[];
 	private readonly _destinationNode: DestinationNode;
 
-	private _audio: HTMLAudioElement | null;
+	private _audio: AudioElement | HTMLAudioElement | null;
 	private _sourceNode: SourceNode | null;
 	private _audioContextTimeout: number;
 	private _audioContextSuspended: boolean;
@@ -170,9 +170,9 @@ class Player {
 			this.playlist = playlist;
 	}
 
-	private createAudioBundle(nextSong: Song | null): AudioBundle {
-		const audio = document.createElement("audio"), // new Audio(),
-			source = this.audioContext.createMediaElementSource(audio),
+	private createAudioBundle(nextSong: Song | null, audioElement?: AudioElement | null): AudioBundle {
+		const audio = (audioElement || document.createElement("audio")), // new Audio(),
+			source = (("customProvider" in audio) ? audio.audioNode : this.audioContext.createMediaElementSource(audio)),
 			sourceNode = new SourceNode(source),
 			boundPlaybackError = (nextSong ?
 				(e: Event | string, source?: string, lineno?: number, colno?: number, error?: Error) => {
@@ -197,17 +197,19 @@ class Player {
 				boundPlaybackError
 			};
 
-		// The audio element is being added to the document now to try to fix the
-		// integration between web audio and media session API's in a few browsers
-		audio.style.pointerEvents = "none";
-		audio.style.position = "absolute";
-		audio.style.left = "0";
-		audio.style.top = "0";
-		audio.style.zIndex = "-1";
-		audio.loop = false;
-		audio.controls = false;
-		audio.autoplay = false;
-		document.body.appendChild(audio);
+		if (!("customProvider" in audio)) {
+			// The audio element is being added to the document now to try to fix the
+			// integration between web audio and media session API's in a few browsers
+			audio.style.pointerEvents = "none";
+			audio.style.position = "absolute";
+			audio.style.left = "0";
+			audio.style.top = "0";
+			audio.style.zIndex = "-1";
+			audio.loop = false;
+			audio.controls = false;
+			audio.autoplay = false;
+			document.body.appendChild(audio);
+		}
 
 		const boundPlaybackLoadStart = () => { if (this._audio === audio) this.playbackLoadStart(); };
 		audio.onwaiting = boundPlaybackLoadStart;
@@ -261,7 +263,25 @@ class Player {
 		return audioBundle;
 	}
 
-	private recreateAudioPath(): void {
+	private destroyAudioElement(audio: AudioElement | HTMLAudioElement | null, reload: boolean, removeFromParent: boolean): void {
+		if (!audio)
+			return;
+
+		if ("customProvider" in audio) {
+			audio.destroy();
+		} else {
+			if (reload) {
+				while (audio.firstChild)
+					audio.removeChild(audio.firstChild);
+				audio.load();
+			}
+
+			if (removeFromParent && audio.parentNode)
+				audio.parentNode.removeChild(audio);
+		}
+	}
+
+	private recreateAudioPath(audioElement?: AudioElement | null): void {
 		const intermediateNodes = this._intermediateNodes;
 
 		if (this._sourceNode)
@@ -270,10 +290,9 @@ class Player {
 		for (let i = intermediateNodes.length - 1; i >= 0; i--)
 			intermediateNodes[i].disconnectFromDestination();
 
-		if (this._audio)
-			document.body.removeChild(this._audio);
+		this.destroyAudioElement(this._audio, false, true);
 
-		const { audio, sourceNode, boundPlaybackError } = this.createAudioBundle(null);
+		const { audio, sourceNode, boundPlaybackError } = this.createAudioBundle(null, audioElement);
 
 		this._audio = audio;
 		this._sourceNode = sourceNode;
@@ -689,14 +708,7 @@ class Player {
 			const audioBundle = this._nextAudioBundle;
 			this._nextAudioBundle = null;
 
-			if (audioBundle.audio) {
-				while (audioBundle.audio.firstChild)
-					audioBundle.audio.removeChild(audioBundle.audio.firstChild);
-				audioBundle.audio.load();
-
-				if (audioBundle.audio.parentNode)
-					audioBundle.audio.parentNode.removeChild(audioBundle.audio);
-			}
+			this.destroyAudioElement(audioBundle.audio, true, true);
 
 			zeroObject(audioBundle, true);
 		}
@@ -745,7 +757,7 @@ class Player {
 						source.src = (src || this._lastObjectURL as string);
 						source.onerror = boundPlaybackError;
 
-						this._audio.appendChild(source);
+						(this._audio as HTMLAudioElement).appendChild(source);
 						this._audio.load();
 					}
 				} else {
@@ -756,7 +768,7 @@ class Player {
 					source.src = (src || this._nextSongObjectURL as string);
 					source.onerror = boundPlaybackError;
 
-					audioBundle.audio.appendChild(source);
+					(audioBundle.audio as HTMLAudioElement).appendChild(source);
 					audioBundle.audio.load();
 				}
 			};
@@ -793,7 +805,7 @@ class Player {
 
 	private nextSongPerformFinalPlaybackSteps(): void {
 		this.resumeAudioContext();
-		(this._audio as HTMLAudioElement).play().catch(Player._nop);
+		(this._audio as AudioElement).play().catch(Player._nop);
 		// If this callback has actually been called, it was suppressed while the song was pre loading
 		this.playbackLengthChange();
 	}
@@ -833,6 +845,19 @@ class Player {
 
 		if (this._loadedSong && this._audio)
 			this._audio.pause();
+	}
+
+	private playCustomProvider(song: Song): void {
+		if (!song.customProvider)
+			return;
+
+		const audioElement = song.customProvider.createAudioElement(this.audioContext, song, () => this.suspendAudioContext(false), () => this.resumeAudioContext());
+
+		this.recreateAudioPath(audioElement);
+
+		audioElement.load();
+
+		audioElement.play().catch(Player._nop);
 	}
 
 	public play(index?: number, automaticCall?: boolean): void {
@@ -920,12 +945,7 @@ class Player {
 
 						zeroObject(audioBundle, true);
 
-						while (oldAudio.firstChild)
-							oldAudio.removeChild(oldAudio.firstChild);
-						oldAudio.load();
-
-						if (oldAudio.parentNode)
-							oldAudio.parentNode.removeChild(oldAudio);
+						this.destroyAudioElement(oldAudio, true, true);
 
 						return;
 					}
@@ -934,10 +954,24 @@ class Player {
 
 			this.destroyNextAudioBundle();
 
-			this.resumeAudioContext();
+			if ("customProvider" in this._audio) {
+				this._audio.destroy();
 
-			while (this._audio.firstChild)
-				this._audio.removeChild(this._audio.firstChild);
+				// Previous song used a custom provider, but the new one does not, so we need to recreate the audio path
+				if (!currentPlaylistSong.customProvider)
+					this.recreateAudioPath();
+			} else {
+				while (this._audio.firstChild)
+					this._audio.removeChild(this._audio.firstChild);
+			}
+
+			if (currentPlaylistSong.customProvider) {
+				// Use the custom provider to load and play the song
+				this.playCustomProvider(currentPlaylistSong);
+				return;
+			}
+
+			this.resumeAudioContext();
 
 			const source = document.createElement("source");
 			if (currentPlaylistSong.url && !currentPlaylistSong.isLocalURL) {
@@ -981,7 +1015,7 @@ class Player {
 			}
 			source.onerror = this._boundPlaybackError;
 
-			this._audio.appendChild(source);
+			(this._audio as HTMLAudioElement).appendChild(source);
 			this._audio.load();
 
 			if (this._songToResumeTime !== currentPlaylistSong || !this._resumeTimeS || this._resumeTimeS <= 0)
@@ -1035,9 +1069,7 @@ class Player {
 			// and other undesirable events.
 			//this.audio.removeAttribute("src");
 			//this.audio.src = "";
-			while (this._audio.firstChild)
-				this._audio.removeChild(this._audio.firstChild);
-			this._audio.load();
+			this.destroyAudioElement(this._audio, true, false);
 
 			if (this._lastObjectURL) {
 				URL.revokeObjectURL(this._lastObjectURL);
