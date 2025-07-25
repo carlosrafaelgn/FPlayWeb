@@ -32,7 +32,7 @@
 // whenever it detects a change in the source code of the
 // service worker).
 const CACHE_PREFIX = "fplay-static-cache-";
-const CACHE_VERSION = "20250723";
+const CACHE_VERSION = "20250724";
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
 
 self.addEventListener("install", (event) => {
@@ -90,8 +90,8 @@ self.addEventListener("install", (event) => {
 			"assets/js/scripts.min.js?" + CACHE_VERSION,
 			"assets/lib/graphicalFilterEditor/lib-nowasm.js?" + CACHE_VERSION,
 			"assets/lib/graphicalFilterEditor/lib.js.mem?" + CACHE_VERSION,
-			"assets/lib/libmikmod/libmikmodclib.wasm?4",
-			"assets/lib/libmikmod/libmikmodprocessor.min.js?4",
+			"assets/lib/libmikmod/libmikmodclib.wasm?5",
+			"assets/lib/libmikmod/libmikmodprocessor.min.js?5",
 		];
 		const promises = new Array(files.length);
 		for (let i = files.length - 1; i >= 0; i--)

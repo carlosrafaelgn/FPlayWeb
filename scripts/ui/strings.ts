@@ -116,7 +116,7 @@ class Strings {
 	public static LeftAbbrev = "L";
 	public static RightAbbrev = "R";
 	public static Volume = "Volume";
-	public static Panning = "Panning";
+	public static Fade = "Fade";
 	public static DownMixToMono = "Down-mix to mono";
 	public static UnknownError = "Something went wrong during playback. 😢";
 	public static Add = "Add";
@@ -235,7 +235,7 @@ class Strings {
 			Strings.LeftAbbrev = "E";
 			Strings.RightAbbrev = "D";
 			//Strings.Volume = "Volume";
-			//Strings.Panning = "Panning";
+			//Strings.Fade = "Fade";
 			Strings.DownMixToMono = "Fazer down-mix para mono";
 			Strings.UnknownError = "Algo saiu errado durante a reprodução. 😢";
 			Strings.Add = "Adicionar";

@@ -479,7 +479,7 @@ class AppUI {
 				<div id="filter-container" class="top-margin"></div>
 
 				<div class="top-border">
-					<f-button id="stereo-panner-control-enabled" checkable text="${Strings.Panning}" icon-name="icon-multiple-stop">
+					<f-button id="stereo-panner-control-enabled" checkable text="${Strings.Fade}" icon-name="icon-multiple-stop">
 					</f-button><f-slider id="stereo-panner-slider" class="left-margin"></f-slider>
 				</div>
 

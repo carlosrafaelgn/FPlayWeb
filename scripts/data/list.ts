@@ -191,11 +191,9 @@ class List<T extends Object> {
 	public get nextItem(): T | null {
 		let nextIndex = this._currentIndex + 1;
 		if (nextIndex >= this.items.length)
-			nextIndex = this.items.length - 1;
-		if (nextIndex < 0)
 			nextIndex = 0;
 
-		return ((nextIndex < this.items.length) ? this.items[nextIndex] : null);
+		return ((nextIndex >= 0 && nextIndex < this.items.length) ? this.items[nextIndex] : null);
 	}
 
 	public item(index: number): T {

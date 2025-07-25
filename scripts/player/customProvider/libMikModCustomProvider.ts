@@ -190,6 +190,13 @@ class LibMikModAudioElement extends AudioElement {
 			LibMikMod.loadModule({
 				audioContext: this._audioContext,
 				source: arrayBuffer,
+				reverb: 0,
+				interpolation: true,
+				noiseReduction: true,
+				hqMixer: true,
+				wrap: false,
+				loop: false,
+				fadeout: true,
 				onload: (audioNode) => {
 					if (!this._alive)
 						return;
@@ -208,12 +215,12 @@ class LibMikModAudioElement extends AudioElement {
 					if (this._playAfterLoading)
 						this.play();
 				},
-				onerror: (reason) => {
+				onerror: (errorCode, reason) => {
 					if (!this._alive)
 						return;
 
 					if (this.onerror)
-						this.onerror(Strings.LibMikModErrorLoadingModule + ": " + reason);
+						this.onerror(Strings.LibMikModErrorLoadingModule + ": " + (reason || Strings.UnknownError) + " (" + errorCode + ")");
 				},
 				onended: () => {
 					if (!this._alive)
@@ -283,8 +290,10 @@ class LibMikModAudioElement extends AudioElement {
 
 		this._suspendAudioContext();
 
-		if (this._sourceAudioNode)
+		if (this._sourceAudioNode) {
 			this._sourceAudioNode.disconnect();
+			LibMikMod.stopModule();
+		}
 
 		this._volumeAudioNode.disconnect();
 

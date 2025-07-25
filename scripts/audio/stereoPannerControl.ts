@@ -58,7 +58,9 @@ class StereoPannerControl extends ConnectableNode {
 		const label = document.createElement("span");
 		label.className = "db-label large small-left-margin";
 
-		slider.ariaLabel = Strings.Panning;
+		// I decided to use the word "fade" instead of "panning" because it's more accurate,
+		// since there is no merging of channels, only a change in the volume of each channel.
+		slider.ariaLabel = Strings.Fade;
 		slider.min = -StereoPannerControl.maxAbsoluteValue;
 		slider.max = StereoPannerControl.maxAbsoluteValue;
 		slider.value = this._pan;
