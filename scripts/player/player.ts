@@ -282,6 +282,8 @@ class Player {
 	}
 
 	private recreateAudioPath(audioElement?: AudioElement | null): void {
+		this.suspendAudioContext(false);
+
 		const intermediateNodes = this._intermediateNodes;
 
 		if (this._sourceNode)
@@ -926,7 +928,7 @@ class Player {
 							this._nextSongToPlayAfterLoading = currentPlaylistSong;
 						} else {
 							// The next song has already been successfully loaded
-							// Do not call this.pause() in order not to pause current audio
+							// Do not call this.pause() in order not to pause current audio / suspend the audio context
 							this._audio.pause();
 						}
 

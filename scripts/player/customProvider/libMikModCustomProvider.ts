@@ -288,8 +288,6 @@ class LibMikModAudioElement extends AudioElement {
 		this._playAfterLoading = false;
 		this._paused = true;
 
-		this._suspendAudioContext();
-
 		if (this._sourceAudioNode) {
 			this._sourceAudioNode.disconnect();
 			LibMikMod.stopModule();
