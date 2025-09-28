@@ -60,6 +60,7 @@ class Song implements SerializableListItem, SongInfo {
 	public readonly title: string;
 	public readonly artist: string;
 	public readonly album: string;
+	public readonly albumLine: string;
 	public readonly track: number;
 	public lengthMS: number;
 	public readonly year: number;
@@ -122,6 +123,7 @@ class Song implements SerializableListItem, SongInfo {
 		this.title = (title || Formatter.none);
 		this.artist = (artist || Formatter.none);
 		this.album = (album || Formatter.none);
+		this.albumLine = ((track && track > 0) ? `${track} / ${this.album}` : this.album);
 		this.track = ((track && track > 0) ? track : Formatter.noneInt);
 		this.lengthMS = ((lengthMS && lengthMS > 0) ? lengthMS : Formatter.noneInt);
 		this.year = ((year && year > 0) ? year : Formatter.noneInt);
@@ -192,8 +194,8 @@ class Song implements SerializableListItem, SongInfo {
 				temp.push(this.title);
 			if (this.artist && this.artist !== Formatter.none)
 				temp.push(this.artist);
-			if (this.album && this.album !== Formatter.none)
-				temp.push(this.album);
+			if (this.albumLine && this.albumLine !== Formatter.none)
+				temp.push(this.albumLine);
 			if (this.year && this.year > 0)
 				temp.push(this.year.toString());
 			if (this.url)

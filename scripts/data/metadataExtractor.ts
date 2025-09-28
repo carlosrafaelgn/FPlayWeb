@@ -40,7 +40,7 @@ interface Metadata {
 	year?: number;
 	sampleRate?: number;
 	channels?: number;
-	albumArt?: Uint8Array | null;
+	albumArt?: Uint8Array<ArrayBuffer> | null;
 
 	file?: File;
 	fileName?: string;
@@ -48,7 +48,7 @@ interface Metadata {
 }
 
 class ResizeableBuffer {
-	public buffer: Uint8Array;
+	public buffer: Uint8Array<ArrayBuffer>;
 
 	public constructor(capacity: number) {
 		this.buffer = new Uint8Array(capacity);
@@ -90,13 +90,13 @@ abstract class BufferedReader {
 	public abstract readUInt32LE(): number | null;
 	public abstract readUInt16BE(): number | null;
 	public abstract readUInt16LE(): number | null;
-	public abstract read(buffer: Uint8Array, offset: number, length: number): Promise<number> | number;
+	public abstract read(buffer: Uint8Array<ArrayBuffer>, offset: number, length: number): Promise<number> | number;
 }
 
 class BufferedFileReader extends BufferedReader {
 	private readonly _file: File;
 
-	private readonly _buffer: Uint8Array;
+	private readonly _buffer: Uint8Array<ArrayBuffer>;
 	private _position: number;
 	private _bufferPosition: number;
 	private _bufferAvailable: number;
@@ -118,7 +118,7 @@ class BufferedFileReader extends BufferedReader {
 		return this._eof;
 	}
 
-	public constructor(file: File, buffer: Uint8Array) {
+	public constructor(file: File, buffer: Uint8Array<ArrayBuffer>) {
 		super(file.size);
 
 		if (buffer.length < BufferedReader.minBufferLength)
@@ -258,7 +258,7 @@ class BufferedFileReader extends BufferedReader {
 			(this._buffer[this._bufferPosition++] << 8));
 	}
 
-	public read(buffer: Uint8Array, offset: number, length: number): Promise<number> | number {
+	public read(buffer: Uint8Array<ArrayBuffer>, offset: number, length: number): Promise<number> | number {
 		if (length < 0)
 			throw new Error("Invalid length");
 
@@ -321,7 +321,7 @@ class MetadataExtractor {
 	protected static readonly textDecoderUtf16be = new TextDecoder("utf-16be");
 	protected static readonly textDecoderUtf8 = new TextDecoder("utf-8");
 
-	private static async extractRIFF(metadata: Metadata, f: BufferedReader, tmp: Uint8Array): Promise<[Metadata, boolean] | null> {
+	private static async extractRIFF(metadata: Metadata, f: BufferedReader, tmp: Uint8Array<ArrayBuffer>): Promise<[Metadata, boolean] | null> {
 		// When entering extractRIFF() the first four bytes have already been consumed
 		if (f.totalLength < 44)
 			return null;
@@ -608,7 +608,7 @@ class MetadataExtractor {
 		return null;
 	}
 
-	private static finishReadingV2Frame(encoding: number, frameSize: number, tmp: Uint8Array): string | null {
+	private static finishReadingV2Frame(encoding: number, frameSize: number, tmp: Uint8Array<ArrayBuffer>): string | null {
 		let offsetStart = 0, offsetEnd = frameSize - 1;
 
 		_trimStart:
@@ -730,7 +730,7 @@ class MetadataExtractor {
 		});
 	}
 
-	private static async extractID3v1(metadata: Metadata, f: BufferedReader, found: number, tmp: Uint8Array): Promise<void> {
+	private static async extractID3v1(metadata: Metadata, f: BufferedReader, found: number, tmp: Uint8Array<ArrayBuffer>): Promise<void> {
 		try {
 			f.seekTo(f.totalLength - 128);
 			const p = f.read(tmp, 0, 128);
@@ -1254,7 +1254,7 @@ class MetadataExtractor {
 		return metadata;
 	}
 
-	public static async extract(file: File, buffer?: Uint8Array | null, tmpBuffer?: ResizeableBuffer | null, fetchAlbumArt: boolean = false, customProvider: CustomProvider | null = null): Promise<Metadata | null> {
+	public static async extract(file: File, buffer?: Uint8Array<ArrayBuffer> | null, tmpBuffer?: ResizeableBuffer | null, fetchAlbumArt: boolean = false, customProvider: CustomProvider | null = null): Promise<Metadata | null> {
 		if (!file)
 			return null;
 

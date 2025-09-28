@@ -75,7 +75,7 @@ class PlaylistAdapter extends ListAdapter<Song> {
 		(childNodes[0].childNodes[1] as Text).nodeValue = item.title;
 		(childNodes[1].childNodes[1] as Text).nodeValue = item.length;
 		(childNodes[2].childNodes[1] as Text).nodeValue = item.artist;
-		(childNodes[3].childNodes[1] as Text).nodeValue = item.album;
+		(childNodes[3].childNodes[1] as Text).nodeValue = item.albumLine;
 		(childNodes[4].firstChild as Text).nodeValue = ((item.url || item.file) ? `${(index + 1)} / ${length}` : `(${Strings.Missing}) ${(index + 1)} / ${length}`);
 	}
 
@@ -261,7 +261,7 @@ class Playlist extends List<Song> {
 		return true;
 	}
 
-	public async addSongWeb(file: File, buffer?: Uint8Array | null, tmpBuffer?: ResizeableBuffer | null, position?: number): Promise<boolean> {
+	public async addSongWeb(file: File, buffer?: Uint8Array<ArrayBuffer> | null, tmpBuffer?: ResizeableBuffer | null, position?: number): Promise<boolean> {
 		const supportedExtensionInfo = FileUtils.getSupportedExtensionInfoByPath(file.name);
 		if (!supportedExtensionInfo)
 			return false;

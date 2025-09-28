@@ -25,7 +25,7 @@
 //
 
 class FLACMetadataExtractor extends VorbisCommentExtractor {
-	private static readHeaderAndStreamInfo(metadata: Metadata, f: BufferedReader, tmp: Uint8Array): number {
+	private static readHeaderAndStreamInfo(metadata: Metadata, f: BufferedReader, tmp: Uint8Array<ArrayBuffer>): number {
 		// https://xiph.org/flac/format.html#stream
 
 		if (f.readUInt32BE() !== 0x664c6143) // fLaC
@@ -171,7 +171,7 @@ class FLACMetadataExtractor extends VorbisCommentExtractor {
 		return (lastBlock ? -1 : 1);
 	}
 
-	public static async extract(file: File, buffer: Uint8Array, tmpBuffer: ResizeableBuffer, fetchAlbumArt: boolean): Promise<Metadata | null> {
+	public static async extract(file: File, buffer: Uint8Array<ArrayBuffer>, tmpBuffer: ResizeableBuffer, fetchAlbumArt: boolean): Promise<Metadata | null> {
 		try {
 			const f = new BufferedFileReader(file, buffer);
 

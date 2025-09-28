@@ -319,7 +319,7 @@ class LibMikModCustomProvider extends CustomProvider {
 		super(CustomProviderId.LibMikMod);
 	}
 
-	public async extractMetadata(metadata: Metadata, file: File, buffer: Uint8Array, tmpBuffer: ResizeableBuffer, fetchAlbumArt: boolean): Promise<Metadata | null> {
+	public async extractMetadata(metadata: Metadata, file: File, buffer: Uint8Array<ArrayBuffer>, tmpBuffer: ResizeableBuffer, fetchAlbumArt: boolean): Promise<Metadata | null> {
 		metadata.flags &= ~MetadataFlags.Seekable;
 		return metadata;
 	}

@@ -38,7 +38,7 @@ class OggBufferedReader extends BufferedFileReader {
 	private _currentPageLength: number;
 	private _additionalSkipLength: number;
 
-	public constructor(file: File, buffer: Uint8Array) {
+	public constructor(file: File, buffer: Uint8Array<ArrayBuffer>) {
 		super(file, buffer);
 
 		this._currentPageLength = 0;
@@ -369,7 +369,7 @@ class OggBufferedReader extends BufferedFileReader {
 		));
 	}
 
-	private async readAsync(p: Promise<number> | number, buffer: Uint8Array, offset: number, length: number, totalRead: number): Promise<number> {
+	private async readAsync(p: Promise<number> | number, buffer: Uint8Array<ArrayBuffer>, offset: number, length: number, totalRead: number): Promise<number> {
 		if ((typeof p) !== "number") {
 			p = await p;
 
@@ -414,7 +414,7 @@ class OggBufferedReader extends BufferedFileReader {
 		return totalRead;
 	}
 
-	public read(buffer: Uint8Array, offset: number, length: number): Promise<number> | number {
+	public read(buffer: Uint8Array<ArrayBuffer>, offset: number, length: number): Promise<number> | number {
 		if (this._additionalSkipLength > 0)
 			return this.skipAdditionalSkipLength().then(() => this.read(buffer, offset, length));
 
@@ -450,7 +450,7 @@ class OggBufferedReader extends BufferedFileReader {
 }
 
 class OggMetadataExtractor extends VorbisCommentExtractor {
-	public static async extract(file: File, buffer: Uint8Array, tmpBuffer: ResizeableBuffer, fetchAlbumArt: boolean): Promise<Metadata | null> {
+	public static async extract(file: File, buffer: Uint8Array<ArrayBuffer>, tmpBuffer: ResizeableBuffer, fetchAlbumArt: boolean): Promise<Metadata | null> {
 		try {
 			const f = new OggBufferedReader(file, buffer);
 
