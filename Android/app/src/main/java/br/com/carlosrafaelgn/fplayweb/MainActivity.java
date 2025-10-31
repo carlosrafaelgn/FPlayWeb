@@ -27,6 +27,7 @@ package br.com.carlosrafaelgn.fplayweb;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
@@ -34,11 +35,16 @@ import android.os.Bundle;
 import android.os.PowerManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.view.View;
+import android.view.ViewTreeObserver;
+import android.view.Window;
+import android.widget.FrameLayout;
 import android.window.OnBackInvokedDispatcher;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements ViewTreeObserver.OnGlobalLayoutListener {
 	private WebViewHost webViewHost;
 	private boolean onBackInvokedCallbackRegistered;
+	private View decorView;
 
 	private void showOverlayPermissionRequest() {
 		final Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
@@ -91,6 +97,14 @@ public class MainActivity extends Activity {
 		}
 
 		webViewHost.setActivity(this);
+
+		if (Build.VERSION.SDK_INT >= 35) {
+			final Window window = getWindow();
+			if (window != null) {
+				decorView = window.getDecorView();
+				decorView.getViewTreeObserver().addOnGlobalLayoutListener(this);
+			}
+		}
 	}
 
 	@Override
@@ -143,6 +157,11 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onDestroy() {
+		if (Build.VERSION.SDK_INT >= 35 && decorView != null) {
+			decorView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+			decorView = null;
+		}
+
 		if (webViewHost != null) {
 			SharedSettings.save(this);
 
@@ -163,5 +182,24 @@ public class MainActivity extends Activity {
 	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 		if (webViewHost != null)
 			webViewHost.onRequestPermissionsResult(grantResults);
+	}
+
+	@Override
+	public void onGlobalLayout() {
+		if (webViewHost == null || webViewHost.webView == null)
+			return;
+
+		final Rect r = new Rect();
+		decorView.getWindowVisibleDisplayFrame(r);
+
+		final int screenHeight = decorView.getContext().getResources().getDisplayMetrics().heightPixels;
+		webViewHost.keyboardHeight = screenHeight - r.bottom;
+
+		final FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams)webViewHost.webView.getLayoutParams();
+		final int bottomMargin = Math.max(webViewHost.keyboardHeight, webViewHost.bottomInset);
+		if (layoutParams.bottomMargin != bottomMargin) {
+			layoutParams.bottomMargin = bottomMargin;
+			webViewHost.webView.setLayoutParams(layoutParams);
+		}
 	}
 }

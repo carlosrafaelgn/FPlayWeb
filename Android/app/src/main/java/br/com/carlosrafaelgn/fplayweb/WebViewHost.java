@@ -587,6 +587,7 @@ public class WebViewHost {
 
 	public final Application application;
 	public WebView webView;
+	public int keyboardHeight, bottomInset;
 
 	public WebViewHost(Application application) {
 		hostAlive = true;
@@ -648,12 +649,25 @@ public class WebViewHost {
 			if (Build.VERSION.SDK_INT >= 35) {
 				webView.setOnApplyWindowInsetsListener((v, windowInsets) -> {
 					final Insets insets = windowInsets.getInsets(WindowInsets.Type.systemBars());
-					final FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-					layoutParams.leftMargin = insets.left;
-					layoutParams.topMargin = insets.top;
-					layoutParams.rightMargin = insets.right;
-					layoutParams.bottomMargin = insets.bottom;
-					v.setLayoutParams(layoutParams);
+
+					bottomInset = insets.bottom;
+
+					final FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams)v.getLayoutParams();
+					final int bottomMargin = Math.max(keyboardHeight, bottomInset);
+
+					if (
+						layoutParams.leftMargin != insets.left ||
+						layoutParams.topMargin != insets.top ||
+						layoutParams.rightMargin != insets.right ||
+						layoutParams.bottomMargin != bottomMargin
+					) {
+						layoutParams.leftMargin = insets.left;
+						layoutParams.topMargin = insets.top;
+						layoutParams.rightMargin = insets.right;
+						layoutParams.bottomMargin = bottomMargin;
+						v.setLayoutParams(layoutParams);
+					}
+
 					return WindowInsets.CONSUMED;
 				});
 			}
