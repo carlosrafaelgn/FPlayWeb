@@ -27,8 +27,12 @@
 	text-align: right;
 }
 
-.playlist-item-row2, .playlist-item-row3, .playlist-item-s-row1, .playlist-item-s-row3 {
+.playlist-item-row2, .playlist-item-row3, .playlist-item-s-row3 {
 	color: $color-text-secondary;
+}
+
+.playlist-item-s-row1 {
+	color: $color-text-intermediate;
 }
 
 .playlist-item-row1, .playlist-item-s-row1 {
@@ -46,6 +50,12 @@
 	top: $small-contents-size + $small-contents-size;
 }
 
+.playlist-item-row3-track {
+	color: $color-text-intermediate;
+	font-weight: 700;
+	margin-right: $s2;
+}
+
 .playlist-item-icon,
 .playlist-item-icon > svg {
 	width: $small-contents-size;
@@ -54,6 +64,7 @@
 
 .playlist-item-icon {
 	padding: 0;
+	margin-right: $s2;
 }
 /*
 .playlist-item > span {
@@ -106,7 +117,7 @@
 	position: relative;
 	display: flex;
 	flex-direction: column;
-    flex-wrap: nowrap;
+	flex-wrap: nowrap;
 	flex: 1 1 auto;
 	padding: $s2 0;
 	min-width: 0; // https://css-tricks.com/flexbox-truncated-text/

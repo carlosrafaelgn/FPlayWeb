@@ -93,6 +93,8 @@ class Strings {
 	public static DurationLabel = "Duration: ";
 	public static Track = "Track";
 	public static TrackLabel = "Track: ";
+	public static TrackAlbum = "Track and album";
+	public static TrackAlbumLabel = "Track and album: ";
 	public static Year = "Year";
 	public static YearLabel = "Year: ";
 	public static SampleRate = "Sample rate";
@@ -212,6 +214,8 @@ class Strings {
 			Strings.DurationLabel = "Duração: ";
 			Strings.Track = "Faixa";
 			Strings.TrackLabel = "Faixa: ";
+			Strings.TrackAlbum = "Faixa e álbum";
+			Strings.TrackAlbumLabel = "Faixa e álbum: ";
 			Strings.Year = "Ano";
 			Strings.YearLabel = "Ano: ";
 			Strings.SampleRate = "Taxa de amostragem";

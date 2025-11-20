@@ -39,7 +39,7 @@ class PlaylistAdapter extends ListAdapter<Song> {
 
 		const row1 = document.createElement("span");
 		row1.className = "playlist-item-row1";
-		row1.appendChild(Icon.create("icon-title", "pink", false, "playlist-item-icon margin", null, Strings.TitleLabel));
+		row1.appendChild(Icon.create("icon-title", "pink", false, "playlist-item-icon", null, Strings.TitleLabel));
 		row1.appendChild(document.createTextNode(Formatter.none));
 		div.appendChild(row1);
 
@@ -51,13 +51,21 @@ class PlaylistAdapter extends ListAdapter<Song> {
 
 		const row2 = document.createElement("span");
 		row2.className = "playlist-item-row2";
-		row2.appendChild(Icon.create("icon-artist", "orange", false, "playlist-item-icon margin", null, Strings.ArtistLabel));
+		row2.appendChild(Icon.create("icon-artist", "orange", false, "playlist-item-icon", null, Strings.ArtistLabel));
 		row2.appendChild(document.createTextNode(Formatter.none));
 		div.appendChild(row2);
 
 		const row3 = document.createElement("span");
 		row3.className = "playlist-item-row3";
-		row3.appendChild(Icon.create("icon-album", "green", false, "playlist-item-icon margin", null, Strings.AlbumLabel));
+		row3.appendChild(Icon.create("icon-album", "green", false, "playlist-item-icon", null, Strings.TrackAlbumLabel));
+		const spanTrack = document.createElement("span");
+		spanTrack.className = "playlist-item-row3-track";
+		spanTrack.appendChild(document.createTextNode(""));
+		row3.appendChild(spanTrack);
+		const spanSpace = document.createElement("span");
+		spanSpace.className = "sr-only";
+		spanSpace.appendChild(document.createTextNode(" "));
+		row3.appendChild(spanSpace);
 		row3.appendChild(document.createTextNode(Formatter.none));
 		div.appendChild(row3);
 
@@ -75,7 +83,12 @@ class PlaylistAdapter extends ListAdapter<Song> {
 		(childNodes[0].childNodes[1] as Text).nodeValue = item.title;
 		(childNodes[1].childNodes[1] as Text).nodeValue = item.length;
 		(childNodes[2].childNodes[1] as Text).nodeValue = item.artist;
-		(childNodes[3].childNodes[1] as Text).nodeValue = item.albumLine;
+		const spanTrackClassName = ((item.track > 0) ? "playlist-item-row3-track" : "playlist-item-row3-track sr-only");
+		const spanTrack = childNodes[3].childNodes[1] as HTMLSpanElement;
+		if (spanTrack.className !== spanTrackClassName)
+			spanTrack.className = spanTrackClassName;
+		(spanTrack.childNodes[0] as Text).nodeValue = item.trackLabel;
+		(childNodes[3].childNodes[3] as Text).nodeValue = item.album;
 		(childNodes[4].firstChild as Text).nodeValue = ((item.url || item.file) ? `${(index + 1)} / ${length}` : `(${Strings.Missing}) ${(index + 1)} / ${length}`);
 	}
 
