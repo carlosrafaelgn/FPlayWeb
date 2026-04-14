@@ -389,6 +389,7 @@ select.btn option {
 // Adding this to the group above makes the entire group stop working in Firefox
 .scrollable::-webkit-scrollbar-thumb {
 	background-color: $color-blue;
+	border-radius: 0;
 }
 
 @for $i from 1 through 7 {
@@ -650,12 +651,14 @@ f-list {
 .scrollable {
 	overflow: hidden auto;
 	padding: 0 var(--thick-border) 0 0;
-	scrollbar-color: $color-blue $color-background;
+	// Adding this makes Chrome render arrows at the edges of the scrollbar
+	// scrollbar-color: $color-blue $color-background;
 }
 
 .scrollable::-webkit-scrollbar {
 	width: var(--scrollbar-size);
 	height: var(--scrollbar-size);
+	border-radius: 0;
 }
 
 .f-list-empty-message {
@@ -715,7 +718,7 @@ f-list.virtual-padding > .f-list-item.virtual {
 #cover {
 	/*
 		Even though html and body have overflow: hidden, a few mobile devices still
-		show the scroll bars, for a brief moment, when the cover is added. The only
+		show the scrollbars, for a brief moment, when the cover is added. The only
 		way to prevent them from appearing was by making the cover fixed!
 	*/
 	position: fixed;
