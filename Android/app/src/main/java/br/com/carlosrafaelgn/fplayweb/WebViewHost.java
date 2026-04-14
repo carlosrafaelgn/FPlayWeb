@@ -828,7 +828,9 @@ public class WebViewHost {
 			if (SharedSettings.floatViewY < 0)
 				SharedSettings.floatViewY = _24dp << 1;
 
-			layoutParams.alpha = 0.3f;
+			// Apparently, Android 35 does not call floatView's OnClickListener/OnTouchListener
+			// when layoutParams.alpha is lower than 0.5f...
+			layoutParams.alpha = 0.5f;
 			layoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 			layoutParams.gravity = Gravity.START | Gravity.TOP;
 			layoutParams.y = SharedSettings.floatViewY;
