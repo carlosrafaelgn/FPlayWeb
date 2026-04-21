@@ -643,6 +643,7 @@ public class WebViewHost {
 		} else if (webView == null) {
 			WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
 
+			// https://chromium.googlesource.com/chromium/src/+/HEAD/android_webview/docs/architecture.md
 			webView = new WebView(application);
 
 			// No solution available yet: https://stackoverflow.com/q/79406826/3569421
