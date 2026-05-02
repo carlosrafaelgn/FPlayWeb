@@ -393,13 +393,15 @@ select.btn option {
 }
 
 .scrollable::-webkit-scrollbar-button {
-	width: 0px;
-	height: 0px;
+	display: none;
+	width: 0;
+	height: 0;
 }
 
 .scrollable::-moz-scrollbar-button {
-	width: 0px;
-	height: 0px;
+	display: none;
+	width: 0;
+	height: 0;
 }
 
 @for $i from 1 through 7 {
@@ -658,6 +660,10 @@ f-list {
 	line-height: $small-contents-size;
 }
 
+// https://developer.chrome.com/docs/css-ui/scrollbar-styling
+// https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Selectors/::-webkit-scrollbar
+// https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/scrollbar-color
+// https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/scrollbar-width
 .scrollable {
 	overflow: hidden auto;
 	padding: 0 var(--thick-border) 0 0;
@@ -669,6 +675,14 @@ f-list {
 	width: var(--scrollbar-size);
 	height: var(--scrollbar-size);
 	border-radius: 0;
+}
+
+// https://stackoverflow.com/a/953491/3569421
+// https://stackoverflow.com/a/32455002/3569421
+@supports (-moz-appearance:none) {
+	.scrollable {
+		scrollbar-color: $color-blue $color-background;
+	}
 }
 
 .f-list-empty-message {
