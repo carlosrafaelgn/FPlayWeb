@@ -392,6 +392,16 @@ select.btn option {
 	border-radius: 0;
 }
 
+.scrollable::-webkit-scrollbar-button {
+	width: 0px;
+	height: 0px;
+}
+
+.scrollable::-moz-scrollbar-button {
+	width: 0px;
+	height: 0px;
+}
+
 @for $i from 1 through 7 {
 	.#{list.nth($color-names, $i)} {
 		color: list.nth($colors, $i);
