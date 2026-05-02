@@ -30,6 +30,18 @@ class Icon extends HTMLElement {
 
 	public static readonly baseSizePX = 12;
 
+	public static createSVG(name?: string | null): { svg: SVGSVGElement, use: SVGUseElement } {
+		const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+		const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+		svg.ariaHidden = "true";
+		svg.appendChild(use);
+
+		if (name)
+			use.setAttribute("href", "#" + name);
+
+		return { svg, use };
+	}
+
 	public static createHTML(name: string, color?: string | null, large?: boolean, className?: string | null, id?: string | null, srTitle?: string | null): string {
 		return `<f-icon name="${name}"${color ? (' color="' + color + '"') : ''}${large ? (' large') : ''}${className ? (' class="' + className + '"') : ''}${id ? (' id="' + id + '"') : ''}${srTitle ? (' sr-title="' + srTitle + '"') : ""} />`;
 	}
@@ -125,16 +137,9 @@ class Icon extends HTMLElement {
 		if (this._use)
 			return;
 
-		this._svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"),
-		this._use = document.createElementNS("http://www.w3.org/2000/svg", "use");
-		this._svg.ariaHidden = "true";
-		this._svg.appendChild(this._use);
-
-		const name = this._name;
-		if (name) {
-			this._name = null;
-			this.attributeChangedCallback("name", null, name);
-		}
+		const temp = Icon.createSVG(this._name);
+		this._svg = temp.svg;
+		this._use = temp.use;
 
 		const color = this._color;
 		if (color) {

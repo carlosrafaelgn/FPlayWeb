@@ -580,6 +580,8 @@ class AppUI {
 		AppUI.animatedRGBMode = appSettings.animatedRGBMode || false;
 		AppUI.extraRGBMode = appSettings.extraRGBMode || false;
 		AppUI.neonMode = appSettings.neonMode || false;
+		PlaylistAdapter.showAlbumArt = appSettings.showPlaylistAlbumArt || false;
+		PlaylistAdapter.showIcons = ((appSettings.showPlaylistIcons === undefined) ? true : appSettings.showPlaylistIcons);
 
 		AppUI.adjustWindow();
 	}
@@ -755,6 +757,32 @@ class AppUI {
 			document.body.classList.remove("neon");
 		else
 			document.body.classList.add("neon");
+	}
+
+	public static get showPlaylistAlbumArt(): boolean {
+		return PlaylistAdapter.showAlbumArt;
+	}
+
+	public static set showPlaylistAlbumArt(showPlaylistAlbumArt: boolean) {
+		if (PlaylistAdapter.showAlbumArt === showPlaylistAlbumArt)
+			return;
+
+		PlaylistAdapter.showAlbumArt = showPlaylistAlbumArt;
+
+		AppUI._playlistControl.synchronizeElementsToEnvironment();
+	}
+
+	public static get showPlaylistIcons(): boolean {
+		return PlaylistAdapter.showIcons;
+	}
+
+	public static set showPlaylistIcons(showPlaylistIcons: boolean) {
+		if (PlaylistAdapter.showIcons === showPlaylistIcons)
+			return;
+
+		PlaylistAdapter.showIcons = showPlaylistIcons;
+
+		AppUI._playlistControl.synchronizeElementsToEnvironment();
 	}
 
 	public static addZoomHandler(zoomHandler: AppUIZoomHandler | null): void {
@@ -1399,6 +1427,26 @@ class AppUI {
 			parent: body,
 			onclick: function () {
 				AppUI.neonMode = neonModeCheckbox.checked;
+			}
+		});
+
+		const showPlaylistAlbumArtCheckbox = ButtonControl.create({
+			text: Strings.ShowPlaylistAlbumArt,
+			checkable: true,
+			checked: AppUI.showPlaylistAlbumArt,
+			parent: body,
+			onclick: function () {
+				AppUI.showPlaylistAlbumArt = showPlaylistAlbumArtCheckbox.checked;
+			}
+		});
+
+		const showPlaylistIconsCheckbox = ButtonControl.create({
+			text: Strings.ShowPlaylistIcons,
+			checkable: true,
+			checked: AppUI.showPlaylistIcons,
+			parent: body,
+			onclick: function () {
+				AppUI.showPlaylistIcons = showPlaylistIconsCheckbox.checked;
 			}
 		});
 

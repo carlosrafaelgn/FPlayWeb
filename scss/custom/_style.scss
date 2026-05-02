@@ -63,9 +63,40 @@
 }
 
 .playlist-item-icon {
+	display: none;
 	padding: 0;
 	margin-right: $s2;
 }
+
+.playlist-item-placeholder {
+	display: none;
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: var(--playlist-item-size);
+	height: var(--playlist-item-size);
+	fill: currentColor;
+}
+
+.playlist-item.album-art {
+	> .playlist-item-row1,
+	> .playlist-item-row2,
+	> .playlist-item-row3 {
+		left: var(--playlist-item-size);
+		padding-left: $s1;
+	}
+
+	> .playlist-item-placeholder {
+		display: block;
+	}
+}
+
+.playlist-item.icons {
+	.playlist-item-icon {
+		display: inline-block;
+	}
+}
+
 /*
 .playlist-item > span {
 	color: $color-text-secondary;

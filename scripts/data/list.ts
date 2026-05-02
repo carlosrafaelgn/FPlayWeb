@@ -85,6 +85,10 @@ abstract class ListAdapter<T extends Object> {
 			this.control.notifyCurrentItemChanged(oldIndex, newIdex);
 	}
 
+	// Indicates a possible change in the environment rather than in the item itself
+	public synchronizeElementToEnvironment(item: T, index: number, length: number, element: HTMLElement): void {
+	}
+
 	public abstract get itemHeight(): number;
 
 	public abstract createEmptyElement(baseClass: string): HTMLElement;

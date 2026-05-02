@@ -137,6 +137,8 @@ class Strings {
 	public static AnimatedRGBMode = "Animated RGB Mode";
 	public static ExtraRGBMode = "Extra RGB Mode";
 	public static NeonMode = "Neon Mode";
+	public static ShowPlaylistAlbumArt = "Show playlist album art";
+	public static ShowPlaylistIcons = "Show playlist icons";
 	public static AboutHTML = `<p>FPlay Web is an experimental audio player. 😊</p>
 <p>For more information about the project, its source code and dependencies, check out its repository at <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb">github.com/carlosrafaelgn/FPlayWeb</a>.</p>
 <p>This project is licensed under the <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb/blob/master/LICENSE">MIT License</a>.</p>`;
@@ -258,6 +260,8 @@ class Strings {
 			Strings.AnimatedRGBMode = "Modo RGB Animado";
 			Strings.ExtraRGBMode = "Modo RGB Extra";
 			Strings.NeonMode = "Modo Neon";
+			Strings.ShowPlaylistAlbumArt = "Exibir arte do álbum na playlist";
+			Strings.ShowPlaylistIcons = "Exibir ícones na playlist";
 			Strings.AboutHTML = `<p>FPlay Web é um player de áudio experimental. 😊</p>
 <p>Para mais informações sobre o projeto, seu código-fonte e dependências, confira seu repositório em <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb">github.com/carlosrafaelgn/FPlayWeb</a>.</p>
 <p>Este projeto é licenciado sob a <a target="_blank" href="https://github.com/carlosrafaelgn/FPlayWeb/blob/master/LICENSE">MIT License</a>.</p>`;

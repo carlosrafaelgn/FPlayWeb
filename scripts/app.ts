@@ -67,6 +67,8 @@ interface AppSettings {
 	animatedRGBMode?: boolean;
 	extraRGBMode?: boolean;
 	neonMode?: boolean;
+	showPlaylistAlbumArt?: boolean;
+	showPlaylistIcons?: boolean;
 }
 
 interface HostInterface extends HostMediaSession {
@@ -129,7 +131,9 @@ class App {
 			rgbMode: AppUI.rgbMode,
 			animatedRGBMode: AppUI.animatedRGBMode,
 			extraRGBMode: AppUI.extraRGBMode,
-			neonMode: AppUI.neonMode
+			neonMode: AppUI.neonMode,
+			showPlaylistAlbumArt: AppUI.showPlaylistAlbumArt,
+			showPlaylistIcons: AppUI.showPlaylistIcons,
 		});
 
 		if (App.graphicalFilterControl)

@@ -25,6 +25,9 @@
 //
 
 class PlaylistAdapter extends ListAdapter<Song> {
+	public static showAlbumArt = false;
+	public static showIcons = true;
+
 	public constructor(list: Playlist) {
 		super(list);
 	}
@@ -35,7 +38,7 @@ class PlaylistAdapter extends ListAdapter<Song> {
 
 	public createEmptyElement(baseClass: string): HTMLElement {
 		const div = document.createElement("div");
-		div.className = baseClass + " playlist-item";
+		div.className = baseClass + " playlist-item" + (PlaylistAdapter.showAlbumArt ? " album-art" : "") + (PlaylistAdapter.showIcons ? " icons" : "");
 
 		const row1 = document.createElement("span");
 		row1.className = "playlist-item-row1";
@@ -75,7 +78,26 @@ class PlaylistAdapter extends ListAdapter<Song> {
 		srow3.appendChild(document.createTextNode(Formatter.none));
 		div.appendChild(srow3);
 
+		const placeholder = Icon.createSVG("icon-album").svg;
+		placeholder.classList.add("playlist-item-placeholder", "white", "disabled");
+		placeholder.ariaHidden = "true";
+		div.appendChild(placeholder);
+
 		return div;
+	}
+
+	public override synchronizeElementToEnvironment(item: Song, index: number, length: number, element: HTMLElement): void {
+		if (PlaylistAdapter.showAlbumArt) {
+			element.classList.add("album-art");
+		} else {
+			element.classList.remove("album-art");
+		}
+
+		if (PlaylistAdapter.showIcons) {
+			element.classList.add("icons");
+		} else {
+			element.classList.remove("icons");
+		}
 	}
 
 	public prepareElement(item: Song, index: number, length: number, element: HTMLElement): void {

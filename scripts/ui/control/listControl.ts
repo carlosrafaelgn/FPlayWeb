@@ -103,16 +103,26 @@ class ListControl<T extends Object> extends HTMLElement {
 	private _focused: boolean;
 	private _keyboardIndex: number;
 	private _lastKeyboardIndex: number;
+	private _lastScrollTime: number;
+	private _scrollStopInterval: number;
 
 	private readonly _boundZoomChanged: any;
 	private readonly _boundRefreshVisibleItemsInternal: any;
 	private readonly _boundNotifyCurrentItemChangedInternal: any;
 	private readonly _boundAdjustScrollbarPaddingFromResize: any;
+	private readonly _boundScrollStopIntervalHandler: any;
 
 	public deleteMode: boolean;
 	public onitemclick: ((item: T, index: number, button: number) => void) | null;
 	public onitemcontrolclick: ((item: T, index: number, button: number, target: HTMLElement) => void) | null;
 	public onitemcontextmenu: ((item: T, index: number) => void) | null;
+	// onscrollend is already a valid standard event, https://developer.mozilla.org/en-US/docs/Web/API/Document/scrollend_event,
+	// but it has a different semantics, as it is only triggered when the user releases the mouse button after scrolling.
+	// Also, current onscrollend event does not have a matching onscrollstart event.
+	// Therefore, I decided to name the end event as onscrollstop, to prevent confusion.
+	// One important detail is that for the onscrollstart handler to work, onscrollstop must also be set.
+	public onscrollstart: (() => void) | null;
+	public onscrollstop: (() => void) | null;
 
 	public constructor() {
 		super();
@@ -129,6 +139,7 @@ class ListControl<T extends Object> extends HTMLElement {
 		this._boundZoomChanged = this.zoomChanged.bind(this);
 		this._boundRefreshVisibleItemsInternal = this.refreshVisibleItemsInternal.bind(this);
 		this._boundAdjustScrollbarPaddingFromResize = this.adjustScrollbarPaddingFromResize.bind(this);
+		this._boundScrollStopIntervalHandler = this.scrollStopIntervalHandler.bind(this);
 
 		const container = document.createElement("div");
 		container.className = "f-list-container";
@@ -167,11 +178,15 @@ class ListControl<T extends Object> extends HTMLElement {
 		this._focused = false;
 		this._keyboardIndex = -1;
 		this._lastKeyboardIndex = -1;
+		this._lastScrollTime = 0;
+		this._scrollStopInterval = 0;
 
 		this.deleteMode = false;
 		this.onitemclick = null;
 		this.onitemcontrolclick = null;
 		this.onitemcontextmenu = null;
+		this.onscrollstart = null;
+		this.onscrollstop = null;
 	}
 
 	public destroy(): void {
@@ -180,6 +195,11 @@ class ListControl<T extends Object> extends HTMLElement {
 
 		if (this._resizeObserver)
 			this._resizeObserver.unobserve(this);
+
+		if (this._scrollStopInterval) {
+			clearInterval(this._scrollStopInterval);
+			this._scrollStopInterval = 0;
+		}
 
 		if (this._items)
 			(this._items as Array<any>).fill(null);
@@ -364,7 +384,25 @@ class ListControl<T extends Object> extends HTMLElement {
 		this.adjustScrollbarPadding();
 	}
 
+	private scrollStopIntervalHandler(): void {
+		if (this._scrollStopInterval && (Date.now() - this._lastScrollTime) >= 150) {
+			clearInterval(this._scrollStopInterval);
+			this._scrollStopInterval = 0;
+			if (this.onscrollstop)
+				this.onscrollstop();
+		}
+	}
+
 	private elementScroll(): void {
+		if (this.onscrollstop) {
+			this._lastScrollTime = Date.now();
+			if (!this._scrollStopInterval) {
+				this._scrollStopInterval = setInterval(this._boundScrollStopIntervalHandler, 40);
+				if (this.onscrollstart)
+					this.onscrollstart();
+			}
+		}
+
 		const adapter = this._adapter;
 		if (!adapter)
 			return;
@@ -910,6 +948,26 @@ class ListControl<T extends Object> extends HTMLElement {
 			queueMicrotask(this._boundRefreshVisibleItemsInternal);
 		}
 	}
+
+	// Indicates a possible change in the environment rather than in the item itself
+	public synchronizeElementsToEnvironment(): void {
+		const adapter = this._adapter;
+		if (!adapter)
+			return;
+
+		const items = this._items,
+			list = adapter.list,
+			length = list.length;
+
+		for (let i = items.length - 1; i >= 0; i--) {
+			const item = items[i];
+			if (!item || !item.item || !item.element)
+				continue;
+
+			adapter.synchronizeElementToEnvironment(item.item, item.index, length, item.element);
+		}
+	}
+
 
 	public notifyCleared(): void {
 		this.clear();
