@@ -9,6 +9,7 @@
 # java -jar /d/Tools/closure-compiler.jar --js docs/assets/js/scripts.js --js_output_file docs/assets/js/scripts.es6.min.js --language_in ECMASCRIPT_2015 --language_out ECMASCRIPT_2015 --strict_mode_input --emit_use_strict --compilation_level SIMPLE
 # rm docs/assets/js/scripts.js
 
-tsc --target ES2015 --project scripts/tsconfig.json
-java -jar /d/Tools/closure-compiler.jar --js docs/assets/js/scripts.js --js_output_file docs/assets/js/scripts.min.js --language_in ECMASCRIPT_2015 --language_out ECMASCRIPT_2015 --strict_mode_input --emit_use_strict --compilation_level SIMPLE
-rm docs/assets/js/scripts.js
+tsc --target ES2020 --project scripts/tsconfig.json
+node bundle.js
+java -jar /d/Tools/closure-compiler.jar --js temp/scripts.js --js_output_file docs/assets/js/scripts.min.js --language_in ECMASCRIPT_2015 --language_out ECMASCRIPT_2015 --strict_mode_input --emit_use_strict --compilation_level SIMPLE
+rm temp/scripts.js

@@ -12,5 +12,6 @@ REM java -jar D:\Tools\closure-compiler.jar --js docs\assets\js\scripts.js --js_
 REM DEL docs\assets\js\scripts.js
 
 CALL tsc --target ES2020 --project scripts\tsconfig.json
-java -jar D:\Tools\closure-compiler.jar --js docs\assets\js\scripts.js --js_output_file docs\assets\js\scripts.min.js --language_in ECMASCRIPT_2020 --language_out ECMASCRIPT_2020 --strict_mode_input --emit_use_strict --compilation_level SIMPLE
-DEL docs\assets\js\scripts.js
+node bundle.js
+java -jar D:\Tools\closure-compiler.jar --js temp\scripts.js --js_output_file docs\assets\js\scripts.min.js --language_in ECMASCRIPT_2020 --language_out ECMASCRIPT_2020 --strict_mode_input --emit_use_strict --compilation_level SIMPLE
+DEL temp\scripts.js

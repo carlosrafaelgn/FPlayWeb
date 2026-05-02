@@ -1,3 +1,5 @@
 tsc --project scripts/tsconfig.json
 
-mv docs/assets/js/scripts.js docs/assets/js/scripts.min.js
+node bundle.js
+
+mv temp/scripts.js docs/assets/js/scripts.min.js
