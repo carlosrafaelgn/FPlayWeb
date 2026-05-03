@@ -86,7 +86,7 @@ abstract class ListAdapter<T extends Object> {
 	}
 
 	// Indicates a possible change in the environment rather than in the item itself
-	public synchronizeElementToEnvironment(item: T, index: number, length: number, element: HTMLElement): void {
+	public synchronizeElementToEnvironment(item: T | null, index: number, length: number, element: HTMLElement): void {
 	}
 
 	public abstract get itemHeight(): number;

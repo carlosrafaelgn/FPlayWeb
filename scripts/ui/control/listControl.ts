@@ -961,7 +961,7 @@ class ListControl<T extends Object> extends HTMLElement {
 
 		for (let i = items.length - 1; i >= 0; i--) {
 			const item = items[i];
-			if (!item || !item.item || !item.element)
+			if (!item || !item.element)
 				continue;
 
 			adapter.synchronizeElementToEnvironment(item.item, item.index, length, item.element);

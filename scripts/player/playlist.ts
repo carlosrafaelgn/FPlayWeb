@@ -86,7 +86,7 @@ class PlaylistAdapter extends ListAdapter<Song> {
 		return div;
 	}
 
-	public override synchronizeElementToEnvironment(item: Song, index: number, length: number, element: HTMLElement): void {
+	public override synchronizeElementToEnvironment(item: Song | null, index: number, length: number, element: HTMLElement): void {
 		if (PlaylistAdapter.showAlbumArt) {
 			element.classList.add("album-art");
 		} else {
